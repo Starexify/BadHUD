@@ -10,7 +10,7 @@ class BadHUDOptions extends Module {
     var save:FlxSave = new FlxSave();
 
     function new () {
-        super("BadHUD Options");
+        super("BadHUD Options", "1");
         save = new FlxSave();
         save.bind("BadHUDOptions", "ImVeryBad");
 
