@@ -1,0 +1,129 @@
+import funkin.modding.module.Module;
+
+import funkin.Highscore;
+import funkin.Paths;
+import funkin.Preferences;
+import funkin.play.PlayState;
+
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
+import flixel.text.FlxTextBorderStyle;
+import flixel.text.FlxText;
+import flixel.util.FlxStringUtil;
+import flixel.util.FlxSave;
+import flixel.ui.FlxBar;
+import flixel.FlxSprite;
+import flixel.FlxG;
+
+import Std;
+import Math;
+
+// This script may have used some code from other scripts so i´ll leave some credits below
+/*
+Psych Engine HUD V-Slice by nubz4lif
+OG Psych Engine HUD by Shadow Mario and his team
+*/
+class TimeBar extends Module {
+    var loaded:Boolean = false;
+    var state:PlayState;
+	var save:FlxSave;
+	var timeBar;
+	var timeBarBG;
+	var timeText;
+    var textFont:Str;
+
+	function new() {
+		super("TimeBar");
+		save = new FlxSave();
+		save.bind("BadHUDOptions", "ImVeryBad");
+	}
+
+    public function onStateChangeEnd(event:StateChangeScriptEvent) {
+        super.onStateChangeEnd(event);
+        if (!Std.isOfType(event.targetState, PlayState)) {            
+            loaded = false;
+        }
+    }
+
+    function onSongLoaded(event) {
+        if(!loaded) {
+            state = PlayState.instance;
+            //textFont = "joystix monospace.ttf";
+            textFont = "vcr.ttf";
+
+            if (save.data.showTimer) {
+                var timeBarZIndex = 802;
+    
+                timeText = new FlxText(0, 19, 400, "", 32);
+                timeText.setFormat(Paths.font(textFont), 28, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+                timeText.scrollFactor.set();
+                timeText.screenCenter(0x01);
+                timeText.borderSize = 1.75;
+                timeText.visible = true;
+                timeText.zIndex = timeBarZIndex + 2;
+                if(Preferences.downscroll) timeText.y = FlxG.height - 34;
+    
+                timeBarBG = new FlxSprite(0, timeText.y + (timeText.height / 4)).loadGraphic(Paths.image('timeBarPsychEngine'));
+                timeBarBG.screenCenter(0x01);
+                timeBarBG.zIndex = timeBarZIndex;
+    
+                timeBar = new FlxBar(timeBarBG.x + 3, timeBarBG.y + 3, null, timeBarBG.width - 6, timeBarBG.height - 6);
+                timeBar.createFilledBar(0xFF000000,0xFFFFFFFF);
+                timeBar.scrollFactor.x = 0;
+                timeBar.scrollFactor.y = 0;
+                timeBar.numDivisions = 200;
+                timeBar.screenCenter(0x01);
+                timeBar.zIndex = timeBarZIndex + 1;
+    
+                timeText.cameras = timeBarBG.cameras = timeBar.cameras = [state.camHUD];
+    
+                timeBarBG.visible = false;
+                timeBar.visible = false;
+                timeText.visible = false;
+    
+                state.add(timeBar);
+                state.add(timeBarBG);
+                state.add(timeText);
+            }
+
+            loaded = true;
+        }
+    }
+    
+    function onSongEnd(){loaded = false;}
+
+    override function onSongStart(event:ScriptEvent) {
+		super.onSongStart(event);
+
+		var timeBarObjects = [timeBarBG, timeBar, timeText];
+
+		for (obj in timeBarObjects) {
+			if(obj != null && (obj.alpha != 1 || !obj.visible)) {
+				obj.alpha = 0;
+
+				FlxTween.tween(obj, {alpha: 1}, 0.5, {ease: FlxEase.circOut});
+				obj.visible = true;
+			}
+		}
+	}
+
+    override function onUpdate(event:UpdateScriptEvent) {
+		super.onUpdate(event);
+		if (!loaded || state == null) return;
+
+		if (timeBar != null && timeBar.visible) {
+			timeBar.value = (state.conductorInUse.songPosition / state.currentSongLengthMs) * 100;
+			timeBar.updateBar();
+
+			timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
+		}
+	}
+
+    override function onSongRetry(event:ScriptEvent) {
+		super.onSongRetry(event);
+
+		if(timeBarBG != null) timeBarBG.visible = false;
+		if(timeBar != null) timeBar.visible = false;
+		if(timeText != null) timeText.visible = false;
+	}
+}

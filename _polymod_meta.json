@@ -1,0 +1,13 @@
+{
+  "title": "BadHUD",
+  "description": "BadHUD for V-Slice, based off nubz4lif's port of Psych Engine HUD and Friday Night Bloxxin'",
+  "contributors": [
+    {
+      "name": "ImVeryBad",
+      "role": "Developer"
+    }
+  ],
+  "api_version": "0.1.0",
+  "mod_version": "1.0.0",
+  "license": "MIT"
+}

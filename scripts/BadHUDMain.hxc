@@ -1,0 +1,331 @@
+import funkin.modding.module.Module;
+
+import funkin.Highscore;
+import funkin.Paths;
+import funkin.play.PlayState;
+
+import flixel.tweens.FlxTween;
+import flixel.text.FlxTextBorderStyle;
+import flixel.text.FlxText;
+import flixel.util.FlxSave;
+import flixel.FlxG;
+
+import Std;
+import Math;
+
+// This script may have used some code from other scripts so i´ll leave some credits below
+/*
+Psych Engine HUD V-Slice by nubz4lif
+OG Psych Engine HUD by Shadow Mario and his team
+*/
+class BadHUDMain extends Module {
+	var save:FlxSave;
+	var loaded:Boolean = false;
+	var state:PlayState;
+
+	var scoreZoom = true;
+	var scoreText:FlxText;
+	var scoreTextTween;
+
+	var ratingsText:FlxText;
+
+	var ratingPercent:Float;
+	var ratingName:String = "?";
+	var ratingFC:String;
+
+	var totalNotesHit:Float = 0.0;
+	var ratingsTextFont:Str;
+	var scoreTextFont:Str;
+
+
+	function new() {
+		super("BadHUDMain");
+		save = new FlxSave();
+		save.bind("BetterHUDOptions", "ImVeryBad");
+	}
+
+	function onSongLoaded(event) {
+        if(!loaded) {
+            state = PlayState.instance;
+			
+			state.scoreText = new FlxText();
+			state.scoreText.visible = false;
+			ratingsTextFont = "vcr.ttf";
+			scoreTextFont = "vcr.ttf";
+			//textFont = "vcr.ttf";
+
+			// Create HUD elements
+			var scoreTextXPos = save.data.verticalScoreBar ? 10 : 0;
+			var scoreTextYPos:Float = save.data.verticalHPBar ? 40 : state.healthBarBG.y + 45;
+
+			if (save.data.showJudgementsScreen) {
+				var ratingsTextXPos = 10;
+				var ratingsTextYPos = FlxG.height * 0.4;
+	
+				ratingsText = new FlxText(ratingsTextXPos, ratingsTextYPos, FlxG.width, "", 20);
+				ratingsText.setFormat(Paths.font(ratingsTextFont), 20, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+				ratingsText.scrollFactor.set();
+				ratingsText.borderSize = 1.25;
+				ratingsText.zIndex = 851;
+				state.add(ratingsText);
+	
+				ratingsText.text = 'Sicks: 0' + '\nGoods: 0' + '\nBads: 0' + '\nShits: 0' + '\nMisses: 0';
+				ratingsText.cameras = [state.camHUD];
+				scoreTextYPos = save.data.verticalScoreBar ? ratingsText.y - ratingsText.height + 20 : scoreTextYPos;
+			}
+	
+			scoreText = new FlxText(scoreTextXPos, scoreTextYPos, FlxG.width, "", 20);
+			scoreText.setFormat(Paths.font(scoreTextFont), 20, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+			scoreText.scrollFactor.set();
+			scoreText.borderSize = 1.25;
+			scoreText.zIndex = 851;
+			state.add(scoreText);
+	
+			if (save.data.verticalScoreBar && save.data.showJudgementsScreen) {
+				scoreText.setFormat(Paths.font(scoreTextFont), 20, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+				scoreText.text = 'Score: 0' + '\nRating: ?' + '\nCombo: 0';
+			} else if (!save.data.verticalScoreBar && save.data.showJudgementsScreen) {
+				scoreText.text = 'Score: 0' + ' | Rating: ?\n';
+			} else if (save.data.verticalScoreBar) {
+				scoreText.setFormat(Paths.font(scoreTextFont), 20, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+				scoreText.text = 'Score: 0' + '\nRating: ?' + '\nCombo: 0';
+			} else {
+				scoreText.text = 'Score: 0' + ' | Combo Breaks: 0' + ' | Rating: ?\n';
+			}
+	
+			// Move the stuff to the HUD camera.
+			scoreText.cameras = [state.camHUD];
+
+            loaded = true;
+        }
+    }
+
+	override function onCountdownStart(event:CountdownScriptEvent) {
+		super.onCountdownStart(event);
+		
+		if (ratingsText != null) {
+			ratingsText.text = 'Sicks: 0' + '\nGoods: 0' + '\nBads: 0' + '\nShits: 0' + '\nMisses: 0';
+		}
+	}
+
+	function onSongEnd(){loaded = false; updateScore();}
+
+	function cleanup() {
+		var stuffToRemove = [scoreText, ratingsText, scoreTextTween];
+
+		for (thing in stuffToRemove) {
+			if(thing != null) thing.destroy();
+		}
+
+		ratingPercent = 0;
+		ratingName = "?";
+		ratingFC = "";
+		totalNotesHit = 0;
+
+		scoreText = null;
+		scoreTextTween = null;
+		ratingsText = null;
+	}
+
+	override function onDestroy(event:ScriptEvent) {
+		super.onDestroy(event);
+		cleanup();
+	}
+
+	public static var ratingStuff: Array<Dynamic> = [
+		['You Suck!', 0.2], //From 0% to 19%
+		['Shit', 0.4], //From 20% to 39%
+		['Bad', 0.5], //From 40% to 49%
+		['Bruh', 0.6], //From 50% to 59%
+		['Meh', 0.69], //From 60% to 68%
+		['Nice', 0.7], //69%
+		['Good', 0.8], //From 70% to 79%
+		['Great', 0.9], //From 80% to 89%
+		['Sick!', 1], //From 90% to 99%
+		['Perfect!!', 1] //The value on this one isn't used actually, since Perfect is always "1"
+	];
+
+	function calculateRating() {
+		var totalNotesPlayed = Highscore.tallies.totalNotesHit;
+
+		if(totalNotesPlayed != 0) {
+			ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalNotesPlayed));
+
+			ratingName = ratingStuff[ratingStuff.length-1][0]; // Uses last string
+			if(ratingPercent < 1) {
+				for (i in 0...ratingStuff.length-1) {
+					if(ratingPercent < ratingStuff[i][1]) {
+						ratingName = ratingStuff[i][0];
+						break;
+					}
+				}
+			}
+		}
+
+		ratingFC = '';
+		var missed = Highscore.tallies.missed;
+
+		// Rating Names
+		if(missed == 0) {
+			var tallies = Highscore.tallies;
+
+			var shits = tallies.shit;
+			var bads = tallies.bad;
+			var goods = tallies.good;
+			var sicks = tallies.sick;
+
+			if (shits == 0 && bads == 0 && goods == 0) ratingFC = 'PFC';
+			else if (shits > 0 || bads > 0) ratingFC = 'FC';
+			else if (goods > 0) ratingFC = 'GFC';
+			else if (sicks > 0) ratingFC = 'SFC';
+		} else {
+			if (missed < 10) ratingFC = 'SDCB';
+			else ratingFC = 'Clear';
+		}
+	}
+
+	function doScoreBop() {
+		if (!scoreZoom || scoreText == null || !loaded) return;
+
+		if (!save.data.verticalScoreBar) {
+			if(scoreTextTween != null) scoreTextTween.cancel();
+			scoreText.scale.set(1.075, 1.075);
+			scoreTextTween = FlxTween.tween(scoreText.scale, {x: 1, y: 1}, 0.2, {
+				onComplete: function(twn:FlxTween) {
+					scoreTextTween = null;
+				}
+			});
+		}
+	}
+
+	function updateScore(miss:Bool = false) {
+		calculateRating();
+
+		var str: String = ratingName;
+		var totalNotesPlayed = Highscore.tallies.totalNotesHit;
+		if(totalNotesPlayed != 0) {
+			var percent:Float = floorDecimal(ratingPercent * 100, 2);
+			if (save.data.verticalScoreBar) {
+			str = percent + '% - ' + ratingFC;
+			} else {
+			str += ' (' + percent + '%) - ' + ratingFC;
+			}
+		}
+
+		var songScore = state.songScore;
+		var missed = Highscore.tallies.missed;
+		
+		var combo = Highscore.tallies.combo;
+		var sicks = Highscore.tallies.sick;
+		var goods = Highscore.tallies.good;
+		var bads = Highscore.tallies.bad;
+		var shits = Highscore.tallies.shit;
+
+		var tempScore:String;
+		
+		// Judgements Screen and Score Bar for update
+		if (save.data.showJudgementsScreen) {
+			var tempRatings:String = 
+			  'Sicks: ' + sicks
+			+ '\nGoods: ' + goods
+			+ '\nBads: ' + bads
+			+ '\nShits: ' + shits
+			+ '\nMisses: ' + missed;
+
+			if (ratingsText != null) ratingsText.text = tempRatings + '\n';
+			
+			if (save.data.verticalScoreBar) {
+				tempScore = 
+				  'Score: ' + (songScore != null ? songScore : 0)
+				  + '\nRating: ' + str
+				  + '\nCombo: ' + combo;
+			} else {
+				tempScore = 
+				  'Score: ' + (songScore != null ? songScore : 0)
+				+ ' | Rating: ' + str;
+			}
+
+		} else {
+			if (save.data.verticalScoreBar) {
+				tempScore = 
+				  'Score: ' + (songScore != null ? songScore : 0)
+				+ '\nCombo Breaks: ' + missed
+				+ '\nRating: ' + str
+				+ '\nCombo: ' + combo;
+			} else {
+				tempScore = 
+				  'Score: ' + (songScore != null ? songScore : 0)
+				+ ' | Combo Breaks: ' + missed
+				+ ' | Rating: ' + str;
+			}
+		}
+
+		if (scoreText != null) scoreText.text = tempScore + '\n';
+
+		if(!miss) doScoreBop();
+	}
+
+	static function floorDecimal(value:Float, decimals:Int):Float {
+		if (decimals < 1) return Math.floor(value);
+
+		var tempMult:Float = 1;
+		for (i in 0...decimals)
+			tempMult *= 10;
+
+		var newValue:Float = Math.floor(value * tempMult);
+		return newValue / tempMult;
+	}
+
+	override function onNoteHit(event:ScriptEvent) {
+		super.onNoteHit(event);
+		if (!loaded || event.healthChange == 0) return;
+
+		var ratingMod = switch(event.judgement) {
+			case 'good':
+				0.67;
+			case 'bad':
+				0.34;
+			case 'shit':
+				0;
+			default:
+				1; // this should only trigger on sick judgements
+		}
+
+		totalNotesHit += ratingMod;
+		
+		updateScore(true);
+	}
+
+	override function onNoteMiss(event:ScriptEvent) {
+		super.onNoteMiss(event);
+		if (!loaded || event.healthChange == 0) return;
+
+		updateScore(false);
+	}
+
+	override function onNoteGhostMiss(event:ScriptEvent) {
+		super.onNoteGhostMiss(event);
+		if (!loaded || event.healthChange == 0) return;
+
+		updateScore(false);
+	}
+
+	override function onSongRetry(event:ScriptEvent) {
+		super.onSongRetry(event);
+
+		ratingPercent = 0;
+		ratingName = "?";
+		ratingFC = "";
+		totalNotesHit = 0;
+
+		updateScore();
+	}
+
+    override function onStateChangeEnd(event:StateChangeScriptEvent) {
+		super.onStateChangeEnd(event);
+
+		if (!Std.isOfType(event.targetState, PlayState)) {            
+            loaded = false;
+        }
+    }
+}

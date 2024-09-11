@@ -1,0 +1,44 @@
+import funkin.modding.module.Module;
+import funkin.ui.options.OptionsState;
+
+import flixel.util.FlxSave;
+import flixel.FlxSprite;
+
+import Std;
+
+class BadHUDOptions extends Module {
+    var save:FlxSave = new FlxSave();
+
+    function new () {
+        super("BadHUD Options");
+        save = new FlxSave();
+        save.bind("BadHUDOptions", "ImVeryBad");
+
+        if (save.data.showJudgementsScreen == null) save.data.showJudgementsScreen = true;
+        if (save.data.showTimer == null) save.data.showTimer = true;
+        if (save.data.verticalHPBar == null) save.data.verticalHPBar = true;
+        if (save.data.verticalScoreBar == null) save.data.verticalScoreBar = true;
+      }
+
+    function onStateChangeEnd(event) {
+        super.onStateChangeEnd(event);
+        if (Std.isOfType(event.targetState, OptionsState)) {
+            var preferences = event.targetState.pages.get("preferences");
+            var laneUnderlayOpacityStr:String = Std.string(save.data.laneUnderlayOpacity);
+            
+            preferences.createPrefItemCheckbox("Show Judgements On Left", "", (value) -> {
+            save.data.showJudgementsScreen = value; }, save.data.showJudgementsScreen);
+
+            preferences.createPrefItemCheckbox("Show Timer", "", (value) -> {
+            save.data.showTimer = value; }, save.data.showTimer);
+
+            preferences.createPrefItemCheckbox("Vertical Health Bar", "", (value) -> {
+            save.data.verticalHPBar = value; }, save.data.verticalHPBar);
+
+            preferences.createPrefItemCheckbox("Vertical Score Bar", "", (value) -> {
+            save.data.verticalScoreBar = value; }, save.data.verticalScoreBar);
+
+            save.flush();
+        }
+    }
+}

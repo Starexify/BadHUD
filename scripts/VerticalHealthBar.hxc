@@ -1,0 +1,116 @@
+import funkin.modding.module.Module;
+
+import funkin.play.PlayState;
+
+import funkin.Preferences;
+import flixel.util.FlxSave;
+import flixel.math.FlxMath;
+import flixel.FlxSprite;
+import flixel.FlxG;
+
+import Std;
+import Math;
+
+class VerticalHealthBar extends Module {
+    var loaded:Boolean = false;
+    var iconP1:FlxSprite;
+    var iconP2:FlxSprite;
+    var LOSING_THRESHOLD:Float = 0.2 * 2;
+    var WINNING_THRESHOLD:Float = 0.8 * 2;
+    var MAXIMUM_HEALTH:Float = 2;
+    var POSITION_OFFSET:Int = 26;
+
+    function new() {
+        super("VerticalHealthBar");
+        save = new FlxSave();
+		save.bind("BadHUDOptions", "ImVeryBad");
+    }
+
+    public function onStateChangeEnd(event:StateChangeScriptEvent) {
+        if (!Std.isOfType(event.targetState, PlayState)) {            
+            loaded = false;
+        }
+    }
+
+    function onSongLoaded(event) {
+        if(!loaded) {
+            var state = PlayState.instance;
+
+            var healthBarYPos = save.data.verticalHPBar ? FlxG.height * (!Preferences.downscroll  ? 0.89 : 0.5) : healthBarYPos = FlxG.height * (!Preferences.downscroll  ? 0.89 : 0.11);
+		    if (save.data.verticalHPBar) {
+		    	// Vertical HP Bar
+		    	var healthBarXPos = FlxG.width * (!Preferences.downscroll  ? 0 : 0.7);	
+            
+		    	state.healthBar.x = healthBarXPos;
+		    	state.healthBar.y = healthBarYPos;
+		    	state.healthBar.angle = 90;
+		    	state.healthBarBG.angle = 90;
+
+                iconP1 = state.iconP1;
+                iconP2 = state.iconP2;
+
+                iconP1.autoUpdate = false;
+                iconP2.autoUpdate = false;
+		    } else {
+		    	// Horizontal HP Bar
+		    	state.healthBar.y = healthBarYPos;
+		    }
+		    state.healthBarBG.setPosition(state.healthBar.x - 4, state.healthBar.y - 4);
+
+            loaded = true;
+        }
+    }
+
+    function onSongEnd(){loaded = false;}
+
+    function updatePosition() {
+        var state = PlayState.instance;
+        if (!loaded || state == null) return;
+
+        // Vertical Health Icons (WORKING SOMEHOW)
+        if (save.data.verticalHPBar) {
+            var healthBarX:Float = state.healthBar.x;
+            var healthBarY:Float = state.healthBar.y;
+            var healthBarHeight:Float = state.healthBar.height;
+            var healthBarWidth:Float = state.healthBar.width;
+            var centering:Float = healthBarWidth / 2 - 10;
+            var gapReduction:Float = 15;
+
+            iconP1.y = healthBarY
+                + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - centering 
+                - POSITION_OFFSET);
+            iconP2.y = healthBarY 
+                + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - centering + gapReduction)
+                - (iconP2.height - POSITION_OFFSET);
+            
+            // Center icons vertically relative to the health bar
+            iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
+            iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2);
+
+            updateHealthIcon(iconP1, state.health);
+            updateHealthIcon(iconP2, MAXIMUM_HEALTH - state.health);
+        }
+    }
+
+	function updateHealthIcon(icon:FlxSprite, health:Float):Void {
+        if (health < LOSING_THRESHOLD) {
+            icon.playAnimation("losing");
+        } else if (health > WINNING_THRESHOLD) {
+            icon.playAnimation("winning");
+        } else {
+            icon.playAnimation("idle");
+        }
+    }
+
+    override function onUpdate(event:UpdateScriptEvent) {
+		super.onUpdate(event);
+		if (!loaded) return;
+		updatePosition();
+	}
+
+    // override function onStepHit(event:ScriptEvent) {
+	// 	super.onStepHit(event);
+	// 	if (!loaded) return;
+	// 	updatePosition();
+	// }
+}
