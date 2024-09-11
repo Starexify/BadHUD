@@ -2,7 +2,7 @@
 
 BadHUD for V-Slice, based off nubz4lif's port of Psych Engine HUD and Friday Night Bloxxin'
 
-I recommend using these mods for QOL Features aswell:
+I also recommend trying these mods for QoL Features aswell:
 
 [OG Psych Engine HUD](https://gamebanana.com/mods/511527)
 
