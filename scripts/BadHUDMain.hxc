@@ -43,7 +43,7 @@ class BadHUDMain extends Module {
 		save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
 	}
 
-	function onSongLoaded(event:SongLoadScriptEvent) {
+	override function onSongLoaded(event:SongLoadScriptEvent) {
 		super.onSongLoaded(event);
         if(!loaded) {
             state = PlayState.instance;
@@ -100,7 +100,7 @@ class BadHUDMain extends Module {
         }
     }
 
-	function onCountdownStart(event:CountdownScriptEvent) {
+	override function onCountdownStart(event:CountdownScriptEvent) {
 		super.onCountdownStart(event);
 		
 		if (ratingsText != null) {

@@ -1,6 +1,8 @@
 import funkin.modding.module.Module;
 
 import funkin.play.PlayState;
+import funkin.util.Constants;
+import funkin.util.MathUtil;
 
 import funkin.Preferences;
 import flixel.util.FlxSave;
@@ -26,13 +28,13 @@ class VerticalHealthBar extends Module {
 		save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
     }
 
-    public function onStateChangeEnd(event:StateChangeScriptEvent) {
+    override function onStateChangeEnd(event:StateChangeScriptEvent) {
         if (!Std.isOfType(event.targetState, PlayState)) {            
             loaded = false;
         }
     }
 
-	function onSongLoaded(event:SongLoadScriptEvent) {
+	override function onSongLoaded(event:SongLoadScriptEvent) {
 		super.onSongLoaded(event);
         if(!loaded) {
             var state = PlayState.instance;
@@ -103,11 +105,9 @@ class VerticalHealthBar extends Module {
         }
     }
 
-    
-
-    function onStepHit(event:SongTimeScriptEvent) {
-		super.onStepHit(event);
+    override function onUpdate(event:UpdateScriptEvent) {
+		super.onUpdate(event);
 		if (!loaded) return;
-		updatePosition();
-	}
+        updatePosition();
+    }
 }
