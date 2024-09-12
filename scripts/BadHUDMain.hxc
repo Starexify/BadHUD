@@ -100,8 +100,6 @@ class BadHUDMain extends Module {
         }
     }
 
-
-
 	function onCountdownStart(event:CountdownScriptEvent) {
 		super.onCountdownStart(event);
 		

@@ -21,10 +21,7 @@ class BadHUDOptions extends Module {
         save = new FlxSave();
         save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
 
-        // if (save.data.showJudgementsScreen == null) save.data.showJudgementsScreen = true;
-        // if (save.data.showTimer == null) save.data.showTimer = true;
-        // if (save.data.verticalHPBar == null) save.data.verticalHPBar = true;
-        // if (save.data.verticalScoreBar == null) save.data.verticalScoreBar = true;
+        // Options when game loaded for first time
         save.data.showJudgementsScreen = (save.data.showJudgementsScreen != null) ? save.data.showJudgementsScreen : true;
         save.data.showTimer = (save.data.showTimer != null) ? save.data.showTimer : true;
         save.data.verticalHPBar = (save.data.verticalHPBar != null) ? save.data.verticalHPBar : false;

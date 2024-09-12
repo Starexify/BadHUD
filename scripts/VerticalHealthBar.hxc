@@ -32,7 +32,8 @@ class VerticalHealthBar extends Module {
         }
     }
 
-    function onSongLoaded(event) {
+	function onSongLoaded(event:SongLoadScriptEvent) {
+		super.onSongLoaded(event);
         if(!loaded) {
             var state = PlayState.instance;
 
@@ -102,15 +103,11 @@ class VerticalHealthBar extends Module {
         }
     }
 
-    override function onUpdate(event:UpdateScriptEvent) {
-		super.onUpdate(event);
+    
+
+    function onStepHit(event:SongTimeScriptEvent) {
+		super.onStepHit(event);
 		if (!loaded) return;
 		updatePosition();
 	}
-
-    // override function onStepHit(event:ScriptEvent) {
-	// 	super.onStepHit(event);
-	// 	if (!loaded) return;
-	// 	updatePosition();
-	// }
 }
