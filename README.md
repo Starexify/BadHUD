@@ -5,7 +5,11 @@
   <a href="https://github.com/Starexify/BadHUD/blob/main/LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/Starexify/BadHUD?style=for-the-badge&color=96000C"></a>
 </p>
 
-BadHUD for V-Slice, based off nubz4lif's port of Psych Engine HUD and Friday Night Bloxxin'
+<p align="center">
+    <strong>
+        ⚠️Please note that this is a mod made in my freetime as a hobby so feedback would be much appreciated. If you encounter any UNKNOWN issues or anything else please let me know.
+    </strong>
+</p>
 
 ## ⚙️ Options
 
@@ -34,6 +38,10 @@ I also recommend trying these mods for QoL Features aswell:
 ### Example with Middlescroll and Lane Opacity from More Strums Options
 
 ![Example with Middlescroll](https://github.com/Starexify/Starexify/blob/main/resources/BadHUD/Example%20with%20Middlescroll.png?raw=true)
+
+## Known Issues
+
+- In Chart Editor after you start and then close the song and then start again it stops working. (Basically there's no fix for that)
 
 ## 📜 License
 
