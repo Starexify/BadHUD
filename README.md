@@ -38,6 +38,7 @@ n = the total of notes in a chart
 ![Psych Engine Accuracy](https://github.com/Starexify/Starexify/blob/main/resources/BadHUD/Psych%20Engine.png?raw=true)
 
 <br>
+
 ![osu!mania Accuracy](https://github.com/Starexify/Starexify/blob/main/resources/BadHUD/osu!mania.png?raw=true)
 
 ## 🧩 Other Mods
