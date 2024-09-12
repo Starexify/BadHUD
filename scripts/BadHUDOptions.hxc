@@ -1,44 +1,111 @@
 import funkin.modding.module.Module;
+import funkin.Paths;
+import funkin.audio.FunkinSound;
 import funkin.ui.options.OptionsState;
 
 import flixel.util.FlxSave;
-import flixel.FlxSprite;
 
 import Std;
 
+// This script may have used some code from other scripts so I'll leave credits below
+/*
+More Strums Options by HEAVYSTYLES
+*/
 class BadHUDOptions extends Module {
     var save:FlxSave = new FlxSave();
-
+    var holdPressTime:Float = 0.0;
+    var optionState;
+    
     function new () {
         super("BadHUD Options", "1");
         save = new FlxSave();
-        save.bind("BadHUDOptions", "ImVeryBad");
+        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
 
-        if (save.data.showJudgementsScreen == null) save.data.showJudgementsScreen = true;
-        if (save.data.showTimer == null) save.data.showTimer = true;
-        if (save.data.verticalHPBar == null) save.data.verticalHPBar = true;
-        if (save.data.verticalScoreBar == null) save.data.verticalScoreBar = true;
-      }
+        // if (save.data.showJudgementsScreen == null) save.data.showJudgementsScreen = true;
+        // if (save.data.showTimer == null) save.data.showTimer = true;
+        // if (save.data.verticalHPBar == null) save.data.verticalHPBar = true;
+        // if (save.data.verticalScoreBar == null) save.data.verticalScoreBar = true;
+        save.data.showJudgementsScreen = (save.data.showJudgementsScreen != null) ? save.data.showJudgementsScreen : true;
+        save.data.showTimer = (save.data.showTimer != null) ? save.data.showTimer : true;
+        save.data.verticalHPBar = (save.data.verticalHPBar != null) ? save.data.verticalHPBar : false;
+        save.data.verticalScoreBar = (save.data.verticalScoreBar != null) ? save.data.verticalScoreBar : false;
+        save.data.accuracyType = (save.data.accuracyType != null) ? save.data.accuracyType : 0;
+        save.flush();
+    }
 
-    function onStateChangeEnd(event) {
+    function onStateChangeEnd(event:StateChangeScriptEvent) {
         super.onStateChangeEnd(event);
+        optionState = null;
+        
         if (Std.isOfType(event.targetState, OptionsState)) {
             var preferences = event.targetState.pages.get("preferences");
-            var laneUnderlayOpacityStr:String = Std.string(save.data.laneUnderlayOpacity);
+
+            optionState = event.targetState;
             
-            preferences.createPrefItemCheckbox("Show Judgements On Left", "", (value) -> {
-            save.data.showJudgementsScreen = value; }, save.data.showJudgementsScreen);
+            if (preferences != null) {
+                preferences.createPrefItemCheckbox("Show Judgements On Left", "", (value) -> {
+                save.data.showJudgementsScreen = value; }, save.data.showJudgementsScreen);
 
-            preferences.createPrefItemCheckbox("Show Timer", "", (value) -> {
-            save.data.showTimer = value; }, save.data.showTimer);
+                preferences.createPrefItemCheckbox("Show Timer", "", (value) -> {
+                save.data.showTimer = value; }, save.data.showTimer);
 
-            preferences.createPrefItemCheckbox("Vertical Health Bar", "", (value) -> {
-            save.data.verticalHPBar = value; }, save.data.verticalHPBar);
+                preferences.createPrefItemCheckbox("Vertical Health Bar", "", (value) -> {
+                save.data.verticalHPBar = value; }, save.data.verticalHPBar);
 
-            preferences.createPrefItemCheckbox("Vertical Score Bar", "", (value) -> {
-            save.data.verticalScoreBar = value; }, save.data.verticalScoreBar);
+                preferences.createPrefItemCheckbox("Vertical Score Bar", "", (value) -> {
+                save.data.verticalScoreBar = value; }, save.data.verticalScoreBar);
 
-            save.flush();
+                updatetypetext();
+                preferences.items.createItem(120, 120 * preferences.items.length + 30, typetext, "default", function(){});
+                preferences.items.getFirst((anything)->{type = anything;});
+            }
         }
+    }
+
+    function onUpdate(event:UpdateScriptEvent) {
+        super.onUpdate(event);
+        
+        if(optionState != null) {
+            var preferences = optionState.pages.get("preferences");
+            switch(preferences.items.selectedItem) {
+                case type:
+                    if (optionState.controls.UI_RIGHT){
+                        if (optionState.controls.UI_RIGHT_P){ 
+                            save.data.accuracyType += 1;
+                            save.flush();
+                            FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+                        }
+                    } else if (optionState.controls.UI_LEFT) {
+                        if (optionState.controls.UI_LEFT_P) {
+                            save.data.accuracyType -= 1;
+                            save.flush();
+                            FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+                        }
+                    }
+                        
+                    if (save.data.accuracyType < 0) save.data.accuracyType = 2;
+
+                    if (save.data.accuracyType > 2) save.data.accuracyType = 0;
+
+                    updatetypetext();
+                    type.label.text = typetext; 
+            }
+            if (optionState.controls.UI_LEFT_R || optionState.controls.UI_RIGHT_R){
+                holdPressTime = 0;
+                save.flush();
+            }
+        }
+    }
+
+    function updatetypetext() {
+        switch(save.data.accuracyType) {
+            case 0:
+            typetext = "Accuracy Type: Vanilla";
+            case 1:
+            typetext = "Accuracy Type: Psych Engine";
+            case 2:
+            typetext = "Accuracy Type: osu!Mania";
+            }
+        save.flush();
     }
 }

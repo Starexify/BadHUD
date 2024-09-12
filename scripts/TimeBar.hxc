@@ -35,7 +35,7 @@ class TimeBar extends Module {
 	function new() {
 		super("TimeBar");
 		save = new FlxSave();
-		save.bind("BadHUDOptions", "ImVeryBad");
+		save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
 	}
 
     public function onStateChangeEnd(event:StateChangeScriptEvent) {
