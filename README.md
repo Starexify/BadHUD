@@ -35,7 +35,7 @@ I also recommend trying these mods for QoL Features aswell:
 
 [More Strums Options - Middlescroll and Lane Underlay](https://gamebanana.com/mods/519686)
 
-[FunnyInputs - Ghost Tapping and Other](https://gamebanana.com/mods/519072)
+[FunnyInputs - Ghost Tapping and better Input](https://gamebanana.com/mods/519072)
 
 [Icon-Colored Health Bar](https://gamebanana.com/mods/511342)
 
