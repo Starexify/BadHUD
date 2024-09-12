@@ -33,7 +33,7 @@ The calculations for accuracy are:
 
 n = the total of notes in a chart
 
-![Vanilla Accuracy](https://github.com/Starexify/Starexify/blob/main/resources/BadHUD/Vanilla.png?raw=true)
+![Vanilla Accuracy](https://github.com/Starexify/Starexify/blob/main/resources/BadHUD/Vanila.png?raw=true)
 <br>
 ![Psych Engine Accuracy](https://github.com/Starexify/Starexify/blob/main/resources/BadHUD/Psych%20Engine.png?raw=true)
 
