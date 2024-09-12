@@ -43,6 +43,7 @@ I also recommend trying these mods for QoL Features aswell:
 
 - In Chart Editor after you start and then close the song and then start again it stops working. (Basically there's no fix for that)
 - The health icons bop is kynda buggy
+- The combo starts at 0 instead of 1
 
 ## 📜 License
 
