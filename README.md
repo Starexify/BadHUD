@@ -15,6 +15,18 @@
 
 ![Options](https://github.com/Starexify/Starexify/blob/main/resources/BadHUD/BadHUD-Options.png?raw=true)
 
+Explanation for each:
+
+-Show Judgements On Left - Just shows the Judgements (Sick, Good, Bad etc) in the left side of the screen
+
+-Show Timer - Shows the time elapsed of the song in down-center of the screen
+
+-Vertical Health Bar - Moves the Health Bar in right side of the screen
+
+-Vertical Score Bar - Moves the Score in the left side of the screen (also adds combo counter)
+
+(Look at mod images for better example of how they look)
+
 ## 🧩 Other Mods
 
 I also recommend trying these mods for QoL Features aswell:
