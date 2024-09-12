@@ -41,7 +41,7 @@ class BadHUDMain extends Module {
 	function new() {
 		super("BadHUDMain");
 		save = new FlxSave();
-		save.bind("BetterHUDOptions", "ImVeryBad");
+		save.bind("BadHUDOptions", "ImVeryBad");
 	}
 
 	function onSongLoaded(event) {
@@ -147,9 +147,23 @@ class BadHUDMain extends Module {
 
 	function calculateRating() {
 		var totalNotesPlayed = Highscore.tallies.totalNotesHit;
+		var totalNotes = Highscore.tallies.totalNotes;
+
+		var tallies = Highscore.tallies;
+
+		var shits = tallies.shit;
+		var bads = tallies.bad;
+		var goods = tallies.good;
+		var sicks = tallies.sick;
+		var missed = tallies.missed;
 
 		if(totalNotesPlayed != 0) {
-			ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalNotesPlayed));
+
+			ratingPercent = Math.min(100, Math.max(0, 100 - ((shits + bads + missed) / totalNotes) * 100)); // Vanilla
+			//ratingPercent = Math.min(100, Math.max(0, 100 - ((sicks * 0 + goods * 0.33 + bads * 0.67 + shits * 1) / totalNotes) * 100)); // Psych Engine
+			//ratingPercent = Math.min(100, Math.max(0, ((300 * sicks + 200 * goods + 100 * bads + 50 * shits) / (300 * (sicks + goods + bads + shits + missed))) * 100)); // osu!mania
+			
+			//ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalNotesPlayed)); // Old rating percent
 
 			ratingName = ratingStuff[ratingStuff.length-1][0]; // Uses last string
 			if(ratingPercent < 1) {
@@ -163,25 +177,16 @@ class BadHUDMain extends Module {
 		}
 
 		ratingFC = '';
-		var missed = Highscore.tallies.missed;
 
 		// Rating Names
-		if(missed == 0) {
-			var tallies = Highscore.tallies;
-
-			var shits = tallies.shit;
-			var bads = tallies.bad;
-			var goods = tallies.good;
-			var sicks = tallies.sick;
-
+		if (missed == 0) {
 			if (shits == 0 && bads == 0 && goods == 0) ratingFC = 'PFC';
 			else if (shits > 0 || bads > 0) ratingFC = 'FC';
 			else if (goods > 0) ratingFC = 'GFC';
 			else if (sicks > 0) ratingFC = 'SFC';
-		} else {
-			if (missed < 10) ratingFC = 'SDCB';
-			else ratingFC = 'Clear';
-		}
+		} else if (missed < 10) {
+			ratingFC = 'SDCB';	
+		} else ratingFC = 'Clear';
 	}
 
 	function doScoreBop() {
@@ -201,25 +206,26 @@ class BadHUDMain extends Module {
 	function updateScore(miss:Bool = false) {
 		calculateRating();
 
-		var str: String = ratingName;
+		var ratingString:String = ratingName;
 		var totalNotesPlayed = Highscore.tallies.totalNotesHit;
+		
 		if(totalNotesPlayed != 0) {
-			var percent:Float = floorDecimal(ratingPercent * 100, 2);
+			var percent:Float = floorDecimal(ratingPercent, 2);
 			if (save.data.verticalScoreBar) {
-			str = percent + '% - ' + ratingFC;
+				ratingString = percent + '% - ' + ratingFC;
 			} else {
-			str += ' (' + percent + '%) - ' + ratingFC;
+				ratingString += ' (' + percent + '%) - ' + ratingFC;
 			}
 		}
 
 		var songScore = state.songScore;
-		var missed = Highscore.tallies.missed;
-		
 		var combo = Highscore.tallies.combo;
+	
 		var sicks = Highscore.tallies.sick;
 		var goods = Highscore.tallies.good;
 		var bads = Highscore.tallies.bad;
 		var shits = Highscore.tallies.shit;
+		var missed = Highscore.tallies.missed;
 
 		var tempScore:String;
 		
@@ -237,12 +243,12 @@ class BadHUDMain extends Module {
 			if (save.data.verticalScoreBar) {
 				tempScore = 
 				  'Score: ' + (songScore != null ? songScore : 0)
-				  + '\nRating: ' + str
+				  + '\nRating: ' + ratingString
 				  + '\nCombo: ' + combo;
 			} else {
 				tempScore = 
 				  'Score: ' + (songScore != null ? songScore : 0)
-				+ ' | Rating: ' + str;
+				+ ' | Rating: ' + ratingString;
 			}
 
 		} else {
@@ -250,13 +256,13 @@ class BadHUDMain extends Module {
 				tempScore = 
 				  'Score: ' + (songScore != null ? songScore : 0)
 				+ '\nCombo Breaks: ' + missed
-				+ '\nRating: ' + str
+				+ '\nRating: ' + ratingString
 				+ '\nCombo: ' + combo;
 			} else {
 				tempScore = 
 				  'Score: ' + (songScore != null ? songScore : 0)
 				+ ' | Combo Breaks: ' + missed
-				+ ' | Rating: ' + str;
+				+ ' | Rating: ' + ratingString;
 			}
 		}
 
@@ -279,19 +285,6 @@ class BadHUDMain extends Module {
 	override function onNoteHit(event:ScriptEvent) {
 		super.onNoteHit(event);
 		if (!loaded || event.healthChange == 0) return;
-
-		var ratingMod = switch(event.judgement) {
-			case 'good':
-				0.67;
-			case 'bad':
-				0.34;
-			case 'shit':
-				0;
-			default:
-				1; // this should only trigger on sick judgements
-		}
-
-		totalNotesHit += ratingMod;
 		
 		updateScore(true);
 	}
