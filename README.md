@@ -13,7 +13,7 @@
 
 ## ⚙️ Options
 
-![Options](https://github.com/Starexify/Starexify/blob/main/resources/BadHUD/BadHUD-Options.png?raw=true)
+![Options](https://github.com/Starexify/Starexify/blob/main/resources/BadHUD/BadHUD-Options2.png?raw=true)
 
 Explanation for each:
 
