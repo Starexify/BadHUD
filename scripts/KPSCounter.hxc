@@ -1,0 +1,126 @@
+import funkin.modding.module.Module;
+import funkin.Paths;
+import funkin.play.PlayState;
+
+import flixel.text.FlxTextBorderStyle;
+import flixel.text.FlxText;
+import flixel.util.FlxSave;
+import flixel.FlxG;
+
+import Std;
+import Math;
+
+class KPSCounter extends Module {
+	var save:FlxSave;
+	var loaded:Boolean = false;
+	var state:PlayState;
+
+    var kpsText:FlxText;
+    var kps:Int = 0;
+    var kpsMax:Int = 0;
+
+    var lastSecondKeyPresses:Array<Float> = [];
+    var updateInterval:Float = 1 / 60;
+    var lastUpdateTime:Float = 0;
+
+    var kpsTextFont = "vcr.ttf";
+
+    function new() {
+		super("KPSCounter");
+		save = new FlxSave();
+		save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
+	}
+
+    override function onSongLoaded(event:SongLoadScriptEvent) {
+		super.onSongLoaded(event);
+        if(!loaded) {
+            state = PlayState.instance;
+
+			// Create KPS Text Element
+			if (save.data.kpsCounter) {
+				var kpsTextXPos = 10;
+				var kpsTextYPos = FlxG.height * 0.6;
+	
+				kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
+				kpsText.setFormat(Paths.font(kpsTextFont), 20, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+				kpsText.scrollFactor.set();
+				kpsText.borderSize = 1.25;
+				kpsText.zIndex = 851;
+				state.add(kpsText);
+	
+				kpsText.text = 'KPS: 0' + '\nMax KPS: 0';
+				kpsText.cameras = [state.camHUD];
+			}
+
+            loaded = true;
+        }
+    }
+
+    function onSongEnd(){loaded = false; updateKPS();}
+
+    function updateKPS() {
+        if (kpsText != null) {
+            kpsText.text = 'KPS: ' + Math.round(kps * 10) / 10 + '\nMax KPS: ' + Math.round(kpsMax * 10) / 10;
+        }
+    }
+
+    override function onUpdate(event:UpdateScriptEvent) {
+        super.onUpdate(event);
+        if (!loaded || state == null || !save.data.kpsCounter) return;
+
+        var currentTime = FlxG.game.ticks / 1000;
+
+        // Check for key presses
+        var keyDownPressed = state.controls.NOTE_DOWN_P;
+        var keyUpPressed = state.controls.NOTE_UP_P;
+        var keyLeftPressed = state.controls.NOTE_LEFT_P;
+        var keyRightPressed = state.controls.NOTE_RIGHT_P;
+
+        if (keyDownPressed) lastSecondKeyPresses.push(currentTime);
+        if (keyUpPressed) lastSecondKeyPresses.push(currentTime);
+        if (keyLeftPressed) lastSecondKeyPresses.push(currentTime);
+        if (keyRightPressed) lastSecondKeyPresses.push(currentTime);
+
+        // Remove key presses older than 1 second
+        while (lastSecondKeyPresses.length > 0 && currentTime - lastSecondKeyPresses[0] > 1) {
+            lastSecondKeyPresses.shift();
+        }
+
+        // Calculate KPS
+        kps = lastSecondKeyPresses.length;
+        kpsMax = Math.max(kpsMax, kps);
+
+        // Update display
+        if (currentTime - lastUpdateTime >= updateInterval) {
+            updateKPS();
+            lastUpdateTime = currentTime;
+        }
+    }
+    
+    function cleanup() {
+		if (kpsText != null) kpsText.destroy();
+		kpsText = null;
+		kps = 0;
+        kpsMax = 0;
+        keyPressHistory = [];
+	}
+    
+    override function onSongRetry(event:ScriptEvent) {
+		super.onSongRetry(event);
+        kps = 0;
+        kpsMax = 0;
+        updateKPS();
+	}
+
+    override function onDestroy(event:ScriptEvent) {
+		super.onDestroy(event);
+		cleanup();
+	}
+
+    override function onStateChangeEnd(event:StateChangeScriptEvent) {
+		super.onStateChangeEnd(event);
+		if (!Std.isOfType(event.targetState, PlayState)) {            
+            loaded = false;
+        }
+    }
+}

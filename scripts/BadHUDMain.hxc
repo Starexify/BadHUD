@@ -25,7 +25,7 @@ class BadHUDMain extends Module {
 	var scoreZoom = true;
 	var scoreText:FlxText;
 	var scoreTextTween;
-
+		
 	var ratingsText:FlxText;
 
 	var ratingPercent:Float;
@@ -33,19 +33,19 @@ class BadHUDMain extends Module {
 	var ratingFC:String;
 
 	var totalNotesHit:Float = 0.0;
-	var ratingsTextFont:Str;
-	var scoreTextFont:Str;
+	var ratingsTextFont:Str = "vcr.ttf";
+	var scoreTextFont:Str = "vcr.ttf";
 
-	var songScore:Int;
+	var songScore:Int = 0;
 
-	var sicks;
-	var goods;
-	var bads;
-	var shits;
-	var missed;
-	var combo;
-
-	var totalNotes;
+	var sicks:Int = 0;
+	var goods:Int = 0;
+	var bads:Int = 0;
+	var shits:Int = 0;
+	var missed:Int = 0;
+	var combo:Int = 0;
+	var totalNotes:Int = 0;
+	var totalNotesPlayed:Int = 0;
 
 	function new() {
 		super("BadHUD Main");
@@ -55,14 +55,12 @@ class BadHUDMain extends Module {
 
 	override function onSongLoaded(event:SongLoadScriptEvent) {
 		super.onSongLoaded(event);
-        if(!loaded) {
-            state = PlayState.instance;
+
+		if(!loaded) {
+			state = PlayState.instance;
 			
 			state.scoreText = new FlxText();
 			state.scoreText.visible = false;
-			ratingsTextFont = "vcr.ttf";
-			scoreTextFont = "vcr.ttf";
-			//textFont = "vcr.ttf";
 
 			// Create HUD elements
 			var scoreTextXPos = save.data.verticalScoreBar ? 10 : 0;
@@ -71,26 +69,26 @@ class BadHUDMain extends Module {
 			if (save.data.showJudgementsScreen) {
 				var ratingsTextXPos = 10;
 				var ratingsTextYPos = FlxG.height * 0.4;
-	
+		
 				ratingsText = new FlxText(ratingsTextXPos, ratingsTextYPos, FlxG.width, "", 20);
 				ratingsText.setFormat(Paths.font(ratingsTextFont), 20, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
 				ratingsText.scrollFactor.set();
 				ratingsText.borderSize = 1.25;
 				ratingsText.zIndex = 851;
 				state.add(ratingsText);
-	
+		
 				ratingsText.text = 'Sicks: 0' + '\nGoods: 0' + '\nBads: 0' + '\nShits: 0' + '\nMisses: 0';
 				ratingsText.cameras = [state.camHUD];
 				scoreTextYPos = save.data.verticalScoreBar ? ratingsText.y - ratingsText.height + 20 : scoreTextYPos;
 			}
-	
+		
 			scoreText = new FlxText(scoreTextXPos, scoreTextYPos, FlxG.width, "", 20);
 			scoreText.setFormat(Paths.font(scoreTextFont), 20, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
 			scoreText.scrollFactor.set();
 			scoreText.borderSize = 1.25;
 			scoreText.zIndex = 851;
 			state.add(scoreText);
-	
+		
 			if (save.data.verticalScoreBar && save.data.showJudgementsScreen) {
 				scoreText.setFormat(Paths.font(scoreTextFont), 20, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
 				scoreText.text = 'Score: 0' + '\nRating: ?' + '\nCombo: 0';
@@ -102,22 +100,19 @@ class BadHUDMain extends Module {
 			} else {
 				scoreText.text = 'Score: 0' + ' | Combo Breaks: 0' + ' | Rating: ?\n';
 			}
-	
+		
 			// Move the stuff to the HUD camera.
 			scoreText.cameras = [state.camHUD];
 
-            loaded = true;
-        }
-    }
+			loaded = true;
+		}
+	}
 
 	override function onCountdownStart(event:CountdownScriptEvent) {
 		super.onCountdownStart(event);
 		totalNotes = Highscore.tallies.totalNotes;
-
-		if (ratingsText != null) {
-			ratingsText.text = 'Sicks: 0' + '\nGoods: 0' + '\nBads: 0' + '\nShits: 0' + '\nMisses: 0';
-		}
-		
+		resetJudgements();
+		totalNotesPlayed = 0;
 		updateScore();
 	}
 
@@ -159,21 +154,18 @@ class BadHUDMain extends Module {
 	];
 
 	function calculateRating() {
-		var totalNotesPlayed = Highscore.tallies.totalNotesHit;
-
-		if(totalNotesPlayed != 0) {
-
+		if (totalNotesPlayed != 0) {
 			switch (save.data.accuracyType) {
-				case 0: // Vanilla
-				ratingPercent = Math.min(100, Math.max(0, 100 - ((shits + bads + missed) / totalNotes) * 100));
-				case 1: // Psych Engine
-				ratingPercent = Math.min(100, Math.max(0, 100 - ((sicks * 0 + goods * 0.33 + bads * 0.67 + shits * 1) / totalNotes) * 100));
-				case 2: // osu!mania
-				ratingPercent = Math.min(100, Math.max(0, ((300 * sicks + 200 * goods + 100 * bads + 50 * shits) / (300 * (sicks + goods + bads + shits + missed))) * 100));
+					case 0: // Vanilla
+					ratingPercent = Math.min(100, Math.max(0, 100 - ((shits + bads + missed) / totalNotes) * 100));
+					case 1: // Psych Engine
+					ratingPercent = Math.min(100, Math.max(0, 100 - ((sicks * 0 + goods * 0.33 + bads * 0.67 + shits * 1) / totalNotes) * 100));
+					case 2: // osu!mania
+					ratingPercent = Math.min(100, Math.max(0, ((300 * sicks + 200 * goods + 100 * bads + 50 * shits) / (300 * (sicks + goods + bads + shits + missed))) * 100));
 			}
 			//ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalNotesPlayed)); // Old rating percent
 
-			ratingName = ratingStuff[ratingStuff.length-1][0]; // Uses last string
+			ratingName = ratingStuff[ratingStuff.length-1][0];
 			if(ratingPercent < 1) {
 				for (i in 0...ratingStuff.length-1) {
 					if(ratingPercent < ratingStuff[i][1]) {
@@ -182,6 +174,9 @@ class BadHUDMain extends Module {
 					}
 				}
 			}
+		} else {
+			ratingName = "?";
+			ratingPercent = 0;
 		}
 
 		ratingFC = '';
@@ -214,15 +209,8 @@ class BadHUDMain extends Module {
 	function updateScore(miss:Bool = false) {
 		calculateRating();
 
-		var ratingString:String = ratingName;
-		var totalNotesPlayed = Highscore.tallies.totalNotesHit;
-		
-		if(totalNotesPlayed != 0) {
-			var percent:Float = floorDecimal(ratingPercent, 2);
-			ratingString = save.data.verticalScoreBar ? percent + '% - ' + ratingFC : ratingString + ' (' + percent + '%) - ' + ratingFC;
-		}
-
-		var tempScore:String;
+		var percent:Float = Math.round(ratingPercent * 100) / 100;
+		var ratingString:String = totalNotesPlayed != 0 ? (save.data.verticalScoreBar ? percent + '% - ' + ratingFC : ratingName + ' (' + percent + '%) - ' + ratingFC) : ratingName;
 
 		// Change the scoring system based on accuracyType (funy)
 		switch (save.data.accuracyType) {
@@ -232,69 +220,56 @@ class BadHUDMain extends Module {
 			songScore = state.songScore;
 			case 2: // osu!mania
 			var maxScore = 1000000;
-			var bonus = 100;
 			
 			var hitValue = sicks * 300 + goods * 200 + bads * 100 + shits * 50;
 			var hitBonusValue = sicks * 32 + goods * 16 + bads * 8 + shits * 4;
-
 			var hitBonus = sicks;
-			var hitPunishment = goods * 8 + bads * 24 + shits * 44;
-
-			bonus += hitBonus - hitPunishment;
-			if (missed > 0) bonus = 0;
-
-			bonus = Math.max(0, Math.min(bonus, 100));
+			var hitPunishment = goods * 8 + bads * 24 + shits * 44 + missed * 100;
+			
+			var bonus = Math.max(0, Math.min(100, hitBonus - hitPunishment));
 			
 			var baseScore = (maxScore * 0.5 / totalNotes) * (hitValue / 300);
 			var bonusScore = (maxScore * 0.5 / totalNotes) * (hitBonusValue * Math.sqrt(bonus) / 300);
 			
 			songScore = Math.round(baseScore + bonusScore);
 		}
-		
-		// Judgements Screen and Score Bar for update
-		if (save.data.showJudgementsScreen) {
-			var tempRatings:String = 
-			  'Sicks: ' + sicks
-			+ '\nGoods: ' + goods
-			+ '\nBads: ' + bads
-			+ '\nShits: ' + shits
-			+ '\nMisses: ' + missed;
-
-			if (ratingsText != null) ratingsText.text = tempRatings + '\n';
 			
-			if (save.data.verticalScoreBar) {
-				tempScore = 
-				  'Score: ' + (songScore != null ? songScore : 0)
-				  + '\nRating: ' + ratingString
-				  + '\nCombo: ' + combo;
-			} else {
-				tempScore = 
-				  'Score: ' + (songScore != null ? songScore : 0)
-				+ ' | Rating: ' + ratingString;
-			}
-
+		// Judgements Screen and Score Bar for update
+		var tempScore:String;
+		var tempRatings:String = save.data.showJudgementsScreen ? 'Sicks: ' + sicks + '\nGoods: ' + goods + '\nBads: ' + bads + '\nShits: ' + shits + '\nMisses: ' + missed : '';
+		if (save.data.showJudgementsScreen) {
+				if (save.data.verticalScoreBar) {
+					tempScore = 
+					'Score: ' + (songScore != null ? songScore : 0)
+					+ '\nRating: ' + ratingString
+					+ '\nCombo: ' + combo;
+				} else {
+					tempScore = 
+					'Score: ' + (songScore != null ? songScore : 0)
+					+ ' | Rating: ' + ratingString;
+				}
 		} else {
-			if (save.data.verticalScoreBar) {
-				tempScore = 
-				  'Score: ' + (songScore != null ? songScore : 0)
-				+ '\nCombo Breaks: ' + missed
-				+ '\nRating: ' + ratingString
-				+ '\nCombo: ' + combo;
-			} else {
-				tempScore = 
-				  'Score: ' + (songScore != null ? songScore : 0)
-				+ ' | Combo Breaks: ' + missed
-				+ ' | Rating: ' + ratingString;
-			}
+				if (save.data.verticalScoreBar) {
+					tempScore = 
+					'Score: ' + (songScore != null ? songScore : 0)
+					+ '\nCombo Breaks: ' + missed
+					+ '\nRating: ' + ratingString
+					+ '\nCombo: ' + combo;
+				} else {
+					tempScore = 
+					'Score: ' + (songScore != null ? songScore : 0)
+					+ ' | Combo Breaks: ' + missed
+					+ ' | Rating: ' + ratingString;
+				}
 		}
 
+		if (ratingsText != null) ratingsText.text = tempRatings + '\n';
 		if (scoreText != null) scoreText.text = tempScore + '\n';
 
 		if(!miss) doScoreBop();
 	}
 
-	override function onUpdate(event) {
-		super.onUpdate(event);
+	function resetJudgements() {
 		var tallies = Highscore.tallies;
 		combo = tallies.combo;
 		sicks = tallies.sick;
@@ -304,21 +279,16 @@ class BadHUDMain extends Module {
 		missed = tallies.missed;
 	}
 
-	static function floorDecimal(value:Float, decimals:Int):Float {
-		if (decimals < 1) return Math.floor(value);
-
-		var tempMult:Float = 1;
-		for (i in 0...decimals)
-			tempMult *= 10;
-
-		var newValue:Float = Math.floor(value * tempMult);
-		return newValue / tempMult;
+	override function onUpdate(event) {
+		super.onUpdate(event);
+		totalNotesPlayed = Highscore.tallies.totalNotesHit;
+		resetJudgements();
 	}
 
 	override function onNoteHit(event:ScriptEvent) {
 		super.onNoteHit(event);
 		if (!loaded || event.healthChange == 0) return;
-		
+			
 		// Fix for judgements starting from 0
 		if (combo >= 0) combo += 1;
 		switch (event.judgement) {
@@ -331,7 +301,7 @@ class BadHUDMain extends Module {
 			case "shit":
 				if (shits >= 0) shits += 1;
 		}
-
+		
 		updateScore(true);
 	}
 
@@ -357,15 +327,15 @@ class BadHUDMain extends Module {
 		ratingName = "?";
 		ratingFC = "";
 		totalNotesHit = 0;
-
+			
+		resetJudgements();
 		updateScore();
 	}
 
-    override function onStateChangeEnd(event:StateChangeScriptEvent) {
+	override function onStateChangeEnd(event:StateChangeScriptEvent) {
 		super.onStateChangeEnd(event);
-
 		if (!Std.isOfType(event.targetState, PlayState)) {            
-            loaded = false;
-        }
-    }
+			loaded = false;
+		}
+	}
 }
