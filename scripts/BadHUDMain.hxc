@@ -36,6 +36,16 @@ class BadHUDMain extends Module {
 	var ratingsTextFont:Str;
 	var scoreTextFont:Str;
 
+	var songScore:Int;
+
+	var sicks;
+	var goods;
+	var bads;
+	var shits;
+	var missed;
+	var combo;
+
+	var totalNotes;
 
 	function new() {
 		super("BadHUD Main");
@@ -102,7 +112,8 @@ class BadHUDMain extends Module {
 
 	override function onCountdownStart(event:CountdownScriptEvent) {
 		super.onCountdownStart(event);
-		
+		totalNotes = Highscore.tallies.totalNotes;
+
 		if (ratingsText != null) {
 			ratingsText.text = 'Sicks: 0' + '\nGoods: 0' + '\nBads: 0' + '\nShits: 0' + '\nMisses: 0';
 		}
@@ -149,15 +160,6 @@ class BadHUDMain extends Module {
 
 	function calculateRating() {
 		var totalNotesPlayed = Highscore.tallies.totalNotesHit;
-		var totalNotes = Highscore.tallies.totalNotes;
-
-		var tallies = Highscore.tallies;
-
-		var shits = tallies.shit;
-		var bads = tallies.bad;
-		var goods = tallies.good;
-		var sicks = tallies.sick;
-		var missed = tallies.missed;
 
 		if(totalNotesPlayed != 0) {
 
@@ -217,23 +219,37 @@ class BadHUDMain extends Module {
 		
 		if(totalNotesPlayed != 0) {
 			var percent:Float = floorDecimal(ratingPercent, 2);
-			if (save.data.verticalScoreBar) {
-				ratingString = percent + '% - ' + ratingFC;
-			} else {
-				ratingString += ' (' + percent + '%) - ' + ratingFC;
-			}
+			ratingString = save.data.verticalScoreBar ? percent + '% - ' + ratingFC : ratingString + ' (' + percent + '%) - ' + ratingFC;
 		}
 
-		var songScore = state.songScore;
-		var combo = Highscore.tallies.combo;
-	
-		var sicks = Highscore.tallies.sick;
-		var goods = Highscore.tallies.good;
-		var bads = Highscore.tallies.bad;
-		var shits = Highscore.tallies.shit;
-		var missed = Highscore.tallies.missed;
-
 		var tempScore:String;
+
+		// Change the scoring system based on accuracyType (funy)
+		switch (save.data.accuracyType) {
+			case 0: // Vanilla
+			songScore = state.songScore;
+			case 1: // Psych Engine
+			songScore = state.songScore;
+			case 2: // osu!mania
+			var maxScore = 1000000;
+			var bonus = 100;
+			
+			var hitValue = sicks * 300 + goods * 200 + bads * 100 + shits * 50;
+			var hitBonusValue = sicks * 32 + goods * 16 + bads * 8 + shits * 4;
+
+			var hitBonus = sicks;
+			var hitPunishment = goods * 8 + bads * 24 + shits * 44;
+
+			bonus += hitBonus - hitPunishment;
+			if (missed > 0) bonus = 0;
+
+			bonus = Math.max(0, Math.min(bonus, 100));
+			
+			var baseScore = (maxScore * 0.5 / totalNotes) * (hitValue / 300);
+			var bonusScore = (maxScore * 0.5 / totalNotes) * (hitBonusValue * Math.sqrt(bonus) / 300);
+			
+			songScore = Math.round(baseScore + bonusScore);
+		}
 		
 		// Judgements Screen and Score Bar for update
 		if (save.data.showJudgementsScreen) {
@@ -277,6 +293,17 @@ class BadHUDMain extends Module {
 		if(!miss) doScoreBop();
 	}
 
+	override function onUpdate(event) {
+		super.onUpdate(event);
+		var tallies = Highscore.tallies;
+		combo = tallies.combo;
+		sicks = tallies.sick;
+		goods = tallies.good;
+		bads = tallies.bad;
+		shits = tallies.shit;
+		missed = tallies.missed;
+	}
+
 	static function floorDecimal(value:Float, decimals:Int):Float {
 		if (decimals < 1) return Math.floor(value);
 
@@ -292,6 +319,19 @@ class BadHUDMain extends Module {
 		super.onNoteHit(event);
 		if (!loaded || event.healthChange == 0) return;
 		
+		// Fix for judgements starting from 0
+		if (combo >= 0) combo += 1;
+		switch (event.judgement) {
+			case "sick":
+				if (sicks >= 0) sicks += 1;
+			case "good":
+				if (goods >= 0) goods += 1;
+			case "bad":
+				if (bads >= 0) bads += 1;
+			case "shit":
+				if (shits >= 0) shits += 1;
+		}
+
 		updateScore(true);
 	}
 
@@ -299,6 +339,7 @@ class BadHUDMain extends Module {
 		super.onNoteMiss(event);
 		if (!loaded || event.healthChange == 0) return;
 
+		if (missed >= 0) missed += 1;
 		updateScore(false);
 	}
 

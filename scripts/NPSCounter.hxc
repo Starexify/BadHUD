@@ -1,0 +1,115 @@
+import funkin.modding.module.Module;
+import funkin.Paths;
+import funkin.play.PlayState;
+
+import flixel.text.FlxTextBorderStyle;
+import flixel.text.FlxText;
+import flixel.util.FlxSave;
+import flixel.FlxG;
+
+import Std;
+import Math;
+
+class KPSCounter extends Module {
+	var save:FlxSave;
+	var loaded:Boolean = false;
+	var state:PlayState;
+
+    var kpsText:FlxText;
+    var kps:Int;
+    var kpsMax:Int;
+
+    var kpsCountdown:Float = 0;
+    var kpsUpdateInterval:Float = 1.0;  
+
+    function new() {
+		super("KPSCounter");
+		save = new FlxSave();
+		save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
+	}
+
+    override function onSongLoaded(event:SongLoadScriptEvent) {
+		super.onSongLoaded(event);
+        if(!loaded) {
+            state = PlayState.instance;
+
+			kpsTextFont = "vcr.ttf";
+
+			// Create KPS Text Element
+			if (save.data.kpsCounter) {
+				var kpsTextXPos = 10;
+				var kpsTextYPos = FlxG.height * 0.6;
+	
+				kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
+				kpsText.setFormat(Paths.font(kpsTextFont), 20, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+				kpsText.scrollFactor.set();
+				kpsText.borderSize = 1.25;
+				kpsText.zIndex = 851;
+				state.add(kpsText);
+	
+				kpsText.text = 'KPS: 0' + '\nMax KPS: 0';
+				kpsText.cameras = [state.camHUD];
+			}
+
+            loaded = true;
+        }
+    }
+
+    function onSongEnd(){loaded = false; updateKPS();}
+
+    function updateKPS() {
+        kpsText.text = 'KPS: ' + kps + '\nMax KPS: ' + kpsMax;
+    }
+
+    override function onUpdate(event:UpdateScriptEvent) {
+        super.onUpdate(event);
+        if (!loaded || state == null || !save.data.kpsCounter) return;
+
+        var keyPressed = state.controls.NOTE_DOWN_P || state.controls.NOTE_UP_P || state.controls.NOTE_LEFT_P || state.controls.NOTE_RIGHT_P;
+        if (keyPressed) {
+            kps += 1;
+            kpsMax = Math.max(kpsMax, kps);
+            if (kpsCountdown <= 0) {
+                kpsCountdown = kpsUpdateInterval; // Start countdown at 1 second
+            }
+        }
+
+        if (kpsCountdown > 0) {
+            kpsCountdown -= FlxG.elapsed;
+            if (kpsCountdown <= 0) {
+                kps = 0;
+                kpsCountdown = 0;
+            }
+        }
+        
+        updateKPS();
+    }
+    
+    function cleanup() {
+		if (kpsText != null) kpsText.destroy();
+		kpsText = null;
+		kps = 0;
+        kpsMax = 0;
+	}
+    
+    override function onSongRetry(event:ScriptEvent) {
+		super.onSongRetry(event);
+
+		kps = 0;
+        kpsMax = 0;
+        updateKPS();
+	}
+
+    override function onDestroy(event:ScriptEvent) {
+		super.onDestroy(event);
+		cleanup();
+	}
+
+    override function onStateChangeEnd(event:StateChangeScriptEvent) {
+		super.onStateChangeEnd(event);
+        
+		if (!Std.isOfType(event.targetState, PlayState)) {            
+            loaded = false;
+        }
+    }
+}

@@ -27,6 +27,7 @@ class BadHUDOptions extends Module {
         save.data.verticalHPBar = (save.data.verticalHPBar != null) ? save.data.verticalHPBar : false;
         save.data.verticalScoreBar = (save.data.verticalScoreBar != null) ? save.data.verticalScoreBar : false;
         save.data.accuracyType = (save.data.accuracyType != null) ? save.data.accuracyType : 0;
+        save.data.kpsCounter = (save.data.kpsCounter != null) ? save.data.kpsCounter : false;
         save.flush();
     }
 
@@ -55,6 +56,9 @@ class BadHUDOptions extends Module {
                 updatetypetext();
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, typetext, "default", function(){});
                 preferences.items.getFirst((anything)->{type = anything;});
+
+                preferences.createPrefItemCheckbox("KPS Counter", "", (value) -> {
+                save.data.kpsCounter = value; }, save.data.kpsCounter);
             }
         }
     }

@@ -90,7 +90,7 @@ class TimeBar extends Module {
         }
     }
     
-    function onSongEnd(){loaded = false;}
+    function onSongEnd(){loaded = false; timeBar.destroy();}
 
     override function onSongStart(event:ScriptEvent) {
 		super.onSongStart(event);
