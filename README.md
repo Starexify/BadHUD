@@ -25,6 +25,8 @@ Explanation for each:
 
 -Vertical Score Bar - Moves the Score in the left side of the screen (also adds combo counter)
 
+- KPS Counter (Beta) - Just counts your Keys Per Second
+
 (Look at mod images for better example of how they look)
 
 - Accuracy - There are 3 accuracy types (Vanilla, Psych Engine, osu!mania) with each different methods of calculation
