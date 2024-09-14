@@ -25,7 +25,7 @@ Explanation for each:
 
 -Vertical Score Bar - Moves the Score in the left side of the screen (also adds combo counter)
 
-- KPS Counter (Beta) - Just counts your Keys Per Second
+- KPS Counter - Just counts your Keys Per Second
 
 (Look at mod images for better example of how they look)
 
