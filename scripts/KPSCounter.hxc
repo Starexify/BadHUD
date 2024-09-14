@@ -23,7 +23,7 @@ class KPSCounter extends Module {
     var updateInterval:Float = 1 / 60;
     var lastUpdateTime:Float = 0;
 
-    var kpsTextFont = "vcr.ttf";
+    var kpsTextFont:Str;
 
     function new() {
 		super("KPSCounter");
@@ -38,11 +38,20 @@ class KPSCounter extends Module {
 
 			// Create KPS Text Element
 			if (save.data.kpsCounter) {
-				var kpsTextXPos = 10;
+                var kpsTextXPos = 10;
 				var kpsTextYPos = FlxG.height * 0.6;
+                var kpsTextSize:Int = 20;
+
+                switch (save.data.fontType) {
+                    case 0: // Vanilla
+                        kpsTextFont = "vcr.ttf";
+                    case 1:
+                        kpsTextFont = "PressStart2P.ttf";
+                        kpsTextSize = 13;
+                }
 	
 				kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
-				kpsText.setFormat(Paths.font(kpsTextFont), 20, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+				kpsText.setFormat(Paths.font(kpsTextFont), kpsTextSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
 				kpsText.scrollFactor.set();
 				kpsText.borderSize = 1.25;
 				kpsText.zIndex = 851;

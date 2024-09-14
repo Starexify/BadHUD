@@ -17,7 +17,7 @@ import Math;
 Psych Engine HUD V-Slice by nubz4lif
 OG Psych Engine HUD by Shadow Mario and his team
 */
-class BadHUDMain extends Module {
+class GamePlayStats extends Module {
 	var save:FlxSave;
 	var loaded:Boolean = false;
 	var state:PlayState;
@@ -33,8 +33,10 @@ class BadHUDMain extends Module {
 	var ratingFC:String;
 
 	var totalNotesHit:Float = 0.0;
-	var ratingsTextFont:Str = "vcr.ttf";
-	var scoreTextFont:Str = "vcr.ttf";
+
+	var ratingsTextFont:Str;
+	var scoreTextFont:Str;
+	var textSize:Int;
 
 	var songScore:Int = 0;
 
@@ -48,7 +50,7 @@ class BadHUDMain extends Module {
 	var totalNotesPlayed:Int = 0;
 
 	function new() {
-		super("BadHUD Main");
+		super("GamePlayStats");
 		save = new FlxSave();
 		save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
 	}
@@ -62,6 +64,17 @@ class BadHUDMain extends Module {
 			state.scoreText = new FlxText();
 			state.scoreText.visible = false;
 
+			textSize = 20;
+			switch (save.data.fontType) {
+				case 0: // Vanilla
+					ratingsTextFont = "vcr.ttf";
+					scoreTextFont = "vcr.ttf";
+				case 1:
+					ratingsTextFont = "PressStart2P.ttf";
+					scoreTextFont = "PressStart2P.ttf";
+					textSize = 13;
+			}
+
 			// Create HUD elements
 			var scoreTextXPos = save.data.verticalScoreBar ? 10 : 0;
 			var scoreTextYPos:Float = save.data.verticalHPBar ? 40 : state.healthBarBG.y + 45;
@@ -71,7 +84,7 @@ class BadHUDMain extends Module {
 				var ratingsTextYPos = FlxG.height * 0.4;
 		
 				ratingsText = new FlxText(ratingsTextXPos, ratingsTextYPos, FlxG.width, "", 20);
-				ratingsText.setFormat(Paths.font(ratingsTextFont), 20, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+				ratingsText.setFormat(Paths.font(ratingsTextFont), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
 				ratingsText.scrollFactor.set();
 				ratingsText.borderSize = 1.25;
 				ratingsText.zIndex = 851;
@@ -83,19 +96,19 @@ class BadHUDMain extends Module {
 			}
 		
 			scoreText = new FlxText(scoreTextXPos, scoreTextYPos, FlxG.width, "", 20);
-			scoreText.setFormat(Paths.font(scoreTextFont), 20, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+			scoreText.setFormat(Paths.font(scoreTextFont), textSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
 			scoreText.scrollFactor.set();
 			scoreText.borderSize = 1.25;
 			scoreText.zIndex = 851;
 			state.add(scoreText);
 		
 			if (save.data.verticalScoreBar && save.data.showJudgementsScreen) {
-				scoreText.setFormat(Paths.font(scoreTextFont), 20, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+				scoreText.setFormat(Paths.font(scoreTextFont), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
 				scoreText.text = 'Score: 0' + '\nRating: ?' + '\nCombo: 0';
 			} else if (!save.data.verticalScoreBar && save.data.showJudgementsScreen) {
 				scoreText.text = 'Score: 0' + ' | Rating: ?\n';
 			} else if (save.data.verticalScoreBar) {
-				scoreText.setFormat(Paths.font(scoreTextFont), 20, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+				scoreText.setFormat(Paths.font(scoreTextFont), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
 				scoreText.text = 'Score: 0' + '\nRating: ?' + '\nCombo: 0';
 			} else {
 				scoreText.text = 'Score: 0' + ' | Combo Breaks: 0' + ' | Rating: ?\n';
@@ -122,7 +135,7 @@ class BadHUDMain extends Module {
 		var stuffToRemove = [scoreText, ratingsText, scoreTextTween];
 
 		for (thing in stuffToRemove) {
-			if(thing != null) thing.destroy();
+			if (thing != null) thing.destroy();
 		}
 
 		ratingPercent = 0;
@@ -140,19 +153,19 @@ class BadHUDMain extends Module {
 		cleanup();
 	}
 
-	public static var ratingStuff: Array<Dynamic> = [
-		['You Suck!', 0.2], //From 0% to 19%
-		['Shit', 0.4], //From 20% to 39%
-		['Bad', 0.5], //From 40% to 49%
-		['Bruh', 0.6], //From 50% to 59%
-		['Meh', 0.69], //From 60% to 68%
-		['Nice', 0.7], //69%
-		['Good', 0.8], //From 70% to 79%
-		['Great', 0.9], //From 80% to 89%
-		['Sick!', 1], //From 90% to 99%
-		['Perfect!!', 1] //The value on this one isn't used actually, since Perfect is always "1"
+	public static var ratingStuff:Array<Dynamic> = [
+		['You Suck!', 0.2], // From 0% to 19%
+		['Shit', 0.4],      // From 20% to 39%
+		['Bad', 0.5],       // From 40% to 49%
+		['Bruh', 0.6],      // From 50% to 59%
+		['Meh', 0.69],      // From 60% to 68%
+		['Nice', 0.7],      // 69%
+		['Good', 0.8],      // From 70% to 79%
+		['Great', 0.9],     // From 80% to 89%
+		['Sick!', 1],       // From 90% to 99%
+		['Perfect!!', 1]    // The value on this one isn't used actually, since Perfect is always "1"
 	];
-
+	
 	function calculateRating() {
 		if (totalNotesPlayed != 0) {
 			switch (save.data.accuracyType) {
@@ -164,7 +177,7 @@ class BadHUDMain extends Module {
 					ratingPercent = Math.min(100, Math.max(0, ((300 * sicks + 200 * goods + 100 * bads + 50 * shits) / (300 * (sicks + goods + bads + shits + missed))) * 100));
 			}
 			//ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalNotesPlayed)); // Old rating percent
-
+			
 			ratingName = ratingStuff[ratingStuff.length-1][0];
 			if(ratingPercent < 1) {
 				for (i in 0...ratingStuff.length-1) {
@@ -181,7 +194,30 @@ class BadHUDMain extends Module {
 
 		ratingFC = '';
 
-		// Rating Names
+		// Rating grades based on 
+		switch (save.data.accuracyType) {
+			case 0: // Vanilla
+			vanillaRatingNames();
+			case 1: // Psych Engine
+			psychRatingNames();
+			case 2: // osu!mania
+			osuGrades();
+		}
+	}
+
+	function vanillaRatingNames() {
+		if (ratingPercent == 100) {
+			ratingFC = 'P (Perfect)';
+		} else if (ratingPercent >= 90) {
+			ratingFC = 'E (Excellent)';
+		} else if (ratingPercent >= 80) {
+			ratingFC = 'G (Great)';
+		} else if (ratingPercent >= 60) {
+			ratingFC = 'G (Good)';
+		} else ratingFC = 'L (Loss)';
+	}
+
+	function psychRatingNames() {
 		if (missed == 0) {
 			if (shits == 0 && bads == 0 && goods == 0) ratingFC = 'PFC';
 			else if (shits > 0 || bads > 0) ratingFC = 'FC';
@@ -190,6 +226,20 @@ class BadHUDMain extends Module {
 		} else if (missed < 10) {
 			ratingFC = 'SDCB';	
 		} else ratingFC = 'Clear';
+	}
+
+	function osuGrades() {
+		if (ratingPercent == 100) {
+			ratingFC = 'SS';
+		} else if (ratingPercent > 95) {
+			ratingFC = 'S';
+		} else if (ratingPercent > 90) {
+			ratingFC = 'A';
+		} else if (ratingPercent > 80) {
+			ratingFC = 'B';
+		} else if (ratingPercent > 70) {
+			ratingFC = 'C';
+		} else ratingFC = 'D';
 	}
 
 	function doScoreBop() {
@@ -238,29 +288,29 @@ class BadHUDMain extends Module {
 		var tempScore:String;
 		var tempRatings:String = save.data.showJudgementsScreen ? 'Sicks: ' + sicks + '\nGoods: ' + goods + '\nBads: ' + bads + '\nShits: ' + shits + '\nMisses: ' + missed : '';
 		if (save.data.showJudgementsScreen) {
-				if (save.data.verticalScoreBar) {
-					tempScore = 
-					'Score: ' + (songScore != null ? songScore : 0)
-					+ '\nRating: ' + ratingString
-					+ '\nCombo: ' + combo;
-				} else {
-					tempScore = 
-					'Score: ' + (songScore != null ? songScore : 0)
-					+ ' | Rating: ' + ratingString;
-				}
+			if (save.data.verticalScoreBar) {
+				tempScore = 
+				'Score: ' + (songScore != null ? songScore : 0)
+				+ '\nRating: ' + ratingString
+				+ '\nCombo: ' + combo;
+			} else {
+				tempScore = 
+				'Score: ' + (songScore != null ? songScore : 0)
+				+ ' | Rating: ' + ratingString;
+			}
 		} else {
-				if (save.data.verticalScoreBar) {
-					tempScore = 
-					'Score: ' + (songScore != null ? songScore : 0)
-					+ '\nCombo Breaks: ' + missed
-					+ '\nRating: ' + ratingString
-					+ '\nCombo: ' + combo;
-				} else {
-					tempScore = 
-					'Score: ' + (songScore != null ? songScore : 0)
-					+ ' | Combo Breaks: ' + missed
-					+ ' | Rating: ' + ratingString;
-				}
+			if (save.data.verticalScoreBar) {
+				tempScore = 
+				'Score: ' + (songScore != null ? songScore : 0)
+				+ '\nCombo Breaks: ' + missed
+				+ '\nRating: ' + ratingString
+				+ '\nCombo: ' + combo;
+			} else {
+				tempScore = 
+				'Score: ' + (songScore != null ? songScore : 0)
+				+ ' | Combo Breaks: ' + missed
+				+ ' | Rating: ' + ratingString;
+			}
 		}
 
 		if (ratingsText != null) ratingsText.text = tempRatings + '\n';

@@ -15,7 +15,12 @@ class BadHUDOptions extends Module {
     var save:FlxSave = new FlxSave();
     var holdPressTime:Float = 0.0;
     var optionState;
-    
+    var accuracy;
+    var timeBar;
+    var accuracyTypeText:String = "";
+    var timebarTypeText:String = "";
+    var fontTypeText:String = "";
+
     function new () {
         super("BadHUD Options", "1");
         save = new FlxSave();
@@ -23,11 +28,13 @@ class BadHUDOptions extends Module {
 
         // Options when game loaded for first time
         save.data.showJudgementsScreen = (save.data.showJudgementsScreen != null) ? save.data.showJudgementsScreen : true;
-        save.data.showTimer = (save.data.showTimer != null) ? save.data.showTimer : true;
-        save.data.verticalHPBar = (save.data.verticalHPBar != null) ? save.data.verticalHPBar : false;
         save.data.verticalScoreBar = (save.data.verticalScoreBar != null) ? save.data.verticalScoreBar : false;
+        save.data.verticalHPBar = (save.data.verticalHPBar != null) ? save.data.verticalHPBar : false;
+        save.data.showTimeBar = (save.data.showTimeBar != null) ? save.data.showTimeBar : true;
+        save.data.timeBarType = (save.data.timeBarType != null) ? save.data.timeBarType : 0;
         save.data.accuracyType = (save.data.accuracyType != null) ? save.data.accuracyType : 0;
         save.data.kpsCounter = (save.data.kpsCounter != null) ? save.data.kpsCounter : false;
+        save.data.fontType = (save.data.fontType != null) ? save.data.fontType : 0;
         save.flush();
     }
 
@@ -41,55 +48,129 @@ class BadHUDOptions extends Module {
             optionState = event.targetState;
             
             if (preferences != null) {
+                updatetypetext();
+
                 preferences.createPrefItemCheckbox("Show Judgements On Left", "", (value) -> {
                 save.data.showJudgementsScreen = value; }, save.data.showJudgementsScreen);
-
-                preferences.createPrefItemCheckbox("Show Timer", "", (value) -> {
-                save.data.showTimer = value; }, save.data.showTimer);
-
+                
+                preferences.createPrefItemCheckbox("Move Score On Left", "", (value) -> {
+                save.data.verticalScoreBar = value; }, save.data.verticalScoreBar);
+                
                 preferences.createPrefItemCheckbox("Vertical Health Bar", "", (value) -> {
                 save.data.verticalHPBar = value; }, save.data.verticalHPBar);
 
-                preferences.createPrefItemCheckbox("Vertical Score Bar", "", (value) -> {
-                save.data.verticalScoreBar = value; }, save.data.verticalScoreBar);
+                preferences.createPrefItemCheckbox("Show Time Bar", "", (value) -> {
+                save.data.showTimeBar = value; }, save.data.showTimeBar);
 
-                updatetypetext();
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, typetext, "default", function(){});
-                preferences.items.getFirst((anything)->{type = anything;});
+                preferences.items.createItem(120, 120 * preferences.items.length + 30, timebarTypeText, "default", function(){});
+                preferences.items.getFirst((anything)->{timeBar = anything;});
 
-                preferences.createPrefItemCheckbox("KPS Counter", "", (value) -> {
+                preferences.items.createItem(120, 120 * preferences.items.length + 30, accuracyTypeText, "default", function(){});
+                preferences.items.getFirst((anything)->{accuracy = anything;});
+                
+                preferences.createPrefItemCheckbox("Show KPS Counter", "", (value) -> {
                 save.data.kpsCounter = value; }, save.data.kpsCounter);
+
+                preferences.items.createItem(120, 120 * preferences.items.length + 30, fontTypeText, "default", function(){});
+                preferences.items.getFirst((anything)->{font = anything;});
             }
         }
+    }
+
+    function updatetypetext() {
+        switch (save.data.accuracyType) {
+            case 0:
+                accuracyTypeText = "Accuracy Type: Vanilla";
+            case 1:
+                accuracyTypeText = "Accuracy Type: Psych Engine";
+            case 2:
+                accuracyTypeText = "Accuracy Type: osu!Mania";
+        }
+
+        switch (save.data.timeBarType) {
+            case 0:
+                timebarTypeText = "Time Bar Type: Psych Engine";
+            case 1:
+                timebarTypeText = "Time Bar Type: Minimal";
+            case 2:
+                timebarTypeText = "Time Bar Type: Minimal Rounded";
+        }
+
+        switch (save.data.fontType) {
+            case 0:
+                fontTypeText = "Font Type: VCR OSD Mono (Vanilla)";
+            case 1:
+                fontTypeText = "Font Type: Press Start 2P";
+        }
+        save.flush();
     }
 
     function onUpdate(event:UpdateScriptEvent) {
         super.onUpdate(event);
         
-        if(optionState != null) {
+        if (optionState != null) {
             var preferences = optionState.pages.get("preferences");
-            switch(preferences.items.selectedItem) {
-                case type:
-                    if (optionState.controls.UI_RIGHT){
-                        if (optionState.controls.UI_RIGHT_P){ 
+            switch (preferences.items.selectedItem) {
+                case accuracy: // Accuracy Types
+                    if (optionState.controls.UI_RIGHT) {
+                        if (optionState.controls.UI_RIGHT_P) { 
                             save.data.accuracyType += 1;
                             save.flush();
-                            FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+                            playScrollSound();
                         }
                     } else if (optionState.controls.UI_LEFT) {
                         if (optionState.controls.UI_LEFT_P) {
                             save.data.accuracyType -= 1;
                             save.flush();
-                            FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
+                            playScrollSound();
                         }
                     }
                         
                     if (save.data.accuracyType < 0) save.data.accuracyType = 2;
-
                     if (save.data.accuracyType > 2) save.data.accuracyType = 0;
 
                     updatetypetext();
-                    type.label.text = typetext; 
+                    accuracy.label.text = accuracyTypeText;
+                case timeBar: // Timer Bar Types
+                    if (optionState.controls.UI_RIGHT) {
+                        if (optionState.controls.UI_RIGHT_P) { 
+                            save.data.timeBarType += 1;
+                            save.flush();
+                            playScrollSound();
+                        }
+                    } else if (optionState.controls.UI_LEFT) {
+                        if (optionState.controls.UI_LEFT_P) {
+                            save.data.timeBarType -= 1;
+                            save.flush();
+                            playScrollSound();
+                        }
+                    }
+                    
+                    if (save.data.timeBarType < 0) save.data.timeBarType = 2;
+                    if (save.data.timeBarType > 2) save.data.timeBarType = 0;
+
+                    updatetypetext();
+                    timeBar.label.text = timebarTypeText;
+                case font: // Timer Bar Types
+                    if (optionState.controls.UI_RIGHT) {
+                        if (optionState.controls.UI_RIGHT_P) { 
+                            save.data.fontType += 1;
+                            save.flush();
+                            playScrollSound();
+                        }
+                    } else if (optionState.controls.UI_LEFT) {
+                        if (optionState.controls.UI_LEFT_P) {
+                            save.data.fontType -= 1;
+                            save.flush();
+                            playScrollSound();
+                        }
+                    }
+                    
+                    if (save.data.fontType < 0) save.data.fontType = 1;
+                    if (save.data.fontType > 1) save.data.fontType = 0;
+
+                    updatetypetext();
+                    font.label.text = fontTypeText; 
             }
             if (optionState.controls.UI_LEFT_R || optionState.controls.UI_RIGHT_R){
                 holdPressTime = 0;
@@ -98,15 +179,7 @@ class BadHUDOptions extends Module {
         }
     }
 
-    function updatetypetext() {
-        switch(save.data.accuracyType) {
-            case 0:
-            typetext = "Accuracy Type: Vanilla";
-            case 1:
-            typetext = "Accuracy Type: Psych Engine";
-            case 2:
-            typetext = "Accuracy Type: osu!Mania";
-            }
-        save.flush();
+    function playScrollSound() {
+        FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
     }
 }

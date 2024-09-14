@@ -76,19 +76,20 @@ class VerticalHealthBar extends Module {
             var healthBarY:Float = state.healthBar.y;
             var healthBarHeight:Float = state.healthBar.height;
             var healthBarWidth:Float = state.healthBar.width;
-            var centering:Float = healthBarWidth / 2 - 10;
-            var gapReduction:Float = 15;
+            var yCentering:Float = healthBarWidth / 2 - 10;
+            var gapReduction:Float = 35;
+            var xCentering:Float = 10;
 
             iconP1.y = healthBarY
-                + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - centering 
+                + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering 
                 - POSITION_OFFSET);
             iconP2.y = healthBarY 
-                + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - centering + gapReduction)
+                + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering + gapReduction)
                 - (iconP2.height - POSITION_OFFSET);
             
             // Center icons vertically relative to the health bar
-            iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
-            iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2);
+            iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2) + xCentering;
+            iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2) + xCentering;
 
             updateHealthIcon(iconP1, state.health);
             updateHealthIcon(iconP2, MAXIMUM_HEALTH - state.health);
@@ -105,9 +106,16 @@ class VerticalHealthBar extends Module {
         }
     }
 
-    override function onUpdate(event:UpdateScriptEvent) {
-		super.onUpdate(event);
+    // bop for icons, I think onBeatHit is better than onUpdate and fixes it ?
+    override function onBeatHit(event:SongTimeScriptEvent) {
+		super.onBeatHit(event);
 		if (!loaded) return;
         updatePosition();
     }
+
+    // override function onUpdate(event:UpdateScriptEvent) {
+	// 	super.onUpdate(event);
+	// 	if (!loaded) return;
+    //     updatePosition();
+    // }
 }
