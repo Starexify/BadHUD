@@ -33,39 +33,37 @@ class KPSCounter extends Module {
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
 		super.onSongLoaded(event);
-        if(!loaded) {
+        if (!loaded && save.data.kpsCounter) {
             state = PlayState.instance;
 
 			// Create KPS Text Element
-			if (save.data.kpsCounter) {
-                var kpsTextXPos = 10;
-				var kpsTextYPos = FlxG.height * 0.6;
-                var kpsTextSize:Int = 20;
+            var kpsTextXPos = 10;
+			var kpsTextYPos = FlxG.height * 0.6;
+            var kpsTextSize:Int = 20;
+            
+            switch (save.data.fontType) {
+                case 0: // Vanilla
+                    kpsTextFont = "vcr.ttf";
+                case 1:
+                    kpsTextFont = "PressStart2P.ttf";
+                    kpsTextSize = 13;
+            }
 
-                switch (save.data.fontType) {
-                    case 0: // Vanilla
-                        kpsTextFont = "vcr.ttf";
-                    case 1:
-                        kpsTextFont = "PressStart2P.ttf";
-                        kpsTextSize = 13;
-                }
-	
-				kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
-				kpsText.setFormat(Paths.font(kpsTextFont), kpsTextSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
-				kpsText.scrollFactor.set();
-				kpsText.borderSize = 1.25;
-				kpsText.zIndex = 851;
-				state.add(kpsText);
-	
-				kpsText.text = 'KPS: 0' + '\nMax KPS: 0';
-				kpsText.cameras = [state.camHUD];
-			}
+			kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
+			kpsText.setFormat(Paths.font(kpsTextFont), kpsTextSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+			kpsText.scrollFactor.set();
+			kpsText.borderSize = 1.25;
+			kpsText.zIndex = 851;
+			state.add(kpsText);
+
+			kpsText.text = 'KPS: 0' + '\nMax KPS: 0';
+			kpsText.cameras = [state.camHUD];
 
             loaded = true;
         }
     }
 
-    function onSongEnd(){loaded = false; updateKPS();}
+    function onSongEnd() {loaded = false; updateKPS();}
 
     function updateKPS() {
         if (kpsText != null) {

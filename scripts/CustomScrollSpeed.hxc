@@ -1,0 +1,65 @@
+import funkin.modding.module.Module;
+import funkin.play.PlayState;
+import funkin.Paths;
+
+import flixel.text.FlxTextBorderStyle;
+import flixel.text.FlxText;
+import flixel.util.FlxSave;
+import flixel.FlxG;
+
+import Std;
+import Math;
+
+class CustomScrollSpeed extends Module {
+    var save:FlxSave;
+	var loaded:Boolean = false;
+	var state:PlayState;
+
+    function new() {
+		super("CustomScrollSpeed");
+		save = new FlxSave();
+		save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
+	}
+
+    override function onSongLoaded(event:SongLoadScriptEvent) {
+		super.onSongLoaded(event);
+
+        if (!loaded && save.data.customScrollSpeed) {
+			state = PlayState.instance;
+            
+            setSpeed(state);
+
+            // Debug Stuff
+            // var scrollSpeedText:FlxText;
+			// var scrollSpeedTextXPos = FlxG.width * 0.84;
+			// var scrollSpeedTextYPos = FlxG.height * 0.98;
+	
+			// scrollSpeedText = new FlxText(0, 0, 0, "", 20);
+			// scrollSpeedText.setFormat(Paths.font("vcr.ttf"), 15, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+            // scrollSpeedText.x = scrollSpeedTextXPos - scrollSpeedText.width;
+            // scrollSpeedText.y = scrollSpeedTextYPos - scrollSpeedText.height;
+			// scrollSpeedText.scrollFactor.set();
+			// scrollSpeedText.zIndex = 851;
+			// state.add(scrollSpeedText);
+	
+			// scrollSpeedText.text = 'Scroll Speed: ' + Math.round(save.data.scrollSpeedFactor * 10) / 10;
+			// scrollSpeedText.cameras = [state.camHUD];
+
+            loaded = true;
+        }
+
+    }
+
+    function onSongEnd() {loaded = false;}
+
+    override function onStateChangeEnd(event:StateChangeScriptEvent) {
+		super.onStateChangeEnd(event);
+		if (!Std.isOfType(event.targetState, PlayState)) {            
+            loaded = false;
+        }
+    }
+
+    function setSpeed(state) {
+        state.currentChart.scrollSpeed = save.data.scrollSpeedFactor;
+    }
+}
