@@ -12,19 +12,19 @@ import Math;
 
 class CustomScrollSpeed extends Module {
     var save:FlxSave;
-	var loaded:Bool = false;
-	var state:PlayState;
+    var loaded:Bool = false ;
+    var state:PlayState;
 
     var speedText:FlxText;
 
     function new() {
-		super("CustomScrollSpeed");
-		save = new FlxSave();
-		save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
-	}
+        super("CustomScrollSpeed");
+        save = new FlxSave();
+        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
+    }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-		super.onSongLoaded(event);
+        super.onSongLoaded(event);
         if (!loaded && save.data.customScrollSpeed) {
             state = PlayState.instance;
             setSpeed(state);
@@ -36,12 +36,12 @@ class CustomScrollSpeed extends Module {
 
             // Create Scroll Speed Text Element
             speedText = new FlxText(20, FlxG.height * 0.94, FlxG.width - 40, "", 20);
-			speedText.setFormat(Paths.font(font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
-			speedText.scrollFactor.set(0, 0);
+            speedText.setFormat(Paths.font(font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+            speedText.scrollFactor.set(0, 0);
             speedText.alignment = "right";
             speedText.cameras = [state.camHUD];
-			state.add(speedText);
-            
+            state.add(speedText);
+
             loaded = true;
         }
     }
@@ -70,8 +70,8 @@ class CustomScrollSpeed extends Module {
     }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
-		super.onStateChangeEnd(event);
-		if (!Std.isOfType(event.targetState, PlayState)) {            
+        super.onStateChangeEnd(event);
+        if (!Std.isOfType(event.targetState, PlayState)) {
             loaded = false;
         }
     }
