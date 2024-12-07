@@ -15,8 +15,6 @@ class PauseOptions extends Module {
     }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent){
-		super.onSubStateOpenBegin(event);
-
         if (event.targetState != PlayState.instance && wasPaused) {
 			FlxG.switchState(() -> new PlayState());
 			wasPaused = false;
@@ -24,9 +22,7 @@ class PauseOptions extends Module {
     }
     
     override function onSubStateOpenEnd(event:SubStateScriptEvent) {
-        super.onSubStateOpenEnd(event);
-
-        if (Std.is(event.targetState, PauseSubState)) {
+        if (Std.isOfType(event.targetState, PauseSubState)) {
             var pauseState = event.targetState;
             var menuEntries = pauseState.currentMenuEntries;
             menuEntries.insert(menuEntries.length - 1, {

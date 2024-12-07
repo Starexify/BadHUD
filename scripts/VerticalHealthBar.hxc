@@ -7,11 +7,10 @@ import flixel.FlxSprite;
 import flixel.FlxG;
 
 import Std;
-import Math;
 
 class VerticalHealthBar extends Module {
     var save:FlxSave;
-    var loaded:Boolean = false;
+    var loaded:Bool = false;
     var state:PlayState;
     var iconP1:FlxSprite;
     var iconP2:FlxSprite;
@@ -32,7 +31,6 @@ class VerticalHealthBar extends Module {
     }
 
 	override function onSongLoaded(event:SongLoadScriptEvent) {
-		super.onSongLoaded(event);
         if(!loaded) {
             state = PlayState.instance;
             iconP1 = state.iconP1;
@@ -99,7 +97,7 @@ class VerticalHealthBar extends Module {
         }
     }
 
-    function onSongEnd() { loaded = false; }
+    override function onSongEnd(event) { loaded = false; }
 
     function updatePosition() {
         if (!loaded || state == null) return;
@@ -145,12 +143,10 @@ class VerticalHealthBar extends Module {
 
     // bop for icons, I think onBeatHit is better than onUpdate and fixes it ?
     override function onBeatHit(event:SongTimeScriptEvent) {
-		super.onBeatHit(event);
         if (loaded) updatePosition();
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        super.onUpdate(event);
         if (loaded && event.healthChange != 0) updatePosition();
     }
 

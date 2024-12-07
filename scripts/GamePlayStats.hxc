@@ -20,7 +20,7 @@ OG Psych Engine HUD by Shadow Mario and his team
 */
 class GamePlayStats extends Module {
 	var save:FlxSave;
-	var loaded:Boolean = false;
+	var loaded:Bool = false;
 	var state:PlayState;
 
 	var scoreZoom = true;
@@ -30,13 +30,13 @@ class GamePlayStats extends Module {
 	var judgementsText:FlxText;
 
 	var ratingPercent:Float;
-	var ratingName:Str = "?";
-	var ratingFC:Str;
+	var ratingName:String = "?";
+	var ratingFC:String;
 
 	var totalNotesHit:Float = 0.0;
 
-	var judgementsTextFont:Str;
-	var scoreTextFont:Str;
+	var judgementsTextFont:String;
+	var scoreTextFont:String;
 	var textSize:Int;
 
 	var songScore:Int = 0;
@@ -62,7 +62,6 @@ class GamePlayStats extends Module {
 	}
 
 	override function onSongLoaded(event:SongLoadScriptEvent) {
-		super.onSongLoaded(event);
 		if(!loaded) {
 			state = PlayState.instance;
 
@@ -114,7 +113,7 @@ class GamePlayStats extends Module {
 		}
 	}
 
-	function createJudgements(textSize:Int, state:FlxState) {
+	function createJudgements(textSize:Int, state:PlayState) {
 		var judgementsTextXPos = 10;
 		var judgementsTextYPos = FlxG.height * 0.45;
 		judgementsText = new FlxText(judgementsTextXPos, judgementsTextYPos, FlxG.width, "", 20);
@@ -129,14 +128,13 @@ class GamePlayStats extends Module {
 	}
 
 	override function onCountdownStart(event:CountdownScriptEvent) {
-		super.onCountdownStart(event);
 		totalNotes = Highscore.tallies.totalNotes;
 		resetJudgements();
 		totalNotesPlayed = 0;
 		updateScore();
 	}
 
-	function onSongEnd(){loaded = false; updateScore();}
+	override function onSongEnd(event:ScriptEvent){loaded = false; updateScore();}
 
 	function cleanup() {
 		var stuffToRemove = [scoreText, judgementsText, scoreTextTween];
@@ -156,7 +154,6 @@ class GamePlayStats extends Module {
 	}
 
 	override function onDestroy(event:ScriptEvent) {
-		super.onDestroy(event);
 		cleanup();
 	}
 
@@ -329,13 +326,11 @@ class GamePlayStats extends Module {
 	}
 
 	override function onUpdate(event:UpdateScriptEvent) {
-		super.onUpdate(event);
 		totalNotesPlayed = Highscore.tallies.totalNotesHit;
 		resetJudgements();
 	}
 
-	override function onNoteHit(event:ScriptEvent) {
-		super.onNoteHit(event);
+	override function onNoteHit(event:HitNoteScriptEvent) {
 		if (!loaded || event.healthChange == 0) return;
 			
 		// Fix for judgements starting from 0
@@ -356,24 +351,20 @@ class GamePlayStats extends Module {
 		updateScore(true);
 	}
 
-	override function onNoteMiss(event:ScriptEvent) {
-		super.onNoteMiss(event);
+	override function onNoteMiss(event:NoteScriptEvent) {
 		if (!loaded || event.healthChange == 0) return;
 		totalNotesPlayed += 1;
 		if (missed >= 0) missed += 1;
 		updateScore(false);
 	}
 
-	override function onNoteGhostMiss(event:ScriptEvent) {
-		super.onNoteGhostMiss(event);
+	override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) {
 		if (!loaded || event.healthChange == 0) return;
 
 		updateScore(false);
 	}
 
 	override function onSongRetry(event:ScriptEvent) {
-		super.onSongRetry(event);
-
 		ratingPercent = 0;
 		ratingName = "?";
 		ratingFC = "";
@@ -384,7 +375,6 @@ class GamePlayStats extends Module {
 	}
 
 	override function onStateChangeEnd(event:StateChangeScriptEvent) {
-		super.onStateChangeEnd(event);
 		if (!Std.isOfType(event.targetState, PlayState)) {            
 			loaded = false;
 		}

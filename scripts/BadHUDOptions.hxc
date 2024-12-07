@@ -9,7 +9,7 @@ class BadHUDOptions extends Module {
     var save:FlxSave = new FlxSave() ;
 
     // Hooks or smth like that for other classes
-    var font;
+    var font:String;
     var timeBarBGStyle;
     var timeTextSize;
 
