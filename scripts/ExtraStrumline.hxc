@@ -1,4 +1,5 @@
 import funkin.modding.module.Module;
+import funkin.ui.debug.charting.ChartEditorState;
 import funkin.play.notes.Strumline;
 import funkin.play.PlayState;
 
@@ -80,6 +81,7 @@ class ExtraStrumline extends Module {
                 rightGradient.cameras = [state.camHUD];
                 state.add(rightGradient);
             }
+
 
             loaded = true;
         }
@@ -179,7 +181,7 @@ class ExtraStrumline extends Module {
 
     override function onSongRetry(event:ScriptEvent) { cleanup(); }
 
-    override function onStateChangeEnd(event:StateChangeScriptEvent) {
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         if (!Std.isOfType(event.targetState, PlayState)) {
             loaded = false;
         }

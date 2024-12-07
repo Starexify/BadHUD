@@ -150,8 +150,8 @@ class VerticalHealthBar extends Module {
         if (loaded && event.healthChange != 0) updatePosition();
     }
 
-    override function onStateChangeEnd(event:StateChangeScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState)) {            
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
+        if (!Std.isOfType(event.targetState, PlayState)) {
             loaded = false;
         }
     }

@@ -66,14 +66,14 @@ class CustomScrollSpeed extends Module {
         }
     }
 
-    override function onStateChangeEnd(event:StateChangeScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState)) {
-            loaded = false;
-        }
-    }
-
     function setSpeed(state:PlayState) {
         state.playerStrumline.scrollSpeed = Math.round(save.data.scrollSpeedFactor * 10) / 10;
         state.opponentStrumline.scrollSpeed = Math.round(save.data.scrollSpeedFactor * 10) / 10;
+    }
+
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
+        if (!Std.isOfType(event.targetState, PlayState)) {
+            loaded = false;
+        }
     }
 }

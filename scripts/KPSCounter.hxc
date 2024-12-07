@@ -119,8 +119,8 @@ class KPSCounter extends Module {
 		cleanup();
 	}
 
-    override function onStateChangeEnd(event:StateChangeScriptEvent) {
-		if (!Std.isOfType(event.targetState, PlayState)) {            
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
+        if (!Std.isOfType(event.targetState, PlayState)) {
             loaded = false;
         }
     }
