@@ -12,7 +12,7 @@ import Std;
 
 class ExtraStrumline extends Module {
     var save:FlxSave;
-    var loaded:Boolean = false;
+    var loaded:Bool = false;
     var state:PlayState;
     var laneUnderlay:FlxSprite;
     var leftGradient;

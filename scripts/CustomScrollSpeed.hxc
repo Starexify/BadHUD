@@ -12,7 +12,7 @@ import Math;
 
 class CustomScrollSpeed extends Module {
     var save:FlxSave;
-	var loaded:Boolean = false;
+	var loaded:Bool = false;
 	var state:PlayState;
 
     var speedText:FlxText;

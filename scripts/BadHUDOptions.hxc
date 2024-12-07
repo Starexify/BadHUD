@@ -14,7 +14,7 @@ class BadHUDOptions extends Module {
     var timeTextSize;
 
     function new () {
-        super("BadHUD Options", "1");
+        super("BadHUD Options", 1);
         save = new FlxSave();
         save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
 
