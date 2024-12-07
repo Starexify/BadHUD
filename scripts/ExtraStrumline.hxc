@@ -131,8 +131,6 @@ class ExtraStrumline extends Module {
 
     function cleanup() {
         var stuffToRemove = [laneUnderlay, leftGradient, rightGradient];
-
-        // Ensure all elements are fully killed and reset
         for (thing in stuffToRemove) {
             if (thing != null) {
                 state.remove(thing);

@@ -194,10 +194,19 @@ class TimeBar extends Module {
 		}
 	}
 
+    function cleanup() {
+        var stuffToRemove = [timeBarBG, timeBar, timeText];
+        for (thing in stuffToRemove) {
+            if (thing != null) {
+                state.remove(thing);
+                thing.destroy();
+                thing = null;
+            }
+        }
+    }
+
     override function onSongRetry(event:ScriptEvent) {
-		if (timeBarBG != null) timeBarBG.visible = false;
-		if (timeBar != null) timeBar.visible = false;
-		if (timeText != null) timeText.visible = false;
+		cleanup();
 	}
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
