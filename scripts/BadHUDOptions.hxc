@@ -6,14 +6,14 @@ import flixel.util.FlxSave;
 import Std;
 
 class BadHUDOptions extends Module {
-    var save:FlxSave = new FlxSave();
+    var save:FlxSave = new FlxSave() ;
 
     // Hooks or smth like that for other classes
     var font;
     var timeBarBGStyle;
     var timeTextSize;
 
-    function new () {
+    function new() {
         super("BadHUD Options", 1);
         save = new FlxSave();
         save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
@@ -42,19 +42,19 @@ class BadHUDOptions extends Module {
         save.flush();
     }
 
-    function onStateChangeEnd(event:StateChangeScriptEvent) {
+    override function onStateChangeEnd(event:StateChangeScriptEvent) {
         super.onStateChangeEnd(event);
-        
+
         if (Std.isOfType(event.targetState, OptionsState)) {
             var preferences = event.targetState.pages.get("preferences");
-            
+
             if (preferences != null) {
                 updatetypetext();
 
                 preferences.createPrefItemCheckbox("Middlescroll", "", (value) -> {
-                save.data.middlescroll = value; }, save.data.middlescroll);
+                    save.data.middlescroll = value; }, save.data.middlescroll);
 
-                preferences.createPrefItemNumber("Note Underlay Opacity", "Changes the opacity of the Note Underlay", function (value:Float) {
+                preferences.createPrefItemNumber("Note Underlay Opacity", "Changes the opacity of the Note Underlay", function(value:Float) {
                     if (value < 0.05) {
                         save.data.underlayOpacity = 0;
                     } else if (value > 0.95) {
@@ -62,23 +62,23 @@ class BadHUDOptions extends Module {
                     } else if (value < 0.1 && value > 0.05) {
                         save.data.underlayOpacity = 0.1;
                     } else {
-                        save.data.underlayOpacity = value; 
+                        save.data.underlayOpacity = value;
                     }
-                }, function (value:Float):String { value = save.data.underlayOpacity; }, save.data.underlayOpacity, 0, 1, 0.05, 2);
+                }, function(value:Float):String { value = save.data.underlayOpacity; }, save.data.underlayOpacity, 0, 1, 0.05, 2);
 
                 preferences.createPrefItemCheckbox("Hide Opponent Notes", "", (value) -> {
-                save.data.oppNotes = value; }, save.data.oppNotes);
+                    save.data.oppNotes = value; }, save.data.oppNotes);
 
                 preferences.createPrefItemCheckbox("Comma Separated Score", "", (value) -> {
-                save.data.commaSeparatedScore = value; }, save.data.commaSeparatedScore);
+                    save.data.commaSeparatedScore = value; }, save.data.commaSeparatedScore);
 
                 preferences.createPrefItemEnum("Accuracy Type", "Changed the accuracy system", [
                     "0" => "Vanilla",
                     "1" => "Psych Engine",
                     "2" => "osu!Mania"
                 ], (value) -> { save.data.accuracyType = Std.parseInt(value); }, save.data.accuracyType);
-                
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Positioning:", "bold", function(){});
+
+                preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Positioning:", "bold", function() {});
 
                 preferences.createPrefItemEnum("Left", "Left side Elements", [
                     "0" => "None",
@@ -86,15 +86,15 @@ class BadHUDOptions extends Module {
                     "2" => "Score",
                     "3" => "Judgements and Score",
                 ], (value) -> { save.data.leftPos = Std.parseInt(value); }, save.data.leftPos);
-                
+
                 preferences.createPrefItemCheckbox("Show KPS Counter", "", (value) -> {
-                save.data.kpsCounter = value; }, save.data.kpsCounter);
-                    
+                    save.data.kpsCounter = value; }, save.data.kpsCounter);
+
                 preferences.createPrefItemCheckbox("Show Health Bar", "", (value) -> {
-                save.data.showHPBar = value; }, save.data.showHPBar);
+                    save.data.showHPBar = value; }, save.data.showHPBar);
 
                 preferences.createPrefItemCheckbox("Vertical Health Bar", "", (value) -> {
-                save.data.verticalHPBar = value; }, save.data.verticalHPBar);
+                    save.data.verticalHPBar = value; }, save.data.verticalHPBar);
 
                 preferences.createPrefItemEnum("Health Icons Position", "Change the Health Icon position", [
                     "0" => "Off",
@@ -102,7 +102,7 @@ class BadHUDOptions extends Module {
                     "2" => "Ends"
                 ], (value) -> { save.data.healthIconPos = Std.parseInt(value); }, save.data.healthIconPos);
 
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, "Time Bar:", "bold", function(){});
+                preferences.items.createItem(120, 120 * preferences.items.length + 30, "Time Bar:", "bold", function() {});
 
                 preferences.createPrefItemEnum("Time Bar Position", "Changes position of the Time Bar", [
                     "0" => "Off",
@@ -128,19 +128,19 @@ class BadHUDOptions extends Module {
                 ], (value) -> { save.data.timebarStyle = Std.parseInt(value); }, save.data.timebarStyle);
 
                 preferences.createPrefItemCheckbox("Custom Scroll Speed", "", (value) -> {
-                save.data.customScrollSpeed = value; }, save.data.customScrollSpeed);
+                    save.data.customScrollSpeed = value; }, save.data.customScrollSpeed);
 
-                preferences.createPrefItemNumber("Scroll Speed Factor", "Changes the speed of the notes", function (value:Float) {
+                preferences.createPrefItemNumber("Scroll Speed Factor", "Changes the speed of the notes", function(value:Float) {
                     save.data.scrollSpeedFactor = value;
-                }, function (value:Float):String { value = save.data.scrollSpeedFactor; }, save.data.scrollSpeedFactor, 0.1, 999, 0.1, 1);
+                }, function(value:Float):String { value = save.data.scrollSpeedFactor; }, save.data.scrollSpeedFactor, 0.1, 999, 0.1, 1);
 
-                preferences.createPrefItemNumber("HUD Opacity", "Changes the opacity of the HUD", function (value:Float) {
+                preferences.createPrefItemNumber("HUD Opacity", "Changes the opacity of the HUD", function(value:Float) {
                     if (value < 0.1) {
                         save.data.hudOpacity = 0;
                     } else {
-                        save.data.hudOpacity = value; 
+                        save.data.hudOpacity = value;
                     }
-                }, function (value:Float):String { value = save.data.hudOpacity; }, save.data.hudOpacity, 0.0, 1.0, 0.1, 1);
+                }, function(value:Float):String { value = save.data.hudOpacity; }, save.data.hudOpacity, 0.0, 1.0, 0.1, 1);
 
                 preferences.createPrefItemEnum("HUD Font", "Changed the font of the HUD", [
                     "0" => "VCR OSD Mono (Vanilla)",
@@ -154,7 +154,7 @@ class BadHUDOptions extends Module {
                 ], (value) -> { save.data.hudFont = Std.parseInt(value); }, save.data.hudFont);
 
                 preferences.createPrefItemNumber("HUD Font Size", "The font size of the HUD elements", function(value) {
-                save.data.hudFontSize = Std.int(value);
+                    save.data.hudFontSize = Std.int(value);
                 }, null, save.data.hudFontSize, 0, 999, 1, 0);
             }
         }
@@ -177,14 +177,14 @@ class BadHUDOptions extends Module {
             case 0: // px = 21;
                 font = "vcr.ttf";
             case 1: // px = 16;
-                font = "VCRosdNEUE.ttf";  
+                font = "VCRosdNEUE.ttf";
             case 2: // px = 16;
                 font = "Minecraft.ttf";
-            case 3:  // px = 11;
+            case 3: // px = 11;
                 font = "Retro Gaming.ttf";
-            case 4:  // px = ?;
+            case 4: // px = ?;
                 font = "RobloxFont-Regular.ttf";
-            case 5:  // px = ?;
+            case 5: // px = ?;
                 font = "Super Mario 64.ttf";
             case 6: // px = ?;
                 font = "New Super Mario Font U.ttf";
