@@ -16,9 +16,8 @@ class ExtraStrumline extends Module {
     var loaded:Bool = false ;
     var state:PlayState;
     var laneUnderlay:FlxSprite;
-    var leftGradient;
-    var rightGradient;
-    var disableStuffTemporary:Bool = false ;
+    var leftGradient:FlxSprite;
+    var rightGradient:FlxSprite;
 
     var excludedSongs = ["Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2"] ;
 
@@ -82,7 +81,6 @@ class ExtraStrumline extends Module {
                 state.add(rightGradient);
             }
 
-
             loaded = true;
         }
     }
@@ -126,7 +124,7 @@ class ExtraStrumline extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (!loaded || state == null || disableStuffTemporary) return;
+        if (!loaded || state == null) return;
         if (save.data.middlescroll && excludedSongs.indexOf(state.currentChart.songName) == -1 && !save.data.oppNotes) updateNotes();
         updatePosition();
     }
@@ -134,8 +132,13 @@ class ExtraStrumline extends Module {
     function cleanup() {
         var stuffToRemove = [laneUnderlay, leftGradient, rightGradient];
 
+        // Ensure all elements are fully killed and reset
         for (thing in stuffToRemove) {
-            if (thing != null) thing == null;
+            if (thing != null) {
+                state.remove(thing);
+                thing.destroy();
+                thing = null;
+            }
         }
     }
 

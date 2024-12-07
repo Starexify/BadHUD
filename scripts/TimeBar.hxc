@@ -46,7 +46,7 @@ class TimeBar extends Module {
             isDownscroll = Preferences.downscroll;
 
             // Binding with BadHUDOptions for fonts
-		    badHUDOptions = new BadHUDOptions();
+		    var badHUDOptions = new BadHUDOptions();
 		    textFont = badHUDOptions.font;
             timeBarBGStyle = badHUDOptions.timeBarBGStyle;
             timeTextSize = badHUDOptions.timeTextSize;
