@@ -1,0 +1,189 @@
+import funkin.modding.module.Module;
+import funkin.play.notes.Strumline;
+import funkin.play.PlayState;
+
+import flixel.util.FlxSave;
+import flixel.FlxSprite;
+import flixel.FlxG;
+
+import openfl.display.BitmapData;
+
+import Std;
+
+class ExtraStrumline extends Module {
+    var save:FlxSave;
+    var loaded:Boolean = false;
+    var state:PlayState;
+    var laneUnderlay:FlxSprite;
+    var leftGradient;
+    var rightGradient;
+    
+    var excludedSongs = ["Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2"];
+
+    function new() {
+		super("ExtraStrumline");
+		save = new FlxSave();
+		save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
+	}
+
+    override function onSongLoaded(event:SongLoadScriptEvent) {
+        super.onSongLoaded(event);
+        if (!loaded) {
+            state = PlayState.instance;
+
+            // Center player strumline
+            if (save.data.middlescroll && excludedSongs.indexOf(state.currentChart.songName) == -1) {
+                state.comboPopUps.offsets = [450, -55];
+                state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
+
+                // Opponent Strumline
+                if (!save.data.oppNotes) {
+                    var rightXOffset = -150;
+                    if (save.data.verticalHPBar) {
+                        rightXOffset = -50;
+                    }
+
+                    // Place last 2 notes on right side
+                    for (i in 2...4) {
+                        var note = state.opponentStrumline.strumlineNotes.members[i];
+                        note.x = FlxG.width - state.opponentStrumline.width - rightXOffset + Strumline.NOTE_SPACING * (i - 2);
+                    }
+                } else {
+                    state.opponentStrumline.visible = false;
+                }
+            }
+
+            // Create the note underlay with gradient
+            if (save.data.underlayOpacity > 0) {
+                laneUnderlay = new FlxSprite(0, 0).makeGraphic(state.playerStrumline.get_width(), FlxG.height * 2);
+                laneUnderlay.x = state.playerStrumline.x;
+                laneUnderlay.color = 0x000000;
+                laneUnderlay.alpha = save.data.underlayOpacity;
+                laneUnderlay.scrollFactor.set();
+                laneUnderlay.zIndex = -1;
+                laneUnderlay.cameras = [state.camHUD];
+                state.add(laneUnderlay);
+                
+                var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
+                
+                leftGradient = createLeftGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity);
+                leftGradient.x = state.playerStrumline.x - fadeRegionWidth;
+                leftGradient.scrollFactor.set();
+                leftGradient.zIndex = -1;
+                leftGradient.cameras = [state.camHUD];
+                state.add(leftGradient);
+                
+                rightGradient = createRightGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity);
+                rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
+                rightGradient.scrollFactor.set();
+                rightGradient.zIndex = -1;
+                rightGradient.cameras = [state.camHUD];
+                state.add(rightGradient);
+            }
+            
+            loaded = true;
+        }
+    }
+
+    function updateNotes() {
+        var alpha = 0.3;
+        for (staticNote in state.opponentStrumline.strumlineNotes.members) {
+            staticNote.alpha = alpha;
+        }
+
+        for (note in state.opponentStrumline.notes.members) {
+            if (note == null || !note.alive) continue;
+            note.x = state.opponentStrumline.strumlineNotes.members[note.direction].x + (state.opponentStrumline.strumlineNotes.members[note.direction].width - note.width) * 0.5;
+            note.alpha = alpha;
+        }
+
+        for (note in state.opponentStrumline.holdNotes.members) {
+            if (note == null || !note.alive) continue;
+            note.x = state.opponentStrumline.strumlineNotes.members[note.noteDirection].x + (state.opponentStrumline.strumlineNotes.members[note.noteDirection].width - note.width) * 0.5;
+            note.alpha = alpha;
+        }
+
+        for (note in state.opponentStrumline.noteHoldCovers.members) {
+            if (note == null || !note.alive) continue;
+            note.x = state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].x + (state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].width - note.width) * 0.5;
+            note.alpha = alpha;
+        }
+    }
+
+    function updatePosition() {
+        if (!loaded || state == null) return;
+        var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
+
+        laneUnderlay.x = state.playerStrumline.x;
+        leftGradient.x = state.playerStrumline.x - fadeRegionWidth;
+        rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
+    }
+
+    override function onBeatHit(event:SongTimeScriptEvent) {
+		super.onBeatHit(event);
+        if (loaded) updatePosition();
+    }
+
+    override function onUpdate(event:UpdateScriptEvent) {
+        if (!loaded || state == null) return;
+        if (save.data.middlescroll && excludedSongs.indexOf(state.currentChart.songName) == -1 && !save.data.oppNotes) updateNotes();
+        super.onUpdate(event);
+        updatePosition();
+    }
+    
+    function cleanup() {
+		var stuffToRemove = [laneUnderlay, leftGradient, rightGradient];
+
+		for (thing in stuffToRemove) {
+			if (thing != null) thing == null;
+		}
+	}
+    
+    function createLeftGradient(width:Int, height:Int, alphaStart:Float, alphaEnd:Float):FlxSprite {
+        var gradientSprite = new FlxSprite();
+        var bitmap = new BitmapData(width, height, true, 0x0);
+    
+        // Left gradient: from fully opaque to transparent on the left side.
+        for (x in 0...width) {
+            var alpha:Float = alphaStart + (alphaEnd - alphaStart) * (x / width); // Fades from right to left
+            alpha = Math.max(0, Math.min(alpha, 1));
+            var color = (Std.int(alpha * 255) << 24) | 0x000000;
+            for (y in 0...height) {
+                bitmap.setPixel32(x, y, color);
+            }
+        }
+    
+        gradientSprite.pixels = bitmap;
+        gradientSprite.dirty = true;
+        return gradientSprite;
+    }
+    
+    function createRightGradient(width:Int, height:Int, alphaStart:Float, alphaEnd:Float):FlxSprite {
+        var gradientSprite = new FlxSprite();
+        var bitmap = new BitmapData(width, height, true, 0x0);
+    
+        // Right gradient: from fully opaque to transparent on the right side.
+        for (x in 0...width) {
+            var alpha:Float = alphaStart + (alphaEnd - alphaStart) * (1.0 - (x / width)); // Fades from left to right
+            alpha = Math.max(0, Math.min(alpha, 1));
+            var color = (Std.int(alpha * 255) << 24) | 0x000000;
+            for (y in 0...height) {
+                bitmap.setPixel32(x, y, color);
+            }
+        }
+    
+        gradientSprite.pixels = bitmap;
+        gradientSprite.dirty = true;
+        return gradientSprite;
+    }
+
+    function onSongEnd() { loaded = false; cleanup();}
+    
+    override function onSongRetry(event:ScriptEvent) { super.onSongRetry(event); cleanup(); }
+    
+    override function onStateChangeEnd(event:StateChangeScriptEvent) {
+        if (!Std.isOfType(event.targetState, PlayState)) {            
+            loaded = false;
+        }
+    }
+}

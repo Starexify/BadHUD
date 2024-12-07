@@ -1,11 +1,11 @@
 import funkin.modding.module.Module;
-import funkin.play.PlayState;
 import funkin.Paths;
+import funkin.play.PlayState;
 
-import flixel.text.FlxTextBorderStyle;
-import flixel.text.FlxText;
-import flixel.util.FlxSave;
 import flixel.FlxG;
+import flixel.text.FlxText;
+import flixel.text.FlxTextBorderStyle;
+import flixel.util.FlxSave;
 
 import Std;
 import Math;
@@ -15,6 +15,8 @@ class CustomScrollSpeed extends Module {
 	var loaded:Boolean = false;
 	var state:PlayState;
 
+    var speedText:FlxText;
+
     function new() {
 		super("CustomScrollSpeed");
 		save = new FlxSave();
@@ -23,34 +25,49 @@ class CustomScrollSpeed extends Module {
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
 		super.onSongLoaded(event);
-
         if (!loaded && save.data.customScrollSpeed) {
-			state = PlayState.instance;
-            
+            state = PlayState.instance;
             setSpeed(state);
 
-            // Debug Stuff
-            // var scrollSpeedText:FlxText;
-			// var scrollSpeedTextXPos = FlxG.width * 0.84;
-			// var scrollSpeedTextYPos = FlxG.height * 0.98;
-	
-			// scrollSpeedText = new FlxText(0, 0, 0, "", 20);
-			// scrollSpeedText.setFormat(Paths.font("vcr.ttf"), 15, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
-            // scrollSpeedText.x = scrollSpeedTextXPos - scrollSpeedText.width;
-            // scrollSpeedText.y = scrollSpeedTextYPos - scrollSpeedText.height;
-			// scrollSpeedText.scrollFactor.set();
-			// scrollSpeedText.zIndex = 851;
-			// state.add(scrollSpeedText);
-	
-			// scrollSpeedText.text = 'Scroll Speed: ' + Math.round(save.data.scrollSpeedFactor * 10) / 10;
-			// scrollSpeedText.cameras = [state.camHUD];
+            // Binding with BadHUDOptions for font and size
+            badHUDOptions = new BadHUDOptions();
+            font = badHUDOptions.font;
+            textSize = save.data.hudFontSize;
 
+            // Create Scroll Speed Text Element
+            speedText = new FlxText(20, FlxG.height * 0.94, FlxG.width - 40, "", 20);
+			speedText.setFormat(Paths.font(font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+			speedText.scrollFactor.set(0, 0);
+            speedText.alignment = "right";
+            speedText.cameras = [state.camHUD];
+			state.add(speedText);
+            
             loaded = true;
         }
-
     }
 
-    function onSongEnd() {loaded = false;}
+    function onSongEnd() { loaded = false; }
+
+    override function onCountdownStart(event:CountdownScriptEvent) {
+        super.onCountdownStart(event);
+        // Fix for scroll speed resetting on song reset
+        if (!loaded || state == null) return;
+        setSpeed(state);
+    }
+
+    override function onUpdate(event:UpdateScriptEvent) {
+        super.onUpdate(event);
+        if (!loaded || state == null) return;
+
+        if (speedText != null) {
+            if (state.isGamePaused) {
+                speedText.visible = true;
+                speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + Math.round(save.data.scrollSpeedFactor * 10) / 10;
+            } else {
+                speedText.visible = false;
+            }
+        }
+    }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
 		super.onStateChangeEnd(event);
@@ -59,7 +76,8 @@ class CustomScrollSpeed extends Module {
         }
     }
 
-    function setSpeed(state) {
-        state.currentChart.scrollSpeed = save.data.scrollSpeedFactor;
+    function setSpeed(state:PlayState) {
+        state.playerStrumline.scrollSpeed = Math.round(save.data.scrollSpeedFactor * 10) / 10;
+        state.opponentStrumline.scrollSpeed = Math.round(save.data.scrollSpeedFactor * 10) / 10;
     }
 }

@@ -1,9 +1,7 @@
 import funkin.modding.module.Module;
-import funkin.Highscore;
 import funkin.Paths;
 import funkin.Preferences;
 import funkin.play.PlayState;
-import funkin.ui.debug.charting.ChartEditorState;
 
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
@@ -16,7 +14,6 @@ import flixel.FlxSprite;
 import flixel.FlxG;
 
 import Std;
-import Math;
 
 // This script may have used some code from other scripts so i´ll leave some credits below
 /*
@@ -24,16 +21,19 @@ Psych Engine HUD V-Slice by nubz4lif
 OG Psych Engine HUD by Shadow Mario and his team
 */
 class TimeBar extends Module {
+    var save:FlxSave;
     var loaded:Boolean = false;
     var state:PlayState;
-	var save:FlxSave;
+    var isDownscroll;
+
 	var timeBar;
 	var timeBarBG;
 	var timeText;
-    var textFont:Str;
-    var timeBarBG:Str;
-    var timeTextSize:Int;
 
+    var textFont;
+    var timeBarBGStyle;
+    var timeTextSize;
+    
 	function new() {
 		super("TimeBar");
 		save = new FlxSave();
@@ -42,111 +42,126 @@ class TimeBar extends Module {
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
         super.onSongLoaded(event);
-        if(!loaded) {
+        if (!loaded && save.data.timebarPosition != 0) {
             state = PlayState.instance;
-            if (save.data.showTimeBar) {
-                var timeBarZIndex = 802;
-                var timeBarBGy;
+            isDownscroll = Preferences.downscroll;
 
-                switch (save.data.timeBarType) {
-                    case 0: // Psych Engine
-                    timeTextSize = 28;
-                    case 1: // Minimal
-                    timeTextSize = 20;
-                    case 2: // Minimal Rounded
-                    timeTextSize = 24;
-                }
+            // Binding with BadHUDOptions for fonts
+		    badHUDOptions = new BadHUDOptions();
+		    textFont = badHUDOptions.font;
+            timeBarBGStyle = badHUDOptions.timeBarBGStyle;
+            timeTextSize = badHUDOptions.timeTextSize;
 
-                switch (save.data.fontType) {
-                    case 0: // Vanilla
-                        textFont = "vcr.ttf";
-                    case 1:
-                        textFont = "PressStart2P.ttf";
-                        timeTextSize -= 5;
-                }
-    
-                timeText = new FlxText(0, 19, 400, "", 32);
-                timeText.setFormat(Paths.font(textFont), timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
-                timeText.scrollFactor.set();
-                timeText.screenCenter(0x01);
-                timeText.borderSize = 1.75;
-                timeText.visible = true;
-                timeText.zIndex = timeBarZIndex + 2;
-                if (Preferences.downscroll) timeText.y = FlxG.height - 34;
+            var timeBarZIndex = 802;
+            var timeBarXPos = FlxG.width * 0.82;
+            var timeBarYPos = FlxG.height * 0.5;
 
-                switch (save.data.timeBarType) {
-                    case 0: // Psych Engine
-                    timeBarBG = "timeBarPsychEngine";
-                    timeBarBGy = timeText.y + (timeText.height / 4);
-                    case 1: // Minimal
-                    timeBarBG = "timeBarMinimal";
-                    timeBarBGy = timeText.y + (timeText.height / 10);
-                    case 2: // Minimal Rounded
-                    timeBarBG = "timeBarMinimalRounded";
-                    timeBarBGy = timeText.y + (timeText.height / 10);
-                }
-
-                timeBarBG = new FlxSprite(0, timeBarBGy).loadGraphic(Paths.image(timeBarBG));
-                timeBarBG.screenCenter(0x01);
-                timeBarBG.zIndex = timeBarZIndex;
-
-                var timeBarHeight = timeBarBG.height - 6;
-                var timeBarY = timeBarBG.y + 3;
-
-                switch (save.data.timeBarType) {
-                    case 0: // Psych Engine
-                    case 1: // Minimal
-                    case 2: // Minimal Rounded
-                    timeBarY = timeBarBG.y + 2;
-                    timeBarHeight = timeBarBG.height - 4;
-                }
-    
-                timeBar = new FlxBar(timeBarBG.x + 3, timeBarY, null, timeBarBG.width - 6, timeBarHeight);
-                timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
-                timeBar.scrollFactor.x = 0;
-                timeBar.scrollFactor.y = 0;
-                timeBar.numDivisions = 200;
-                timeBar.screenCenter(0x01);
+            setupTimeText(timeBarXPos, timeBarYPos, timeBarZIndex);
+            setupTimeBarBackground(timeBarZIndex);
+            setupTimeBarFill(timeBarZIndex);
+        
+            // Adjust zIndexes
+            switch (save.data.timebarStyle) {
+                case 0: // Psych Engine
+                case 1: // Minimal
+                case 2: // Minimal Rounded
+                timeText.zIndex = timeBarZIndex + 3;
+                timeBarBG.zIndex = timeBarZIndex + 2;
                 timeBar.zIndex = timeBarZIndex + 1;
-
-                switch (save.data.timeBarType) {
-                    case 0: // Psych Engine
-                    case 1: // Minimal
-                    case 2: // Minimal Rounded
-                    timeText.zIndex = timeBarZIndex + 3;
-                    timeBarBG.zIndex = timeBarZIndex + 2;
-                    timeBar.zIndex = timeBarZIndex + 1;
-                }
-    
-                timeText.cameras = timeBarBG.cameras = timeBar.cameras = [state.camHUD];
-    
-                timeBarBG.visible = false;
-                timeBar.visible = false;
-                timeText.visible = false;
-    
-                state.add(timeBar);
-                state.add(timeBarBG);
-                state.add(timeText);
             }
+
+            adjustComponentsForVerticalTimeBar();
 
             loaded = true;
         }
     }
-    
-    function onSongEnd() {
-        loaded = false;
+
+    function setupTimeText(xPos:Float, yPos:Float, zIndex:Int) {
+        timeText = new FlxText(0, 0, 400, "", 32);
+        timeText.setFormat(Paths.font(textFont), timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        timeText.borderSize = 1.75;
+        timeText.scrollFactor.set(0, 0);
+        timeText.zIndex = zIndex + 2;
+
+        switch (save.data.timebarPosition) {
+            case 0: // Off
+            case 1: // Down
+                timeText.y = FlxG.height - 34;
+            case 2: // Up
+                timeText.y = 16;
+            case 3: // Vertical (Right Side)
+                timeText.x = xPos;
+                timeText.y = yPos;
+        }
+
+        state.add(timeText);
+        timeText.cameras = [state.camHUD];
+        timeText.visible = false;
     }
+
+    function setupTimeBarBackground(zIndex:Int) {
+        timeBarBG = new FlxSprite(timeText.x, timeText.y).loadGraphic(Paths.image(timeBarBGStyle));
+        timeBarBG.scrollFactor.set(0, 0);
+        timeBarBG.zIndex = zIndex;
+
+        switch (save.data.timebarPosition) {
+            case 0: // Off
+            case 1: // Down
+                timeBarBG.y = timeText.y + 2;
+                if (save.data.hudFont == 0) {
+                    timeBarBG.y = timeText.y + 5;
+                }
+            case 2: // Up
+                timeBarBG.y = timeText.y + 2;
+                if (save.data.hudFont == 0) {
+                    timeBarBG.y = timeText.y + 5;
+                }
+            case 3: // Vertical (Right Side)
+                timeBarBG.x = timeText.x + (timeText.height / 5);
+        }
+
+        state.add(timeBarBG);
+        timeBarBG.cameras = [state.camHUD];
+        timeBarBG.visible = false;
+    }
+
+    function setupTimeBarFill(zIndex:Int) {
+        var timeBarHeight = timeBarBG.height - (save.data.timeBarType == 0 ? 6 : 4);
+        var timeBarY = timeBarBG.y + (save.data.timeBarType == 0 ? 3 : 2);
+    
+        timeBar = new FlxBar(timeBarBG.x + 3, timeBarY, null, timeBarBG.width - 5, timeBarHeight);
+        timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
+        timeBar.scrollFactor.set();
+        timeBar.numDivisions = 200;
+        timeBar.zIndex = zIndex + 1;
+        state.add(timeBar);
+        timeBar.cameras = [state.camHUD];
+        timeBar.visible = false;
+    }
+
+    function adjustComponentsForVerticalTimeBar() {
+        if (save.data.timebarPosition == 3) { // Vertical Time Bar
+            timeText.angle = timeBarBG.angle = timeBar.angle = 90;
+            timeText.zIndex = state.iconP1.zIndex + 1;
+        } else {
+            timeText.screenCenter(0x01);
+            timeBarBG.screenCenter(0x01);
+            timeBar.screenCenter(0x01);
+        }
+    }
+    
+    function onSongEnd() { loaded = false; }
 
     override function onSongStart(event:ScriptEvent) {
 		super.onSongStart(event);
 
-		var timeBarObjects = [timeBarBG, timeBar, timeText];
+        var timeBarObjects = [timeBarBG, timeBar, timeText];
 
 		for (obj in timeBarObjects) {
-			if(obj != null && (obj.alpha != 1 || !obj.visible)) {
+			if(obj != null && (obj.alpha != save.data.hudOpacity || !obj.visible)) {
 				obj.alpha = 0;
 
-				FlxTween.tween(obj, {alpha: 1}, 0.5, {ease: FlxEase.circOut});
+				FlxTween.tween(obj, {alpha: save.data.hudOpacity}, 0.5, {ease: FlxEase.circOut});
 				obj.visible = true;
 			}
 		}
@@ -159,8 +174,27 @@ class TimeBar extends Module {
 		if (timeBar != null && timeBar.visible) {
 			timeBar.value = (state.conductorInUse.songPosition / state.currentSongLengthMs) * 100;
 			timeBar.updateBar();
-
-			timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
+            var time;
+            switch (save.data.timebarType) {
+                case 0: // Off
+                case 1: // Time Left
+                    time = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
+                    timeText.text = time;
+                case 2: // Time Left / Total
+                    time = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
+                    timeText.text = time;
+                case 3: // Elapsed
+                    time = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false);
+                    timeText.text = time;
+                case 4: // Elapsed / Total
+                    time = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
+                    timeText.text = time;
+                case 5: // Elapsed / Total
+                    time = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
+                    timeText.text = time;
+                case 6: // Song Name
+                    timeText.text = state.currentChart.songName;
+            }
 		}
 	}
 

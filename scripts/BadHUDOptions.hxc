@@ -1,25 +1,17 @@
 import funkin.modding.module.Module;
-import funkin.Paths;
-import funkin.audio.FunkinSound;
 import funkin.ui.options.OptionsState;
 
 import flixel.util.FlxSave;
 
 import Std;
 
-// This script may have used some code from other scripts so I'll leave credits below
-/*
-More Strums Options by HEAVYSTYLES
-*/
 class BadHUDOptions extends Module {
     var save:FlxSave = new FlxSave();
-    var holdPressTime:Float = 0.0;
-    var optionState;
-    var accuracy;
-    var timeBar;
-    var accuracyTypeText:String = "";
-    var timebarTypeText:String = "";
-    var fontTypeText:String = "";
+
+    // Hooks or smth like that for other classes
+    var font;
+    var timeBarBGStyle;
+    var timeTextSize;
 
     function new () {
         super("BadHUD Options", "1");
@@ -27,203 +19,179 @@ class BadHUDOptions extends Module {
         save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
 
         // Options when game loaded for first time
-        save.data.showJudgementsScreen = (save.data.showJudgementsScreen != null) ? save.data.showJudgementsScreen : true;
-        save.data.verticalScoreBar = (save.data.verticalScoreBar != null) ? save.data.verticalScoreBar : false;
-        save.data.verticalHPBar = (save.data.verticalHPBar != null) ? save.data.verticalHPBar : false;
-        save.data.showTimeBar = (save.data.showTimeBar != null) ? save.data.showTimeBar : true;
-        save.data.timeBarType = (save.data.timeBarType != null) ? save.data.timeBarType : 0;
+        save.data.middlescroll = (save.data.middlescroll != null) ? save.data.middlescroll : false;
+        save.data.underlayOpacity = (save.data.underlayOpacity != null) ? save.data.underlayOpacity : 0;
+        save.data.oppNotes = (save.data.oppNotes != null) ? save.data.oppNotes : false;
+        save.data.commaSeparatedScore = (save.data.commaSeparatedScore != null) ? save.data.commaSeparatedScore : false;
         save.data.accuracyType = (save.data.accuracyType != null) ? save.data.accuracyType : 0;
+        save.data.leftPos = (save.data.leftPos != null) ? save.data.leftPos : 1;
         save.data.kpsCounter = (save.data.kpsCounter != null) ? save.data.kpsCounter : false;
-        save.data.fontType = (save.data.fontType != null) ? save.data.fontType : 0;
+        save.data.showHPBar = (save.data.showHPBar != null) ? save.data.showHPBar : true;
+        save.data.verticalHPBar = (save.data.verticalHPBar != null) ? save.data.verticalHPBar : false;
+        save.data.timebarPosition = (save.data.timebarPosition != null) ? save.data.timebarPosition : 1;
+        save.data.timebarType = (save.data.timebarType != null) ? save.data.timebarType : 1;
+        save.data.timebarStyle = (save.data.timebarStyle != null) ? save.data.timebarStyle : 0;
         save.data.customScrollSpeed = (save.data.customScrollSpeed != null) ? save.data.customScrollSpeed : false;
         save.data.scrollSpeedFactor = (save.data.scrollSpeedFactor != null) ? save.data.scrollSpeedFactor : 1.8;
+        save.data.hudOpacity = (save.data.hudOpacity != null) ? save.data.hudOpacity : 1;
+        save.data.hudFont = (save.data.hudFont != null) ? save.data.hudFont : 0;
+        save.data.hudFontSize = (save.data.hudFontSize != null) ? save.data.hudFontSize : 21;
+        save.data.healthIconPos = (save.data.healthIconPos != null) ? save.data.healthIconPos : 1;
+
+        updatetypetext();
         save.flush();
     }
 
     function onStateChangeEnd(event:StateChangeScriptEvent) {
         super.onStateChangeEnd(event);
-        optionState = null;
         
         if (Std.isOfType(event.targetState, OptionsState)) {
             var preferences = event.targetState.pages.get("preferences");
-
-            optionState = event.targetState;
             
             if (preferences != null) {
                 updatetypetext();
 
-                preferences.createPrefItemCheckbox("Show Judgements On Left", "", (value) -> {
-                save.data.showJudgementsScreen = value; }, save.data.showJudgementsScreen);
+                preferences.createPrefItemCheckbox("Middlescroll", "", (value) -> {
+                save.data.middlescroll = value; }, save.data.middlescroll);
+
+                preferences.createPrefItemNumber("Note Underlay Opacity", "Changes the opacity of the Note Underlay", function (value:Float) {
+                    if (value < 0.05) {
+                        save.data.underlayOpacity = 0;
+                    } else if (value > 0.95) {
+                        save.data.underlayOpacity = 1;
+                    } else if (value < 0.1 && value > 0.05) {
+                        save.data.underlayOpacity = 0.1;
+                    } else {
+                        save.data.underlayOpacity = value; 
+                    }
+                }, function (value:Float):String { value = save.data.underlayOpacity; }, save.data.underlayOpacity, 0, 1, 0.05, 2);
+
+                preferences.createPrefItemCheckbox("Hide Opponent Notes", "", (value) -> {
+                save.data.oppNotes = value; }, save.data.oppNotes);
+
+                preferences.createPrefItemCheckbox("Comma Separated Score", "", (value) -> {
+                save.data.commaSeparatedScore = value; }, save.data.commaSeparatedScore);
+
+                preferences.createPrefItemEnum("Accuracy Type", "Changed the accuracy system", [
+                    "0" => "Vanilla",
+                    "1" => "Psych Engine",
+                    "2" => "osu!Mania"
+                ], (value) -> { save.data.accuracyType = Std.parseInt(value); }, save.data.accuracyType);
                 
-                preferences.createPrefItemCheckbox("Move Score On Left", "", (value) -> {
-                save.data.verticalScoreBar = value; }, save.data.verticalScoreBar);
-                
-                preferences.createPrefItemCheckbox("Vertical Health Bar", "", (value) -> {
-                save.data.verticalHPBar = value; }, save.data.verticalHPBar);
+                preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Positioning:", "bold", function(){});
 
-                preferences.createPrefItemCheckbox("Show Time Bar", "", (value) -> {
-                save.data.showTimeBar = value; }, save.data.showTimeBar);
-
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, timebarTypeText, "default", function(){});
-                preferences.items.getFirst((anything)->{timeBar = anything;});
-
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, accuracyTypeText, "default", function(){});
-                preferences.items.getFirst((anything)->{accuracy = anything;});
+                preferences.createPrefItemEnum("Left", "Left side Elements", [
+                    "0" => "None",
+                    "1" => "Judgements",
+                    "2" => "Score",
+                    "3" => "Judgements and Score",
+                ], (value) -> { save.data.leftPos = Std.parseInt(value); }, save.data.leftPos);
                 
                 preferences.createPrefItemCheckbox("Show KPS Counter", "", (value) -> {
                 save.data.kpsCounter = value; }, save.data.kpsCounter);
+                    
+                preferences.createPrefItemCheckbox("Show Health Bar", "", (value) -> {
+                save.data.showHPBar = value; }, save.data.showHPBar);
 
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, fontTypeText, "default", function(){});
-                preferences.items.getFirst((anything)->{font = anything;});
+                preferences.createPrefItemCheckbox("Vertical Health Bar", "", (value) -> {
+                save.data.verticalHPBar = value; }, save.data.verticalHPBar);
+
+                preferences.createPrefItemEnum("Health Icons Position", "Change the Health Icon position", [
+                    "0" => "Off",
+                    "1" => "Default",
+                    "2" => "Ends"
+                ], (value) -> { save.data.healthIconPos = Std.parseInt(value); }, save.data.healthIconPos);
+
+                preferences.items.createItem(120, 120 * preferences.items.length + 30, "Time Bar:", "bold", function(){});
+
+                preferences.createPrefItemEnum("Time Bar Position", "Changes position of the Time Bar", [
+                    "0" => "Off",
+                    "1" => "Down",
+                    "2" => "Up",
+                    "3" => "Vertical"
+                ], (value) -> { save.data.timebarPosition = Std.parseInt(value); }, save.data.timebarPosition);
+
+                preferences.createPrefItemEnum("Time Bar Display", "Changes the display of the Time Bar", [
+                    "0" => "Off",
+                    "1" => "Time Left",
+                    "2" => "Time Left / Total",
+                    "3" => "Elapsed",
+                    "4" => "Elapsed / Total",
+                    "5" => "Elapsed / Time Left",
+                    "6" => "Song Name"
+                ], (value) -> { save.data.timebarType = Std.parseInt(value); }, save.data.timebarType);
+
+                preferences.createPrefItemEnum("Time Bar Style", "Changes the style of the Time Bar", [
+                    "0" => "Psych Engine",
+                    "1" => "Minimal",
+                    "2" => "Minimal Rounded"
+                ], (value) -> { save.data.timebarStyle = Std.parseInt(value); }, save.data.timebarStyle);
 
                 preferences.createPrefItemCheckbox("Custom Scroll Speed", "", (value) -> {
                 save.data.customScrollSpeed = value; }, save.data.customScrollSpeed);
 
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, "Scroll Speed", "default" , function(){});
-                preferences.items.getFirst((anything)->{scrollSpeed = anything;});
+                preferences.createPrefItemNumber("Scroll Speed Factor", "Changes the speed of the notes", function (value:Float) {
+                    save.data.scrollSpeedFactor = value;
+                }, function (value:Float):String { value = save.data.scrollSpeedFactor; }, save.data.scrollSpeedFactor, 0.1, 999, 0.1, 1);
 
-                scrollSpeed.label.text = "Scroll Speed = " + Math.round(save.data.scrollSpeedFactor * 10) / 10; 
+                preferences.createPrefItemNumber("HUD Opacity", "Changes the opacity of the HUD", function (value:Float) {
+                    if (value < 0.1) {
+                        save.data.hudOpacity = 0;
+                    } else {
+                        save.data.hudOpacity = value; 
+                    }
+                }, function (value:Float):String { value = save.data.hudOpacity; }, save.data.hudOpacity, 0.0, 1.0, 0.1, 1);
+
+                preferences.createPrefItemEnum("HUD Font", "Changed the font of the HUD", [
+                    "0" => "VCR OSD Mono (Vanilla)",
+                    "1" => "VCR OSD Neue",
+                    "2" => "Minecraft",
+                    "3" => "Retro Gaming",
+                    "4" => "Roblox",
+                    "5" => "Super Mario 64",
+                    "6" => "New Super Mario Font U",
+                    "7" => "Karmatic Arcade"
+                ], (value) -> { save.data.hudFont = Std.parseInt(value); }, save.data.hudFont);
+
+                preferences.createPrefItemNumber("HUD Font Size", "The font size of the HUD elements", function(value) {
+                save.data.hudFontSize = Std.int(value);
+                }, null, save.data.hudFontSize, 0, 999, 1, 0);
             }
         }
     }
 
     function updatetypetext() {
-        switch (save.data.accuracyType) {
+        switch (save.data.timebarStyle) {
             case 0:
-                accuracyTypeText = "Accuracy Type: Vanilla";
+                timeBarBGStyle = "timeBarPsychEngine";
+                timeTextSize = 26;
             case 1:
-                accuracyTypeText = "Accuracy Type: Psych Engine";
+                timeBarBGStyle = "timeBarMinimal";
+                timeTextSize = 20;
             case 2:
-                accuracyTypeText = "Accuracy Type: osu!Mania";
+                timeBarBGStyle = "timeBarMinimalRounded";
+                timeTextSize = 24;
         }
 
-        switch (save.data.timeBarType) {
-            case 0:
-                timebarTypeText = "Time Bar Type: Psych Engine";
-            case 1:
-                timebarTypeText = "Time Bar Type: Minimal";
-            case 2:
-                timebarTypeText = "Time Bar Type: Minimal Rounded";
+        switch (save.data.hudFont) {
+            case 0: // px = 21;
+                font = "vcr.ttf";
+            case 1: // px = 16;
+                font = "VCRosdNEUE.ttf";  
+            case 2: // px = 16;
+                font = "Minecraft.ttf";
+            case 3:  // px = 11;
+                font = "Retro Gaming.ttf";
+            case 4:  // px = ?;
+                font = "RobloxFont-Regular.ttf";
+            case 5:  // px = ?;
+                font = "Super Mario 64.ttf";
+            case 6: // px = ?;
+                font = "New Super Mario Font U.ttf";
+            case 7: // px = ?;
+                font = "ka1.ttf";
         }
 
-        switch (save.data.fontType) {
-            case 0:
-                fontTypeText = "Font Type: VCR OSD Mono (Vanilla)";
-            case 1:
-                fontTypeText = "Font Type: Press Start 2P";
-        }
         save.flush();
-    }
-
-    function onUpdate(event:UpdateScriptEvent) {
-        super.onUpdate(event);
-        
-        if (optionState != null) {
-            var preferences = optionState.pages.get("preferences");
-            switch (preferences.items.selectedItem) {
-                case accuracy: // Accuracy Types
-                    if (optionState.controls.UI_RIGHT) {
-                        if (optionState.controls.UI_RIGHT_P) { 
-                            save.data.accuracyType += 1;
-                            save.flush();
-                            playScrollSound();
-                        }
-                    } else if (optionState.controls.UI_LEFT) {
-                        if (optionState.controls.UI_LEFT_P) {
-                            save.data.accuracyType -= 1;
-                            save.flush();
-                            playScrollSound();
-                        }
-                    }
-                        
-                    if (save.data.accuracyType < 0) save.data.accuracyType = 2;
-                    if (save.data.accuracyType > 2) save.data.accuracyType = 0;
-
-                    updatetypetext();
-                    accuracy.label.text = accuracyTypeText;
-
-                case timeBar: // Timer Bar Types
-                    if (optionState.controls.UI_RIGHT) {
-                        if (optionState.controls.UI_RIGHT_P) { 
-                            save.data.timeBarType += 1;
-                            save.flush();
-                            playScrollSound();
-                        }
-                    } else if (optionState.controls.UI_LEFT) {
-                        if (optionState.controls.UI_LEFT_P) {
-                            save.data.timeBarType -= 1;
-                            save.flush();
-                            playScrollSound();
-                        }
-                    }
-                    
-                    if (save.data.timeBarType < 0) save.data.timeBarType = 2;
-                    if (save.data.timeBarType > 2) save.data.timeBarType = 0;
-
-                    updatetypetext();
-                    timeBar.label.text = timebarTypeText;
-
-                case font: // Timer Bar Types
-                    if (optionState.controls.UI_RIGHT) {
-                        if (optionState.controls.UI_RIGHT_P) { 
-                            save.data.fontType += 1;
-                            save.flush();
-                            playScrollSound();
-                        }
-                    } else if (optionState.controls.UI_LEFT) {
-                        if (optionState.controls.UI_LEFT_P) {
-                            save.data.fontType -= 1;
-                            save.flush();
-                            playScrollSound();
-                        }
-                    }
-                    
-                    if (save.data.fontType < 0) save.data.fontType = 1;
-                    if (save.data.fontType > 1) save.data.fontType = 0;
-
-                    updatetypetext();
-                    font.label.text = fontTypeText;
-
-                case scrollSpeed: // Custom Scroll Speed           
-                    if (optionState.controls.UI_RIGHT) {
-                        holdPressTime += event.elapsed;
-                    
-                        if (optionState.controls.UI_RIGHT_P) {
-                            save.data.scrollSpeedFactor += 0.1;
-                            save.flush();
-                            playScrollSound();
-                        } else if (holdPressTime >= 0.4) {
-                            // The longer the button is held, the more holdPressTime decreases
-                            holdPressTime -= Math.min(0.3, holdPressTime * 0.2); // Decrease faster over time, up to a maximum rate
-                            save.data.scrollSpeedFactor += 0.1;
-                        }
-                    } else if (optionState.controls.UI_LEFT) {
-                        holdPressTime += event.elapsed;
-                    
-                        if (optionState.controls.UI_LEFT_P) {
-                            save.data.scrollSpeedFactor -= 0.1;
-                            save.flush();
-                            playScrollSound();
-                        } else if (holdPressTime >= 0.4) {
-                            // The longer the button is held, the more holdPressTime decreases
-                            holdPressTime -= Math.min(0.3, holdPressTime * 0.2); // Decrease faster over time, up to a maximum rate
-                            save.data.scrollSpeedFactor -= 0.1;
-                        }
-                    }
-                        
-                    if (save.data.scrollSpeedFactor < 0.1) save.data.scrollSpeedFactor = 0.1;
-                    if (save.data.scrollSpeedFactor > 10) save.data.scrollSpeedFactor = 10;
-                    
-                    scrollSpeed.label.text = "Scroll Speed = " + Math.round(save.data.scrollSpeedFactor * 10) / 10;
-            }
-            if (optionState.controls.UI_LEFT_R || optionState.controls.UI_RIGHT_R) {
-                holdPressTime = 0;
-                save.flush();
-            }
-        }
-    }
-
-    function playScrollSound() {
-        FunkinSound.playOnce(Paths.sound('scrollMenu'), 0.4);
     }
 }

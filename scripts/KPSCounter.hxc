@@ -23,7 +23,10 @@ class KPSCounter extends Module {
     var updateInterval:Float = 1 / 60;
     var lastUpdateTime:Float = 0;
 
-    var kpsTextFont:Str;
+    var font:Str;
+    var textSize;
+
+    var badHUDOptions:BadHUDOptions;
 
     function new() {
 		super("KPSCounter");
@@ -36,21 +39,18 @@ class KPSCounter extends Module {
         if (!loaded && save.data.kpsCounter) {
             state = PlayState.instance;
 
+            // Binding with BadHUDOptions for fonts
+		    badHUDOptions = new BadHUDOptions();
+            font = badHUDOptions.font;
+            
+            textSize = save.data.hudFontSize;
+
 			// Create KPS Text Element
             var kpsTextXPos = 10;
 			var kpsTextYPos = FlxG.height * 0.6;
-            var kpsTextSize:Int = 20;
-            
-            switch (save.data.fontType) {
-                case 0: // Vanilla
-                    kpsTextFont = "vcr.ttf";
-                case 1:
-                    kpsTextFont = "PressStart2P.ttf";
-                    kpsTextSize = 13;
-            }
 
 			kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
-			kpsText.setFormat(Paths.font(kpsTextFont), kpsTextSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+			kpsText.setFormat(Paths.font(font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
 			kpsText.scrollFactor.set();
 			kpsText.borderSize = 1.25;
 			kpsText.zIndex = 851;
@@ -63,7 +63,7 @@ class KPSCounter extends Module {
         }
     }
 
-    function onSongEnd() {loaded = false; updateKPS();}
+    function onSongEnd() { loaded = false; }
 
     function updateKPS() {
         if (kpsText != null) {

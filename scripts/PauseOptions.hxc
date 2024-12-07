@@ -1,0 +1,46 @@
+import funkin.modding.module.Module;
+import funkin.play.PauseSubState;
+import funkin.play.PlayState;
+import funkin.ui.options.OptionsState;
+
+import flixel.FlxG;
+
+import Std;
+
+class PauseOptions extends Module {
+    var wasPaused:Bool = false;
+    
+    function new() {
+        super("PauseOptions");
+    }
+
+    override function onSubStateOpenBegin(event:SubStateScriptEvent){
+		super.onSubStateOpenBegin(event);
+
+        if (event.targetState != PlayState.instance && wasPaused) {
+			FlxG.switchState(() -> new PlayState());
+			wasPaused = false;
+		}
+    }
+    
+    override function onSubStateOpenEnd(event:SubStateScriptEvent) {
+        super.onSubStateOpenEnd(event);
+
+        if (Std.is(event.targetState, PauseSubState)) {
+            var pauseState = event.targetState;
+            var menuEntries = pauseState.currentMenuEntries;
+            menuEntries.insert(menuEntries.length - 1, {
+                text: "Options",
+                callback: optionsCallback
+            });
+
+            pauseState.clearAndAddMenuEntries();
+            pauseState.changeSelection();
+        }
+    }
+
+    function optionsCallback() {
+        FlxG.switchState(() -> new OptionsState());
+        wasPaused = true;
+    }
+}
