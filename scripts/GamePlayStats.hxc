@@ -365,13 +365,7 @@ class GamePlayStats extends Module {
 	}
 
 	override function onSongRetry(event:ScriptEvent) {
-		ratingPercent = 0;
-		ratingName = "?";
-		ratingFC = "";
-		totalNotesHit = 0;
-			
-		resetJudgements();
-		updateScore();
+		cleanup();
 	}
 
 	override function onSubStateOpenBegin(event:SubStateScriptEvent) {

@@ -110,9 +110,7 @@ class KPSCounter extends Module {
 	}
     
     override function onSongRetry(event:ScriptEvent) {
-        kps = 0;
-        kpsMax = 0;
-        updateKPS();
+        cleanup();
 	}
 
     override function onDestroy(event:ScriptEvent) {

@@ -1,7 +1,7 @@
 import funkin.modding.module.Module;
-import funkin.Paths;
-import funkin.Preferences;
+import funkin.graphics.FunkinSprite;
 import funkin.play.PlayState;
+import funkin.Paths;
 
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
@@ -10,7 +10,6 @@ import flixel.text.FlxText;
 import flixel.util.FlxStringUtil;
 import flixel.util.FlxSave;
 import flixel.ui.FlxBar;
-import flixel.FlxSprite;
 import flixel.FlxG;
 
 import Std;
@@ -22,131 +21,104 @@ OG Psych Engine HUD by Shadow Mario and his team
 */
 class TimeBar extends Module {
     var save:FlxSave;
-    var loaded:Bool = false;
+    var loaded:Bool = false ;
     var state:PlayState;
-    var isDownscroll;
 
-	var timeBar;
-	var timeBarBG;
-	var timeText;
+    var timeBar:FlxBar;
+    var timeBarBG:FunkinSprite;
+    var timeText:FlxText;
 
     var textFont;
     var timeBarBGStyle;
     var timeTextSize;
-    
-	function new() {
-		super("TimeBar");
-		save = new FlxSave();
-		save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
-	}
+
+    function new() {
+        super("TimeBar");
+        save = new FlxSave();
+        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
+    }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (!loaded && save.data.timebarPosition != 0) {
             state = PlayState.instance;
-            isDownscroll = Preferences.downscroll;
 
             // Binding with BadHUDOptions for fonts
-		    var badHUDOptions = new BadHUDOptions();
-		    textFont = badHUDOptions.font;
+            var badHUDOptions = new BadHUDOptions();
+            textFont = badHUDOptions.font;
             timeBarBGStyle = badHUDOptions.timeBarBGStyle;
             timeTextSize = badHUDOptions.timeTextSize;
 
-            var timeBarZIndex = 802;
-            var timeBarXPos = FlxG.width * 0.82;
-            var timeBarYPos = FlxG.height * 0.5;
-
-            setupTimeText(timeBarXPos, timeBarYPos, timeBarZIndex);
-            setupTimeBarBackground(timeBarZIndex);
-            setupTimeBarFill(timeBarZIndex);
-        
-            // Adjust zIndexes
-            switch (save.data.timebarStyle) {
-                case 0: // Psych Engine
-                case 1: // Minimal
-                case 2: // Minimal Rounded
-                timeText.zIndex = timeBarZIndex + 3;
-                timeBarBG.zIndex = timeBarZIndex + 2;
-                timeBar.zIndex = timeBarZIndex + 1;
-            }
-
-            adjustComponentsForVerticalTimeBar();
+            initTimeBar();
 
             loaded = true;
         }
     }
 
-    function setupTimeText(xPos:Float, yPos:Float, zIndex:Int) {
+    function initTimeBar() {
+        var timeBarXPosV = FlxG.width * 0.82;
+        var timeBarYPosV = FlxG.height * 0.5;
+
+        timeBarBG = FunkinSprite.create(0, 0, timeBarBGStyle);
+        timeBarBG.scrollFactor.set(0, 0);
+        timeBarBG.zIndex = 800;
+
+        var timeBarHeight = timeBarBG.height - (save.data.timeBarType == 0 ? 6 : 4);
+        timeBar = new FlxBar(0, 0, null, timeBarBG.width - 5, timeBarHeight);
+        timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
+        timeBar.scrollFactor.set();
+        timeBar.zIndex = save.data.timebarStyle == 2 ? 799 : 801;
+
         timeText = new FlxText(0, 0, 400, "", 32);
         timeText.setFormat(Paths.font(textFont), timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
         timeText.borderSize = 1.75;
-        timeText.scrollFactor.set(0, 0);
-        timeText.zIndex = zIndex + 2;
+        timeText.scrollFactor.set();
+        timeText.zIndex = 802;
 
         switch (save.data.timebarPosition) {
             case 0: // Off
             case 1: // Down
                 timeText.y = FlxG.height - 34;
+                timeBarBG.y = FlxG.height - 34 + 2;
+                if (save.data.hudFont == 0) {
+                    timeBarBG.y = timeText.y + 5;
+                }
             case 2: // Up
                 timeText.y = 16;
-            case 3: // Vertical (Right Side)
-                timeText.x = xPos;
-                timeText.y = yPos;
-        }
-
-        state.add(timeText);
-        timeText.cameras = [state.camHUD];
-        timeText.visible = false;
-    }
-
-    function setupTimeBarBackground(zIndex:Int) {
-        timeBarBG = new FlxSprite(timeText.x, timeText.y).loadGraphic(Paths.image(timeBarBGStyle));
-        timeBarBG.scrollFactor.set(0, 0);
-        timeBarBG.zIndex = zIndex;
-
-        switch (save.data.timebarPosition) {
-            case 0: // Off
-            case 1: // Down
-                timeBarBG.y = timeText.y + 2;
-                if (save.data.hudFont == 0) {
-                    timeBarBG.y = timeText.y + 5;
-                }
-            case 2: // Up
                 timeBarBG.y = timeText.y + 2;
                 if (save.data.hudFont == 0) {
                     timeBarBG.y = timeText.y + 5;
                 }
             case 3: // Vertical (Right Side)
-                timeBarBG.x = timeText.x + (timeText.height / 5);
+                timeText.x = timeBarXPosV;
+                timeText.y = timeBarYPosV;
+                timeBarBG.x = timeBarXPosV + (timeText.height / 5);
+                timeBarBG.y = timeBarYPosV;
+                timeText.angle = timeBarBG.angle = timeBar.angle = 90;
+                timeText.zIndex = state.iconP1.zIndex + 1;
         }
 
-        state.add(timeBarBG);
-        timeBarBG.cameras = [state.camHUD];
-        timeBarBG.visible = false;
-    }
+        timeBar.x = timeBarBG.x + 3;
+        timeBar.y = timeBarBG.y + (save.data.timeBarType == 0 ? 3 : 2);
 
-    function setupTimeBarFill(zIndex:Int) {
-        var timeBarHeight = timeBarBG.height - (save.data.timeBarType == 0 ? 6 : 4);
-        var timeBarY = timeBarBG.y + (save.data.timeBarType == 0 ? 3 : 2);
-    
-        timeBar = new FlxBar(timeBarBG.x + 3, timeBarY, null, timeBarBG.width - 5, timeBarHeight);
-        timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
-        timeBar.scrollFactor.set();
-        timeBar.numDivisions = 200;
-        timeBar.zIndex = zIndex + 1;
-        state.add(timeBar);
-        timeBar.cameras = [state.camHUD];
-        timeBar.visible = false;
-    }
-
-    function adjustComponentsForVerticalTimeBar() {
-        if (save.data.timebarPosition == 3) { // Vertical Time Bar
-            timeText.angle = timeBarBG.angle = timeBar.angle = 90;
-            timeText.zIndex = state.iconP1.zIndex + 1;
-        } else {
+        if (!save.data.timebarPosition == 3) { // Vertical Time Bar
             timeText.screenCenter(0x01);
             timeBarBG.screenCenter(0x01);
             timeBar.screenCenter(0x01);
         }
+
+        state.add(timeBarBG);
+        state.add(timeBar);
+        state.add(timeText);
+
+        // Move the time bar to the HUD camera.
+        timeBarBG.cameras = [state.camHUD];
+        timeBar.cameras = [state.camHUD];
+        timeText.cameras = [state.camHUD];
+
+        // Time bar is Invisible at first
+        timeBarBG.visible = false;
+        timeBar.visible = false;
+        timeText.visible = false;
     }
 
     override function onSongEnd(event) { loaded = false; }
@@ -154,22 +126,22 @@ class TimeBar extends Module {
     override function onSongStart(event:ScriptEvent) {
         var timeBarObjects = [timeBarBG, timeBar, timeText];
 
-		for (obj in timeBarObjects) {
-			if(obj != null && (obj.alpha != save.data.hudOpacity || !obj.visible)) {
-				obj.alpha = 0;
+        for (obj in timeBarObjects) {
+            if (obj != null && (obj.alpha != save.data.hudOpacity || !obj.visible)) {
+                obj.alpha = 0;
 
-				FlxTween.tween(obj, {alpha: save.data.hudOpacity}, 0.5, {ease: FlxEase.circOut});
-				obj.visible = true;
-			}
-		}
-	}
+                FlxTween.tween(obj, {alpha: save.data.hudOpacity}, 0.5, {ease: FlxEase.circOut});
+                obj.visible = true;
+            }
+        }
+    }
 
     override function onUpdate(event:UpdateScriptEvent) {
-		if (!loaded || state == null) return;
+        if (!loaded || state == null) return;
 
-		if (timeBar != null && timeBar.visible) {
-			timeBar.value = (state.conductorInUse.songPosition / state.currentSongLengthMs) * 100;
-			timeBar.updateBar();
+        if (timeBar != null && timeBar.visible) {
+            timeBar.value = (state.conductorInUse.songPosition / state.currentSongLengthMs) * 100;
+            timeBar.updateBar();
             var time;
             switch (save.data.timebarType) {
                 case 0: // Off
@@ -191,23 +163,24 @@ class TimeBar extends Module {
                 case 6: // Song Name
                     timeText.text = state.currentChart.songName;
             }
-		}
-	}
-
-    function cleanup() {
-        var stuffToRemove = [timeBarBG, timeBar, timeText];
-        for (thing in stuffToRemove) {
-            if (thing != null) {
-                state.remove(thing);
-                thing.destroy();
-                thing = null;
-            }
         }
     }
 
-    override function onSongRetry(event:ScriptEvent) {
-		cleanup();
-	}
+    function cleanup() {
+        var stuffToRemove = [timeBarBG, timeBar, timeText];
+
+        for (thing in stuffToRemove) {
+            if (thing != null) thing.destroy();
+        }
+
+        timeBarBG = null;
+        timeBar = null;
+        timeText = null;
+    }
+
+    override function onSongRetry(event) {
+        cleanup();
+    }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         if (!Std.isOfType(event.targetState, PlayState)) {
