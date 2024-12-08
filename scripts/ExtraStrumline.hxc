@@ -1,5 +1,4 @@
 import funkin.modding.module.Module;
-import funkin.ui.debug.charting.ChartEditorState;
 import funkin.play.notes.Strumline;
 import funkin.play.PlayState;
 
@@ -133,11 +132,12 @@ class ExtraStrumline extends Module {
         var stuffToRemove = [laneUnderlay, leftGradient, rightGradient];
         for (thing in stuffToRemove) {
             if (thing != null) {
-                state.remove(thing);
                 thing.destroy();
-                thing = null;
             }
         }
+        laneUnderlay = null;
+        leftGradient = null;
+        rightGradient = null;
     }
 
     function createLeftGradient(width:Int, height:Int, alphaStart:Float, alphaEnd:Float):FlxSprite {
