@@ -1,27 +1,28 @@
 import funkin.modding.module.Module;
-import funkin.Paths;
+import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.Paths;
 
 import flixel.text.FlxTextBorderStyle;
 import flixel.text.FlxText;
 import flixel.util.FlxSave;
 import flixel.FlxG;
 
-import Std;
 import Math;
+import Std;
 
 class KPSCounter extends Module {
-	var save:FlxSave;
-	var loaded:Bool = false;
-	var state:PlayState;
+    var save:FlxSave;
+    var loaded:Bool = false ;
+    var state:PlayState;
 
     var kpsText:FlxText;
-    var kps:Int = 0;
-    var kpsMax:Int = 0;
+    var kps:Int = 0 ;
+    var kpsMax:Int = 0 ;
 
-    var lastSecondKeyPresses:Array<Float> = [];
-    var updateInterval:Float = 1 / 60;
-    var lastUpdateTime:Float = 0;
+    var lastSecondKeyPresses:Array<Float> = [] ;
+    var updateInterval:Float = 1 / 60 ;
+    var lastUpdateTime:Float = 0 ;
 
     var font:String;
     var textSize;
@@ -29,39 +30,37 @@ class KPSCounter extends Module {
     var badHUDOptions:BadHUDOptions;
 
     function new() {
-		super("KPSCounter");
-		save = new FlxSave();
-		save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
-	}
+        super("KPSCounter");
+        save = new FlxSave();
+        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
+    }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (!loaded && save.data.kpsCounter) {
             state = PlayState.instance;
 
             // Binding with BadHUDOptions for fonts
-		    badHUDOptions = new BadHUDOptions();
+            badHUDOptions = new BadHUDOptions();
             font = badHUDOptions.font;
             textSize = save.data.hudFontSize;
 
-			// Create KPS Text Element
+            // Create KPS Text Element
             var kpsTextXPos = 10;
-			var kpsTextYPos = FlxG.height * 0.6;
+            var kpsTextYPos = FlxG.height * 0.6;
 
-			kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
-			kpsText.setFormat(Paths.font(font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
-			kpsText.scrollFactor.set();
-			kpsText.borderSize = 1.25;
-			kpsText.zIndex = 851;
-			state.add(kpsText);
+            kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
+            kpsText.setFormat(Paths.font(font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+            kpsText.scrollFactor.set();
+            kpsText.borderSize = 1.25;
+            kpsText.zIndex = 851;
+            state.add(kpsText);
 
-			kpsText.text = 'KPS: 0' + '\nMax KPS: 0';
-			kpsText.cameras = [state.camHUD];
+            kpsText.text = 'KPS: 0' + '\nMax KPS: 0';
+            kpsText.cameras = [state.camHUD];
 
             loaded = true;
         }
     }
-
-    override function onSongEnd(event:ScriptEvent) { loaded = false; }
 
     function updateKPS() {
         if (kpsText != null) {
@@ -100,26 +99,32 @@ class KPSCounter extends Module {
             lastUpdateTime = currentTime;
         }
     }
-    
+
     function cleanup() {
-		if (kpsText != null) kpsText.destroy();
-		kpsText = null;
-		kps = 0;
+        if (kpsText != null) kpsText.destroy();
+        kpsText = null;
+        kps = 0;
         kpsMax = 0;
         keyPressHistory = [];
-	}
-    
-    override function onSongRetry(event:ScriptEvent) {
-        cleanup();
-	}
+    }
 
-    override function onDestroy(event:ScriptEvent) {
-		cleanup();
-	}
+    override function onSongRetry(event:ScriptEvent) { loaded = false; cleanup(); }
+
+    override function onSongEnd(event:ScriptEvent) { loaded = false; cleanup(); }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState)) {
+        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
             loaded = false;
         }
+    }
+
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
+        if (Std.isOfType(event.targetState, PlayState)) {
+            loaded = false;
+        }
+    }
+
+    override function onDestroy(event:ScriptEvent) {
+        cleanup();
     }
 }

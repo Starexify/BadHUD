@@ -1,17 +1,18 @@
 import funkin.modding.module.Module;
+import funkin.play.PauseSubState;
+import funkin.play.PlayState;
 import funkin.Highscore;
 import funkin.Paths;
-import funkin.play.PlayState;
 
 import flixel.text.FlxTextBorderStyle;
 import flixel.text.FlxText;
+import flixel.tweens.FlxTween;
 import flixel.util.FlxSave;
 import flixel.util.FlxStringUtil;
-import flixel.tweens.FlxTween;
 import flixel.FlxG;
 
-import Std;
 import Math;
+import Std;
 
 // This script may have used some code from other scripts so I'll leave credits below
 /*
@@ -134,8 +135,6 @@ class GamePlayStats extends Module {
 		updateScore();
 	}
 
-	override function onSongEnd(event:ScriptEvent){loaded = false; updateScore();}
-
 	function cleanup() {
 		var stuffToRemove = [scoreText, judgementsText, scoreTextTween];
 
@@ -151,10 +150,6 @@ class GamePlayStats extends Module {
 		scoreText = null;
 		scoreTextTween = null;
 		judgementsText = null;
-	}
-
-	override function onDestroy(event:ScriptEvent) {
-		cleanup();
 	}
 
 	public static var ratingStuff:Array<Dynamic> = [
@@ -360,16 +355,24 @@ class GamePlayStats extends Module {
 
 	override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) {
 		if (!loaded || event.healthChange == 0) return;
-
 		updateScore(false);
 	}
 
 	override function onSongRetry(event:ScriptEvent) {
+		loaded = false;
 		cleanup();
 	}
 
+	override function onSongEnd(event:ScriptEvent){ loaded = false; cleanup(); }
+
 	override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-		if (!Std.isOfType(event.targetState, PlayState)) {
+		if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
+			loaded = false;
+		}
+	}
+
+	override function onSubStateCloseBegin(event:SubStateScriptEvent) {
+		if (Std.isOfType(event.targetState, PlayState)) {
 			loaded = false;
 		}
 	}

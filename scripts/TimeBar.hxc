@@ -1,14 +1,15 @@
 import funkin.modding.module.Module;
 import funkin.graphics.FunkinSprite;
+import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.Paths;
 
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
-import flixel.text.FlxTextBorderStyle;
 import flixel.text.FlxText;
-import flixel.util.FlxStringUtil;
+import flixel.text.FlxTextBorderStyle;
 import flixel.util.FlxSave;
+import flixel.util.FlxStringUtil;
 import flixel.ui.FlxBar;
 import flixel.FlxG;
 
@@ -121,8 +122,6 @@ class TimeBar extends Module {
         timeText.visible = false;
     }
 
-    override function onSongEnd(event) { loaded = false; }
-
     override function onSongStart(event:ScriptEvent) {
         var timeBarObjects = [timeBarBG, timeBar, timeText];
 
@@ -178,12 +177,18 @@ class TimeBar extends Module {
         timeText = null;
     }
 
-    override function onSongRetry(event) {
-        cleanup();
-    }
+    override function onSongEnd(event) { loaded = false; cleanup(); }
+
+    override function onSongRetry(event) { loaded = false; cleanup(); }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState)) {
+        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
+            loaded = false;
+        }
+    }
+
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
+        if (Std.isOfType(event.targetState, PlayState)) {
             loaded = false;
         }
     }

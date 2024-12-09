@@ -1,10 +1,11 @@
 import funkin.modding.module.Module;
+import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 
-import flixel.util.FlxSave;
 import flixel.math.FlxMath;
-import flixel.FlxSprite;
+import flixel.util.FlxSave;
 import flixel.FlxG;
+import flixel.FlxSprite;
 
 import Std;
 
@@ -97,8 +98,6 @@ class VerticalHealthBar extends Module {
         }
     }
 
-    override function onSongEnd(event) { loaded = false; }
-
     function updatePosition() {
         if (!loaded || state == null) return;
 
@@ -150,8 +149,18 @@ class VerticalHealthBar extends Module {
         if (loaded && event.healthChange != 0) updatePosition();
     }
 
+    override function onSongEnd(event) { loaded = false; }
+
+    override function onSongRetry(event) { loaded = false; }
+
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState)) {
+        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
+            loaded = false;
+        }
+    }
+
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
+        if (Std.isOfType(event.targetState, PlayState)) {
             loaded = false;
         }
     }

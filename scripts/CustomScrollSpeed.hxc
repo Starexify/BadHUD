@@ -1,11 +1,12 @@
 import funkin.modding.module.Module;
-import funkin.Paths;
+import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.Paths;
 
-import flixel.FlxG;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
 import flixel.util.FlxSave;
+import flixel.FlxG;
 
 import Std;
 import Math;
@@ -24,14 +25,14 @@ class CustomScrollSpeed extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (!loaded && save.data.customScrollSpeed) {
+        if (!loaded) {
             state = PlayState.instance;
             setSpeed(state);
 
             // Binding with BadHUDOptions for font and size
-            badHUDOptions = new BadHUDOptions();
-            font = badHUDOptions.font;
-            textSize = save.data.hudFontSize;
+            var badHUDOptions = new BadHUDOptions();
+            var font = badHUDOptions.font;
+            var textSize = save.data.hudFontSize;
 
             // Create Scroll Speed Text Element
             speedText = new FlxText(20, FlxG.height * 0.94, FlxG.width - 40, "", 20);
@@ -45,35 +46,39 @@ class CustomScrollSpeed extends Module {
         }
     }
 
-    override function onSongEnd(event) { loaded = false; }
-
     override function onCountdownStart(event:CountdownScriptEvent) {
-        // Fix for scroll speed resetting on song reset
         if (!loaded || state == null) return;
         setSpeed(state);
     }
 
-    override function onUpdate(event:UpdateScriptEvent) {
-        if (!loaded || state == null) return;
-
-        if (speedText != null) {
-            if (state.isGamePaused) {
-                speedText.visible = true;
-                speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + Math.round(save.data.scrollSpeedFactor * 10) / 10;
-            } else {
-                speedText.visible = false;
-            }
-        }
-    }
-
     function setSpeed(state:PlayState) {
-        state.playerStrumline.scrollSpeed = Math.round(save.data.scrollSpeedFactor * 10) / 10;
-        state.opponentStrumline.scrollSpeed = Math.round(save.data.scrollSpeedFactor * 10) / 10;
+        var scrollSpeed:Float = Math.round(save.data.scrollSpeedFactor * 10) / 10;
+        state.playerStrumline.scrollSpeed = scrollSpeed;
+        state.opponentStrumline.scrollSpeed = scrollSpeed;
     }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState)) {
+        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
             loaded = false;
         }
+
+        if (Std.isOfType(event.targetState, PauseSubState) && speedText != null) {
+            speedText.visible = true;
+            speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + Math.round(save.data.scrollSpeedFactor * 10) / 10;
+        }
+    }
+
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
+        if (Std.isOfType(event.targetState, PauseSubState) && speedText != null) {
+            speedText.visible = false;
+        }
+
+        if (Std.isOfType(event.targetState, PlayState)) {
+            loaded = false;
+        }
+    }
+
+    override function onSongEnd(event:ScriptEvent) {
+        loaded = false;
     }
 }

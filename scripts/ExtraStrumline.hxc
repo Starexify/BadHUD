@@ -1,5 +1,6 @@
 import funkin.modding.module.Module;
 import funkin.play.notes.Strumline;
+import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 
 import flixel.util.FlxSave;
@@ -12,8 +13,10 @@ import Std;
 
 class ExtraStrumline extends Module {
     var save:FlxSave;
+
     var loaded:Bool = false ;
     var state:PlayState;
+
     var laneUnderlay:FlxSprite;
     var leftGradient:FlxSprite;
     var rightGradient:FlxSprite;
@@ -21,7 +24,7 @@ class ExtraStrumline extends Module {
     var excludedSongs = ["Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2"] ;
 
     function new() {
-        super("ExtraStrumline");
+        super("ExtraStrumline", 1);
         save = new FlxSave();
         save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
     }
@@ -122,10 +125,6 @@ class ExtraStrumline extends Module {
         rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
     }
 
-    override function onBeatHit(event:SongTimeScriptEvent) {
-        if (loaded) updatePosition();
-    }
-
     override function onUpdate(event:UpdateScriptEvent) {
         if (!loaded || state == null) return;
         if (save.data.middlescroll && excludedSongs.indexOf(state.currentChart.songName) == -1 && !save.data.oppNotes) updateNotes();
@@ -144,14 +143,24 @@ class ExtraStrumline extends Module {
         rightGradient = null;
     }
 
-    override function onSongEnd(event:ScriptEvent) { loaded = false; cleanup(); }
-
-    override function onSongRetry(event:ScriptEvent) { cleanup(); }
-
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState)) {
+        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
             loaded = false;
         }
+    }
+
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
+        if (Std.isOfType(event.targetState, PlayState)) {
+            loaded = false;
+        }
+    }
+
+    override function onSongRetry(event:ScriptEvent) { loaded = false; cleanup(); }
+
+    override function onSongEnd(event:ScriptEvent) { loaded = false; cleanup(); }
+
+    override function onDestroy(event:ScriptEvent) {
+        cleanup();
     }
 
     // Gradient Underlay Stuff

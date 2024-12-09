@@ -9,7 +9,7 @@ import Std;
 
 class PauseOptions extends Module {
     var wasPaused:Bool = false;
-    
+
     function new() {
         super("PauseOptions");
     }
@@ -20,7 +20,7 @@ class PauseOptions extends Module {
 			wasPaused = false;
 		}
     }
-    
+
     override function onSubStateOpenEnd(event:SubStateScriptEvent) {
         if (Std.isOfType(event.targetState, PauseSubState)) {
             var pauseState = event.targetState;
