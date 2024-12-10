@@ -43,8 +43,6 @@ class BadHUDOptions extends Module {
     }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
-        super.onStateChangeEnd(event);
-
         if (Std.isOfType(event.targetState, OptionsState)) {
             var preferences = event.targetState.pages.get("preferences");
 

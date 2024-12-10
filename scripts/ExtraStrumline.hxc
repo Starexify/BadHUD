@@ -14,7 +14,8 @@ import Std;
 class ExtraStrumline extends Module {
     var save:FlxSave;
 
-    var loaded:Bool = false ;
+    var alpha = 0.3 ;
+
     var state:PlayState;
 
     var laneUnderlay:FlxSprite;
@@ -30,70 +31,65 @@ class ExtraStrumline extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (!loaded) {
-            state = PlayState.instance;
+        if (PlayState.instance == null) return;
 
-            // Center player strumline
-            if (save.data.middlescroll && excludedSongs.indexOf(state.currentChart.songName) == -1) {
-                state.comboPopUps.offsets = [450, -55];
-                state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
+        state = PlayState.instance;
+        // Center player strumline
+        if (save.data.middlescroll && excludedSongs.indexOf(state.currentChart.songName) == -1) {
+            state.comboPopUps.offsets = [450, -55];
+            state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
 
-                // Opponent Strumline
-                if (!save.data.oppNotes) {
-                    var rightXOffset = -150;
-                    if (save.data.verticalHPBar) {
-                        rightXOffset = -50;
-                    }
+            // Opponent Strumline
+            if (!save.data.oppNotes) {
+                var rightXOffset = save.data.verticalHPBar ? -50 : -150;
 
-                    // Place last 2 notes on right side
-                    for (i in 2...4) {
-                        var note = state.opponentStrumline.strumlineNotes.members[i];
-                        note.x = FlxG.width - state.opponentStrumline.width - rightXOffset + Strumline.NOTE_SPACING * (i - 2);
-                    }
-                } else {
-                    state.opponentStrumline.visible = false;
+                // Place last 2 notes on right side
+                for (i in 2...4) {
+                    var note = state.opponentStrumline.strumlineNotes.members[i];
+                    note.x = FlxG.width - state.opponentStrumline.width - rightXOffset + Strumline.NOTE_SPACING * (i - 2);
                 }
+            } else {
+                state.opponentStrumline.visible = false;
             }
+        }
 
-            // Create the note underlay with gradient
-            if (save.data.underlayOpacity > 0) {
-                laneUnderlay = new FlxSprite(0, 0).makeGraphic(state.playerStrumline.get_width(), FlxG.height * 2);
-                laneUnderlay.x = state.playerStrumline.x;
-                laneUnderlay.color = 0x000000;
-                laneUnderlay.alpha = save.data.underlayOpacity;
-                laneUnderlay.scrollFactor.set();
-                laneUnderlay.zIndex = -1;
-                laneUnderlay.cameras = [state.camHUD];
-                state.add(laneUnderlay);
+        // Create the note underlay with gradient
+        if (save.data.underlayOpacity > 0) {
+            laneUnderlay = new FlxSprite(0, 0).makeGraphic(state.playerStrumline.get_width(), FlxG.height * 2);
+            laneUnderlay.x = state.playerStrumline.x;
+            laneUnderlay.color = 0x000000;
+            laneUnderlay.alpha = save.data.underlayOpacity;
+            laneUnderlay.scrollFactor.set();
+            laneUnderlay.zIndex = -1;
+            laneUnderlay.cameras = [state.camHUD];
+            state.add(laneUnderlay);
 
-                var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
+            var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
 
-                leftGradient = createLeftGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity);
-                leftGradient.x = state.playerStrumline.x - fadeRegionWidth;
-                leftGradient.scrollFactor.set();
-                leftGradient.zIndex = -1;
-                leftGradient.cameras = [state.camHUD];
-                state.add(leftGradient);
+            leftGradient = createLeftGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity);
+            leftGradient.x = state.playerStrumline.x - fadeRegionWidth;
+            leftGradient.scrollFactor.set();
+            leftGradient.zIndex = -1;
+            leftGradient.cameras = [state.camHUD];
+            state.add(leftGradient);
 
-                rightGradient = createRightGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity);
-                rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
-                rightGradient.scrollFactor.set();
-                rightGradient.zIndex = -1;
-                rightGradient.cameras = [state.camHUD];
-                state.add(rightGradient);
-            }
+            rightGradient = createRightGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity);
+            rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
+            rightGradient.scrollFactor.set();
+            rightGradient.zIndex = -1;
+            rightGradient.cameras = [state.camHUD];
+            state.add(rightGradient);
+        }
+    }
 
-            loaded = true;
+    override function onCountdownStep(event:CountdownScriptEvent) {
+        // Transparent Opponent Strumline
+        for (staticNote in state.opponentStrumline.strumlineNotes.members) {
+            staticNote.alpha = alpha;
         }
     }
 
     function updateNotes() {
-        var alpha = 0.3;
-        // Strumline
-        for (staticNote in state.opponentStrumline.strumlineNotes.members) {
-            staticNote.alpha = alpha;
-        }
-
         // Incoming Notes
         for (note in state.opponentStrumline.notes.members) {
             if (note == null || !note.alive) continue;
@@ -117,7 +113,7 @@ class ExtraStrumline extends Module {
     }
 
     function updatePosition() {
-        if (!loaded || state == null) return;
+        if (PlayState.instance == null && laneUnderlay.x == state.playerStrumline.x) return;
         var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
 
         laneUnderlay.x = state.playerStrumline.x;
@@ -126,41 +122,44 @@ class ExtraStrumline extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (!loaded || state == null) return;
-        if (save.data.middlescroll && excludedSongs.indexOf(state.currentChart.songName) == -1 && !save.data.oppNotes) updateNotes();
-        updatePosition();
-    }
-
-    function cleanup() {
-        var stuffToRemove = [laneUnderlay, leftGradient, rightGradient];
-        for (thing in stuffToRemove) {
-            if (thing != null) {
-                thing.destroy();
+        if (PlayState.instance == null) return;
+        if (save.data.underlayOpacity > 0) updatePosition();
+        if (save.data.middlescroll && !save.data.oppNotes) {
+            if (state.currentStage != null && excludedSongs.indexOf(state.currentChart.songName) == -1) {
+                updateNotes();
+            } else if (state.isMinimalMode) {
+                updateNotes();
             }
         }
-        laneUnderlay = null;
-        leftGradient = null;
-        rightGradient = null;
     }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
-            loaded = false;
+            cleanup();
         }
     }
 
     override function onSubStateCloseBegin(event:SubStateScriptEvent) {
         if (Std.isOfType(event.targetState, PlayState)) {
-            loaded = false;
+            cleanup();
         }
     }
 
-    override function onSongRetry(event:ScriptEvent) { loaded = false; cleanup(); }
+    override function onSongRetry(event:ScriptEvent) { cleanup(); }
 
-    override function onSongEnd(event:ScriptEvent) { loaded = false; cleanup(); }
+    override function onSongEnd(event:ScriptEvent) { cleanup(); }
 
-    override function onDestroy(event:ScriptEvent) {
-        cleanup();
+    override function onDestroy(event:ScriptEvent) { cleanup(); }
+
+    function cleanup() {
+        if (laneUnderlay != null) {
+            laneUnderlay.destroy();
+            leftGradient.destroy();
+            rightGradient.destroy();
+            laneUnderlay = null;
+            leftGradient = null;
+            rightGradient = null;
+        }
     }
 
     // Gradient Underlay Stuff

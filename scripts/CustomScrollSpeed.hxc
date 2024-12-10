@@ -33,25 +33,27 @@ class CustomScrollSpeed extends Module {
         state.opponentStrumline.scrollSpeed = scrollSpeed;
     }
 
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (Std.isOfType(event.targetState, PauseSubState)) {
-            // Binding with BadHUDOptions for font and size
-            var badHUDOptions = new BadHUDOptions();
-            var font = badHUDOptions.font;
-            var textSize = save.data.hudFontSize;
+    override function onPause(event:PauseScriptEvent) {
+        // Binding with BadHUDOptions for font and size
+        var badHUDOptions = new BadHUDOptions();
+        var font = badHUDOptions.font;
+        var textSize = save.data.hudFontSize;
 
-            // Create Scroll Speed Text Element
-            speedText = new FlxText(20, FlxG.height * 0.94, FlxG.width - 40, "", 20);
-            speedText.setFormat(Paths.font(font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
-            speedText.scrollFactor.set(0, 0);
-            speedText.alignment = "right";
-            speedText.cameras = [state.camHUD];
-            speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + Math.round(save.data.scrollSpeedFactor * 10) / 10;
-            state.add(speedText);
-        }
+        // Create Scroll Speed Text Element
+        speedText = new FlxText(20, FlxG.height * 0.94, FlxG.width - 40, "", 20);
+        speedText.setFormat(Paths.font(font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        speedText.scrollFactor.set(0, 0);
+        speedText.alignment = "right";
+        speedText.cameras = [state.camHUD];
+        speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + Math.round(save.data.scrollSpeedFactor * 10) / 10;
+        state.add(speedText);
     }
 
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) { cleanup(); }
+
+    override function onDestroy(event:ScriptEvent) { cleanup(); }
+
+    function cleanup() {
         if (speedText != null) {
             speedText.destroy();
             speedText = null;
