@@ -13,7 +13,6 @@ import Math;
 
 class CustomScrollSpeed extends Module {
     var save:FlxSave;
-    var loaded:Bool = false ;
     var state:PlayState;
 
     var speedText:FlxText;
@@ -25,10 +24,17 @@ class CustomScrollSpeed extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (!loaded) {
-            state = PlayState.instance;
-            setSpeed(state);
+        if (PlayState.instance == null && !save.data.customScrollSpeed) return;
 
+        state = PlayState.instance;
+
+        var scrollSpeed:Float = Math.round(save.data.scrollSpeedFactor * 10) / 10;
+        state.playerStrumline.scrollSpeed = scrollSpeed;
+        state.opponentStrumline.scrollSpeed = scrollSpeed;
+    }
+
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
+        if (Std.isOfType(event.targetState, PauseSubState)) {
             // Binding with BadHUDOptions for font and size
             var badHUDOptions = new BadHUDOptions();
             var font = badHUDOptions.font;
@@ -40,45 +46,15 @@ class CustomScrollSpeed extends Module {
             speedText.scrollFactor.set(0, 0);
             speedText.alignment = "right";
             speedText.cameras = [state.camHUD];
-            state.add(speedText);
-
-            loaded = true;
-        }
-    }
-
-    override function onCountdownStart(event:CountdownScriptEvent) {
-        if (!loaded || state == null) return;
-        setSpeed(state);
-    }
-
-    function setSpeed(state:PlayState) {
-        var scrollSpeed:Float = Math.round(save.data.scrollSpeedFactor * 10) / 10;
-        state.playerStrumline.scrollSpeed = scrollSpeed;
-        state.opponentStrumline.scrollSpeed = scrollSpeed;
-    }
-
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
-            loaded = false;
-        }
-
-        if (Std.isOfType(event.targetState, PauseSubState) && speedText != null) {
-            speedText.visible = true;
             speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + Math.round(save.data.scrollSpeedFactor * 10) / 10;
+            state.add(speedText);
         }
     }
 
     override function onSubStateCloseBegin(event:SubStateScriptEvent) {
-        if (Std.isOfType(event.targetState, PauseSubState) && speedText != null) {
-            speedText.visible = false;
+        if (speedText != null) {
+            speedText.destroy();
+            speedText = null;
         }
-
-        if (Std.isOfType(event.targetState, PlayState)) {
-            loaded = false;
-        }
-    }
-
-    override function onSongEnd(event:ScriptEvent) {
-        loaded = false;
     }
 }
