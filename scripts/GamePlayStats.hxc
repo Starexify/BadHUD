@@ -121,16 +121,15 @@ class GamePlayStats extends Module {
         scoreText.cameras = [state.camHUD];
 
         if (PlayStatePlaylist.isStoryMode) talliesLevel = Highscore.talliesLevel;
-
-        resetJudgements();
-        updateScore();
     }
 
     override function onCountdownStart(event:CountdownScriptEvent) {
-        totalNotesPlayed = tallies.totalNotesHit;
+        totalNotes = tallies.totalNotes;
         if (PlayStatePlaylist.isStoryMode) {
-            totalNotesPlayed = talliesLevel.totalNotesHit + tallies.totalNotesHit;
+            totalNotes += talliesLevel.totalNotes;
         }
+        updateScore();
+        resetJudgements();
     }
 
     function initJudgements(textSize:Int) {
@@ -369,9 +368,11 @@ class GamePlayStats extends Module {
             if (thing != null) thing.destroy();
         }
 
-        ratingPercent = 0;
-        ratingName = "?";
-        ratingFC = "";
+        if (!PlayStatePlaylist.isStoryMode) {
+            ratingPercent = 0;
+            ratingName = "?";
+            ratingFC = "";
+        }
         totalNotesPlayed = 0;
         songScore = 0;
 
