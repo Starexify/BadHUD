@@ -20,360 +20,352 @@ Psych Engine HUD V-Slice by nubz4lif
 OG Psych Engine HUD by Shadow Mario and his team
 */
 class GamePlayStats extends Module {
-	var save:FlxSave;
-	var loaded:Bool = false;
-	var state:PlayState;
+    var save:FlxSave;
+    var loaded:Bool = false ;
+    var state:PlayState;
 
-	var scoreZoom = true;
-	var scoreText:FlxText;
-	var scoreTextTween;
+    var scoreZoom = true ;
+    var scoreText:FlxText;
+    var scoreTextTween;
 
-	var judgementsText:FlxText;
+    var judgementsText:FlxText;
 
-	var ratingPercent:Float;
-	var ratingName:String = "?";
-	var ratingFC:String;
+    var ratingPercent:Float;
+    var ratingName:String = "?" ;
+    var ratingFC:String;
 
-	var totalNotesHit:Float = 0.0;
+    var totalNotesHit:Float = 0.0 ;
 
-	var judgementsTextFont:String;
-	var scoreTextFont:String;
-	var textSize:Int;
+    var textSize:Int;
 
-	var songScore:Int = 0;
+    var songScore:Int;
 
-	var sicks:Int = 0;
-	var goods:Int = 0;
-	var bads:Int = 0;
-	var shits:Int = 0;
-	var missed:Int = 0;
-	var combo:Int = 0;
-	var totalNotes:Int = 0;
-	var totalNotesPlayed:Int = 0;
+    var sicks:Int = 0 ;
+    var goods:Int = 0 ;
+    var bads:Int = 0 ;
+    var shits:Int = 0 ;
+    var missed:Int = 0 ;
+    var combo:Int = 0 ;
+    var totalNotes:Int = 0 ;
+    var totalNotesPlayed:Int = 0 ;
 
-	var badHUDOptions:BadHUDOptions;
+    var badHUDOptions;
 
-	var excludedSongs = ["Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME", "Destruction Dance",
-	"Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine"];
+    public static var ratingStuff:Array<Dynamic> = [
+        ['You Suck!', 20], // From 0% to 19%
+        ['Shit', 40], // From 20% to 39%
+        ['Bad', 50], // From 40% to 49%
+        ['Bruh', 60], // From 50% to 59%
+        ['Meh', 69], // From 60% to 68%
+        ['Nice', 69], // Exactly 69%
+        ['Good', 80], // From 70% to 79%
+        ['Great', 90], // From 80% to 89%
+        ['Sick!', 100], // From 90% to 99%
+        ['Perfect!!', 100] // Perfect is always at 100%
+    ] ;
 
-	function new() {
-		super("GamePlayStats");
-		save = new FlxSave();
-		save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
-	}
+    var excludedSongs = ["Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME", "Destruction Dance",
+    "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine"] ;
 
-	override function onSongLoaded(event:SongLoadScriptEvent) {
-		if(!loaded) {
-			state = PlayState.instance;
+    function new() {
+        super("GamePlayStats");
+        save = new FlxSave();
+        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
+    }
 
-			// Binding with BadHUDOptions for fonts
-			badHUDOptions = new BadHUDOptions();
-			judgementsTextFont = badHUDOptions.font;
-			scoreTextFont = badHUDOptions.font;
+    override function onSongLoaded(event:SongLoadScriptEvent) {
+        if (PlayState.instance == null) return;
+        state = PlayState.instance;
+        loaded = true;
+        //state.scoreText.visible = false;
 
-			textSize = save.data.hudFontSize;
-			
-			if (excludedSongs.indexOf(state.currentChart.songName) != -1) return;
-			state.scoreText = new FlxText();
-			state.scoreText.visible = false;
+        // Binding with BadHUDOptions for fonts
+        badHUDOptions = new BadHUDOptions();
+        textSize = save.data.hudFontSize;
 
-			// Create HUD elements
-			var scoreTextXPos = 0;
-			var scoreTextYPos:Float = save.data.verticalHPBar ? 40 : state.healthBarBG.y + 45;
-			var scoringText = 'Score: 0' + ' | Combo Breaks: 0' + ' | Rating: ?\n';
-			var scorePosition = "center";
+        if (excludedSongs.indexOf(state.currentChart.songName) != -1) return;
 
-			switch (save.data.leftPos) {
-				case 0: // None
-				case 1: // Judgements
-					createJudgements(textSize, state);
-				case 2: // Score
-					scoreTextXPos = 10;
-					scoreTextYPos = (FlxG.height * 0.45) - 84 - 10;
-					scoringText = 'Score: 0' + '\nCombo Breaks: 0' + '\nRating: ?';
-					scorePosition = "left";
-				case 3: // Judgements and Score
-					createJudgements(textSize, state);
+        // Create HUD elements
+        var scoreTextXPos = 0;
+        var scoreTextYPos:Float = save.data.verticalHPBar ? 40 : state.healthBarBG.y + 45;
+        var scoringText = 'Score: 0' + ' | Combo Breaks: 0' + ' | Rating: ?\n';
+        var scorePosition = "center";
 
-					scoreTextXPos = 10;
-					scoreTextYPos = judgementsText.y - judgementsText.height - 10;
-					scoringText = 'Score: 0' + '\nCombo Breaks: 0' + '\nRating: ?';
-					scorePosition = "left";
-			}
+        switch (save.data.leftPos) {
+            case 0: // None
+            case 1: // Judgements
+                initJudgements(textSize);
+            case 2: // Score
+                scoreTextXPos = 10;
+                scoreTextYPos = (FlxG.height * 0.45) - 84 - 10;
+                scoringText = 'Score: 0' + '\nCombo Breaks: 0' + '\nRating: ?';
+                scorePosition = "left";
+            case 3: // Judgements and Score
+                initJudgements(textSize);
 
-			scoreText = new FlxText(scoreTextXPos, scoreTextYPos, FlxG.width, "", 20);
-			scoreText.setFormat(Paths.font(scoreTextFont), textSize, 0xFFFFFFFF, scorePosition, FlxTextBorderStyle.OUTLINE, 0xFF000000);
-			scoreText.scrollFactor.set();
-			scoreText.borderSize = 1.25;
-			scoreText.zIndex = 851;
-			state.add(scoreText);
-	
-			scoreText.cameras = [state.camHUD];
+                scoreTextXPos = 10;
+                scoreTextYPos = judgementsText.y - judgementsText.height - 10;
+                scoringText = 'Score: 0' + '\nCombo Breaks: 0' + '\nRating: ?';
+                scorePosition = "left";
+        }
 
-			loaded = true;
-		}
-	}
+        scoreText = new FlxText(scoreTextXPos, scoreTextYPos, FlxG.width, "", 20);
+        scoreText.setFormat(Paths.font(badHUDOptions.font), textSize, 0xFFFFFFFF, scorePosition, FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        scoreText.scrollFactor.set();
+        scoreText.borderSize = 1.25;
+        scoreText.zIndex = 851;
 
-	function createJudgements(textSize:Int, state:PlayState) {
-		var judgementsTextXPos = 10;
-		var judgementsTextYPos = FlxG.height * 0.45;
-		judgementsText = new FlxText(judgementsTextXPos, judgementsTextYPos, FlxG.width, "", 20);
-		judgementsText.setFormat(Paths.font(judgementsTextFont), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
-		judgementsText.scrollFactor.set();
-		judgementsText.borderSize = 1.25;
-		judgementsText.zIndex = 851;
-		state.add(judgementsText);
-	
-		judgementsText.text = 'Sicks: 0' + '\nGoods: 0' + '\nBads: 0' + '\nShits: 0';
-		judgementsText.cameras = [state.camHUD];
-	}
+        state.add(scoreText);
+        scoreText.cameras = [state.camHUD];
 
-	override function onCountdownStart(event:CountdownScriptEvent) {
-		totalNotes = Highscore.tallies.totalNotes;
-		resetJudgements();
-		totalNotesPlayed = 0;
-		updateScore();
-	}
+        resetJudgements();
+        totalNotesPlayed = 0;
+        updateScore();
+        trace("[BadHUD] Song Loaded");
+    }
 
-	function cleanup() {
-		var stuffToRemove = [scoreText, judgementsText, scoreTextTween];
+    override function onCountdownStart(event:CountdownScriptEvent) {
+        totalNotes = Highscore.tallies.totalNotes;
+    }
 
-		for (thing in stuffToRemove) {
-			if (thing != null) thing.destroy();
-		}
+    function initJudgements(textSize:Int) {
+        judgementsText = new FlxText(10, FlxG.height * 0.45, FlxG.width, 'Sicks: 0' + '\nGoods: 0' + '\nBads: 0' + '\nShits: 0', 20);
+        judgementsText.setFormat(Paths.font(badHUDOptions.font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        judgementsText.scrollFactor.set();
+        judgementsText.borderSize = 1.25;
+        judgementsText.zIndex = 851;
 
-		ratingPercent = 0;
-		ratingName = "?";
-		ratingFC = "";
-		totalNotesHit = 0;
+        state.add(judgementsText);
+        judgementsText.cameras = [state.camHUD];
+    }
 
-		scoreText = null;
-		scoreTextTween = null;
-		judgementsText = null;
-	}
+    function calculateRating() {
+        if (totalNotesPlayed != 0) {
+            switch (save.data.accuracyType) {
+                case 0: // Vanilla
+                    ratingPercent = Math.min(100, Math.max(0, 100 - ((shits + bads + missed) / totalNotes) * 100));
+                case 1: // Psych Engine
+                    ratingPercent = Math.min(100, Math.max(0, 100 - ((sicks * 0 + goods * 0.33 + bads * 0.67 + shits * 1) / totalNotes) * 100));
+                case 2: // osu!mania
+                    ratingPercent = Math.min(100, Math.max(0, ((300 * sicks + 200 * goods + 100 * bads + 50 * shits) / (300 * (sicks + goods + bads + shits + missed))) * 100));
+            }
+            //ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalNotesPlayed)); // Old rating percent
 
-	public static var ratingStuff:Array<Dynamic> = [
-		['You Suck!', 20],     // From 0% to 19%
-		['Shit', 40],          // From 20% to 39%
-		['Bad', 50],           // From 40% to 49%
-		['Bruh', 60],          // From 50% to 59%
-		['Meh', 69],           // From 60% to 68%
-		['Nice', 69],          // Exactly 69%
-		['Good', 80],          // From 70% to 79%
-		['Great', 90],         // From 80% to 89%
-		['Sick!', 100],        // From 90% to 99%
-		['Perfect!!', 100]     // Perfect is always at 100%
-	];
-	
-	function calculateRating() {
-		if (totalNotesPlayed != 0) {
-			switch (save.data.accuracyType) {
-				case 0: // Vanilla
-					ratingPercent = Math.min(100, Math.max(0, 100 - ((shits + bads + missed) / totalNotes) * 100));
-				case 1: // Psych Engine
-					ratingPercent = Math.min(100, Math.max(0, 100 - ((sicks * 0 + goods * 0.33 + bads * 0.67 + shits * 1) / totalNotes) * 100));
-				case 2: // osu!mania
-					ratingPercent = Math.min(100, Math.max(0, ((300 * sicks + 200 * goods + 100 * bads + 50 * shits) / (300 * (sicks + goods + bads + shits + missed))) * 100));
-			}
-			//ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalNotesPlayed)); // Old rating percent
-			
-			ratingPercent = Math.round(ratingPercent * 100) / 100;
-			ratingName = ratingStuff[ratingStuff.length - 1][0];
-			if (ratingPercent < 100) {
-				for (i in 0...ratingStuff.length - 1) {
-					if (ratingPercent < ratingStuff[i][1]) {
-						ratingName = ratingStuff[i][0];
-						break;
-					}
-				}
-			}
-		} else {
-			ratingName = "?";
-			ratingPercent = 0;
-		}
+            ratingPercent = Math.round(ratingPercent * 100) / 100;
+            ratingName = ratingStuff[ratingStuff.length - 1][0];
+            if (ratingPercent < 100) {
+                for (i in 0...ratingStuff.length - 1) {
+                    if (ratingPercent < ratingStuff[i][1]) {
+                        ratingName = ratingStuff[i][0];
+                        break;
+                    }
+                }
+            }
+        } else {
+            ratingName = "?";
+            ratingPercent = 0;
+        }
 
-		ratingFC = '';
+        ratingFC = '';
 
-		// Rating grades based on 
-		switch (save.data.accuracyType) {
-			case 0: // Vanilla
-			vanillaRatingNames();
-			case 1: // Psych Engine
-			psychRatingNames();
-			case 2: // osu!mania
-			osuGrades();
-		}
-	}
+        // Rating grades based on
+        switch (save.data.accuracyType) {
+            case 0: // Vanilla
+                vanillaRatingNames();
+            case 1: // Psych Engine
+                psychRatingNames();
+            case 2: // osu!mania
+                osuGrades();
+        }
+    }
 
-	function vanillaRatingNames() {
-		if (ratingPercent == 100 && goods == 0) {
-			ratingFC = 'P (Perfect+)';
-		} else if (ratingPercent == 100 && goods >= 1) {
-			ratingFC = 'P (Perfect)';
-		} else if (ratingPercent >= 90) {
-			ratingFC = 'E (Excellent)';
-		} else if (ratingPercent >= 80) {
-			ratingFC = 'G (Great)';
-		} else if (ratingPercent >= 60) {
-			ratingFC = 'G (Good)';
-		} else ratingFC = 'L (Loss)';
-	}
+    function vanillaRatingNames() {
+        if (ratingPercent == 100 && goods == 0) {
+            ratingFC = 'P (Perfect+)';
+        } else if (ratingPercent == 100 && goods >= 1) {
+            ratingFC = 'P (Perfect)';
+        } else if (ratingPercent >= 90) {
+            ratingFC = 'E (Excellent)';
+        } else if (ratingPercent >= 80) {
+            ratingFC = 'G (Great)';
+        } else if (ratingPercent >= 60) {
+            ratingFC = 'G (Good)';
+        } else ratingFC = 'L (Loss)';
+    }
 
-	function psychRatingNames() {
-		if (missed == 0) {
-			if (shits == 0 && bads == 0 && goods == 0) ratingFC = 'PFC';
-			else if (shits > 0 || bads > 0) ratingFC = 'FC';
-			else if (goods > 0) ratingFC = 'GFC';
-			else if (sicks > 0) ratingFC = 'SFC';
-		} else if (missed < 10) {
-			ratingFC = 'SDCB';	
-		} else ratingFC = 'Clear';
-	}
+    function psychRatingNames() {
+        if (missed == 0) {
+            if (shits == 0 && bads == 0 && goods == 0) ratingFC = 'PFC';
+            else if (shits > 0 || bads > 0) ratingFC = 'FC';
+            else if (goods > 0) ratingFC = 'GFC';
+            else if (sicks > 0) ratingFC = 'SFC';
+        } else if (missed < 10) {
+            ratingFC = 'SDCB';
+        } else ratingFC = 'Clear';
+    }
 
-	function osuGrades() {
-		if (ratingPercent == 100) {
-			ratingFC = 'SS';
-		} else if (ratingPercent > 95) {
-			ratingFC = 'S';
-		} else if (ratingPercent > 90) {
-			ratingFC = 'A';
-		} else if (ratingPercent > 80) {
-			ratingFC = 'B';
-		} else if (ratingPercent > 70) {
-			ratingFC = 'C';
-		} else ratingFC = 'D';
-	}
+    function osuGrades() {
+        if (ratingPercent == 100) {
+            ratingFC = 'SS';
+        } else if (ratingPercent > 95) {
+            ratingFC = 'S';
+        } else if (ratingPercent > 90) {
+            ratingFC = 'A';
+        } else if (ratingPercent > 80) {
+            ratingFC = 'B';
+        } else if (ratingPercent > 70) {
+            ratingFC = 'C';
+        } else ratingFC = 'D';
+    }
 
-	function doScoreBop() {
-		if (!scoreZoom || scoreText == null || !loaded) return;
-		if (save.data.leftPos != 2 || save.data.leftPos != 3) return;
-		
-		if (scoreTextTween != null) scoreTextTween.cancel();
-		scoreText.scale.set(1.075, 1.075);
-		scoreTextTween = FlxTween.tween(scoreText.scale, {x: 1, y: 1}, 0.2, {
-			onComplete: function(twn:FlxTween) {
-				scoreTextTween = null;
-			}
-		});
-	}
+    function doScoreBop() {
+        if (!scoreZoom || scoreText == null || !loaded) return;
+        if (save.data.leftPos != 2 || save.data.leftPos != 3) return;
 
-	function updateScore(miss:Bool = false) {
-		calculateRating();
+        if (scoreTextTween != null) scoreTextTween.cancel();
+        scoreText.scale.set(1.075, 1.075);
+        scoreTextTween = FlxTween.tween(scoreText.scale, {x: 1, y: 1}, 0.2, {
+            onComplete: function(twn:FlxTween) {
+                scoreTextTween = null;
+            }
+        });
+    }
 
-		var ratingString:String = totalNotesPlayed != 0 ? ratingName + ' (' + ratingPercent + '%) - ' + ratingFC : ratingName;
+    function updateScore(miss:Bool = false) {
+        calculateRating();
 
-		// Change the scoring system based on accuracyType (funy)
-		songScore = state.songScore;
-		switch (save.data.accuracyType) {
-			case 0: // Vanilla
-			case 1: // Psych Engine
-			case 2: // osu!mania
-				var maxScore = 1000000;
-				
-				var hitValue = sicks * 300 + goods * 200 + bads * 100 + shits * 50;
-				var hitBonusValue = sicks * 32 + goods * 16 + bads * 8 + shits * 4;
-				var hitBonus = sicks;
-				var hitPunishment = goods * 8 + bads * 24 + shits * 44 + missed * 100;
-				
-				var bonus = Math.max(0, Math.min(100, hitBonus - hitPunishment));
-				
-				var baseScore = (maxScore * 0.5 / totalNotes) * (hitValue / 300);
-				var bonusScore = (maxScore * 0.5 / totalNotes) * (hitBonusValue * Math.sqrt(bonus) / 300);
-				
-				songScore = Math.round(baseScore + bonusScore);
-		}
-		
-		if (save.data.commaSeparatedScore) {
-			songScore = FlxStringUtil.formatMoney(songScore, false, true);
-		}
+        var ratingString:String = totalNotesPlayed != 0 ? ratingName + ' (' + ratingPercent + '%) - ' + ratingFC : ratingName;
 
-		// Judgements Screen and Score Bar for update
-		var tempScore:String = 'Score: ' + songScore + ' | Combo Breaks: ' + missed + ' | Rating: ' + ratingString;
-		var tempJudgements:String = "";
-		
-		switch (save.data.leftPos) {
-			case 0: // None
-			case 1: // Judgements
-				tempJudgements = 'Sicks: ' + sicks + '\nGoods: ' + goods + '\nBads: ' + bads + '\nShits: ' + shits;
-			case 2: // Score
-				ratingString = totalNotesPlayed != 0 ? ratingPercent + '% - ' + ratingFC : ratingName;
-				tempScore = 'Score: ' + songScore + '\nCombo Breaks: ' + missed + '\nRating: ' + ratingString + '\nCombo: ' + combo;
-			case 3: // Judgements and Score
-				ratingString = totalNotesPlayed != 0 ? ratingPercent + '% - ' + ratingFC : ratingName;
-				tempJudgements = 'Sicks: ' + sicks + '\nGoods: ' + goods + '\nBads: ' + bads + '\nShits: ' + shits;
-				tempScore = 'Score: ' + songScore + '\nCombo Breaks: ' + missed + '\nRating: ' + ratingString + '\nCombo: ' + combo;
-		}
+        // Change the scoring system based on accuracyType (funy)
+        songScore = state.songScore;
+        switch (save.data.accuracyType) {
+            case 0: // Vanilla
+            case 1: // Psych Engine
+            case 2: // osu!mania
+                var maxScore = 1000000;
 
-		if (judgementsText != null) judgementsText.text = tempJudgements + '\n';
-		if (scoreText != null) scoreText.text = tempScore + '\n';
+                var hitValue = sicks * 300 + goods * 200 + bads * 100 + shits * 50;
+                var hitBonusValue = sicks * 32 + goods * 16 + bads * 8 + shits * 4;
+                var hitBonus = sicks;
+                var hitPunishment = goods * 8 + bads * 24 + shits * 44 + missed * 100;
 
-		if(!miss) doScoreBop();
-	}
+                var bonus = Math.max(0, Math.min(100, hitBonus - hitPunishment));
 
-	function resetJudgements() {
-		var tallies = Highscore.tallies;
-		combo = tallies.combo;
-		sicks = tallies.sick;
-		goods = tallies.good;
-		bads = tallies.bad;
-		shits = tallies.shit;
-		missed = tallies.missed;
-	}
+                var baseScore = (maxScore * 0.5 / totalNotes) * (hitValue / 300);
+                var bonusScore = (maxScore * 0.5 / totalNotes) * (hitBonusValue * Math.sqrt(bonus) / 300);
 
-	override function onUpdate(event:UpdateScriptEvent) {
-		totalNotesPlayed = Highscore.tallies.totalNotesHit;
-		resetJudgements();
-	}
+                songScore = Math.round(baseScore + bonusScore);
+        }
 
-	override function onNoteHit(event:HitNoteScriptEvent) {
-		if (!loaded || event.healthChange == 0) return;
-			
-		// Fix for judgements starting from 0
-		if (combo >= 0) combo += 1;
-		switch (event.judgement) {
-			case "sick":
-				if (sicks >= 0) sicks += 1;
-			case "good":
-				if (goods >= 0) goods += 1;
-			case "bad":
-				if (bads >= 0) bads += 1;
-			case "shit":
-				if (shits >= 0) shits += 1;
-		}
-		
-		totalNotesPlayed += 1;
-		
-		updateScore(true);
-	}
+        if (save.data.commaSeparatedScore) {
+            songScore = FlxStringUtil.formatMoney(songScore, false, true);
+        }
 
-	override function onNoteMiss(event:NoteScriptEvent) {
-		if (!loaded || event.healthChange == 0) return;
-		totalNotesPlayed += 1;
-		if (missed >= 0) missed += 1;
-		updateScore(false);
-	}
+        // Judgements Screen and Score Bar for update
+        var tempScore:String = 'Score: ' + songScore + ' | Combo Breaks: ' + missed + ' | Rating: ' + ratingString;
+        var tempJudgements:String = "";
 
-	override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) {
-		if (!loaded || event.healthChange == 0) return;
-		updateScore(false);
-	}
+        switch (save.data.leftPos) {
+            case 0: // None
+            case 1: // Judgements
+                tempJudgements = 'Sicks: ' + sicks + '\nGoods: ' + goods + '\nBads: ' + bads + '\nShits: ' + shits;
+            case 2: // Score
+                ratingString = totalNotesPlayed != 0 ? ratingPercent + '% - ' + ratingFC : ratingName;
+                tempScore = 'Score: ' + songScore + '\nCombo Breaks: ' + missed + '\nRating: ' + ratingString + '\nCombo: ' + combo;
+            case 3: // Judgements and Score
+                ratingString = totalNotesPlayed != 0 ? ratingPercent + '% - ' + ratingFC : ratingName;
+                tempJudgements = 'Sicks: ' + sicks + '\nGoods: ' + goods + '\nBads: ' + bads + '\nShits: ' + shits;
+                tempScore = 'Score: ' + songScore + '\nCombo Breaks: ' + missed + '\nRating: ' + ratingString + '\nCombo: ' + combo;
+        }
 
-	override function onSongRetry(event:ScriptEvent) {
-		loaded = false;
-		cleanup();
-	}
+        if (judgementsText != null) judgementsText.text = tempJudgements + '\n';
+        if (scoreText != null) scoreText.text = tempScore + '\n';
 
-	override function onSongEnd(event:ScriptEvent){ loaded = false; cleanup(); }
+        if (!miss) doScoreBop();
+    }
 
-	override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-		if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
-			loaded = false;
-		}
-	}
+    function resetJudgements() {
+        var tallies = Highscore.tallies;
+        combo = tallies.combo;
+        sicks = tallies.sick;
+        goods = tallies.good;
+        bads = tallies.bad;
+        shits = tallies.shit;
+        missed = tallies.missed;
+    }
 
-	override function onSubStateCloseBegin(event:SubStateScriptEvent) {
-		if (Std.isOfType(event.targetState, PlayState)) {
-			loaded = false;
-		}
-	}
+    override function onUpdate(event:UpdateScriptEvent) {
+        if (save.data.accuracyType == 3 && scoreText == null) return;
+        songScore = state.songScore;
+    }
+
+    override function onNoteHit(event:HitNoteScriptEvent) {
+        if (event.healthChange = 0) return;
+        // Fix for judgements starting from 0
+        if (combo >= 0) combo += 1;
+        switch (event.judgement) {
+            case "sick":
+                if (sicks >= 0) sicks += 1;
+            case "good":
+                if (goods >= 0) goods += 1;
+            case "bad":
+                if (bads >= 0) bads += 1;
+            case "shit":
+                if (shits >= 0) shits += 1;
+        }
+
+        totalNotesPlayed += 1;
+
+        updateScore(true);
+    }
+
+    override function onNoteMiss(event:NoteScriptEvent) {
+        if (!loaded || event.healthChange == 0) return;
+        totalNotesPlayed += 1;
+        if (missed >= 0) missed += 1;
+        updateScore(false);
+    }
+
+    override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) {
+        if (!loaded || event.healthChange == 0) return;
+        updateScore(false);
+    }
+
+    // Cleanup stuff
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
+        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
+            loaded = false;
+        }
+    }
+
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
+        if (Std.isOfType(event.targetState, PlayState)) {
+            loaded = false;
+        }
+    }
+
+    override function onSongEnd(event:ScriptEvent) { cleanup(); }
+
+    override function onSongRetry(event:ScriptEvent) { cleanup(); }
+
+    override function onDestroy(event:ScriptEvent) { cleanup(); }
+
+    function cleanup() {
+        var stuffToRemove = [scoreText, judgementsText, scoreTextTween];
+
+        for (thing in stuffToRemove) {
+            if (thing != null) thing.destroy();
+        }
+
+        ratingPercent = 0;
+        ratingName = "?";
+        ratingFC = "";
+        totalNotesHit = 0;
+        score = 0;
+
+        scoreText = null;
+        judgementsText = null;
+        scoreTextTween = null;
+        loaded = false;
+    }
 }
