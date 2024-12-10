@@ -5,24 +5,28 @@ import funkin.ui.options.OptionsState;
 
 import flixel.FlxG;
 
-import Std;
-
 class PauseOptions extends Module {
-    var wasPaused:Bool = false;
+    var wasPaused:Bool = false ;
+    var stateParams:PlayStateParams;
 
     function new() {
         super("PauseOptions");
     }
 
-    override function onSubStateOpenBegin(event:SubStateScriptEvent){
+    override function onSongLoaded(event:SongLoadScriptEvent) {
+        if (PlayState.instance == null) return;
+        stateParams = PlayState.instance.lastParams;
+    }
+
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         if (event.targetState != PlayState.instance && wasPaused) {
-			FlxG.switchState(() -> new PlayState());
-			wasPaused = false;
-		}
+            FlxG.switchState(() -> new PlayState(stateParams));
+            wasPaused = false;
+        }
     }
 
     override function onSubStateOpenEnd(event:SubStateScriptEvent) {
-        if (Std.isOfType(event.targetState, PauseSubState)) {
+        if (Std.isOfType(event.targetState, PauseSubState) && !PlayState.instance.isMinimalMode) {
             var pauseState = event.targetState;
             var menuEntries = pauseState.currentMenuEntries;
             menuEntries.insert(menuEntries.length - 1, {
@@ -34,6 +38,7 @@ class PauseOptions extends Module {
             pauseState.changeSelection();
         }
     }
+
 
     function optionsCallback() {
         FlxG.switchState(() -> new OptionsState());
