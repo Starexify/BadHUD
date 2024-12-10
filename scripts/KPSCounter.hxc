@@ -1,6 +1,7 @@
 import funkin.modding.module.Module;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.Preferences;
 import funkin.Paths;
 
 import flixel.text.FlxTextBorderStyle;
@@ -13,21 +14,16 @@ import Std;
 
 class KPSCounter extends Module {
     var save:FlxSave;
-    var loaded:Bool = false ;
     var state:PlayState;
+    var loaded:Bool = false ;
 
     var kpsText:FlxText;
     var kps:Int = 0 ;
     var kpsMax:Int = 0 ;
 
     var lastSecondKeyPresses:Array<Float> = [] ;
-    var updateInterval:Float = 1 / 60 ;
+    var updateInterval:Float = 1 / Preferences.framerate ;
     var lastUpdateTime:Float = 0 ;
-
-    var font:String;
-    var textSize;
-
-    var badHUDOptions:BadHUDOptions;
 
     function new() {
         super("KPSCounter");
@@ -36,40 +32,32 @@ class KPSCounter extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (!loaded && save.data.kpsCounter) {
+        if (save.data.kpsCounter) {
+            if (PlayState.instance == null) return;
             state = PlayState.instance;
+            loaded = true;
 
-            // Binding with BadHUDOptions for fonts
-            badHUDOptions = new BadHUDOptions();
-            font = badHUDOptions.font;
-            textSize = save.data.hudFontSize;
+            // Binding with BadHUDOptions
+            var badHUDOptions = new BadHUDOptions();
 
             // Create KPS Text Element
             var kpsTextXPos = 10;
             var kpsTextYPos = FlxG.height * 0.6;
 
             kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
-            kpsText.setFormat(Paths.font(font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+            kpsText.setFormat(Paths.font(badHUDOptions.font), save.data.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
             kpsText.scrollFactor.set();
             kpsText.borderSize = 1.25;
             kpsText.zIndex = 851;
-            state.add(kpsText);
-
             kpsText.text = 'KPS: 0' + '\nMax KPS: 0';
+
+            state.add(kpsText);
             kpsText.cameras = [state.camHUD];
-
-            loaded = true;
-        }
-    }
-
-    function updateKPS() {
-        if (kpsText != null) {
-            kpsText.text = 'KPS: ' + Math.round(kps * 10) / 10 + '\nMax KPS: ' + Math.round(kpsMax * 10) / 10;
         }
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (!loaded || state == null || !save.data.kpsCounter) return;
+        if (PlayState.instance == null || !loaded || !save.data.kpsCounter) return;
 
         var currentTime = FlxG.game.ticks / 1000;
 
@@ -100,31 +88,36 @@ class KPSCounter extends Module {
         }
     }
 
-    function cleanup() {
-        if (kpsText != null) kpsText.destroy();
-        kpsText = null;
-        kps = 0;
-        kpsMax = 0;
-        keyPressHistory = [];
+    function updateKPS() {
+        if (kpsText != null) {
+            kpsText.text = 'KPS: ' + Math.round(kps * 10) / 10 + '\nMax KPS: ' + Math.round(kpsMax * 10) / 10;
+        }
     }
 
-    override function onSongRetry(event:ScriptEvent) { loaded = false; cleanup(); }
-
-    override function onSongEnd(event:ScriptEvent) { loaded = false; cleanup(); }
-
+    // Cleanup stuff
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
-            loaded = false;
+            cleanup();
         }
     }
 
     override function onSubStateCloseBegin(event:SubStateScriptEvent) {
         if (Std.isOfType(event.targetState, PlayState)) {
-            loaded = false;
+            cleanup();
         }
     }
 
-    override function onDestroy(event:ScriptEvent) {
-        cleanup();
+    override function onSongEnd(event:ScriptEvent) { cleanup(); }
+
+    override function onSongRetry(event:ScriptEvent) { cleanup(); }
+
+    override function onDestroy(event:ScriptEvent) { cleanup(); }
+
+    function cleanup() {
+        if (kpsText != null) kpsText.destroy();
+        kpsText = null;
+        kps = 0;
+        kpsMax = 0;
+        lastSecondKeyPresses = [];
     }
 }
