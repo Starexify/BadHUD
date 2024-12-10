@@ -17,6 +17,7 @@ class ExtraStrumline extends Module {
     var alpha = 0.3 ;
 
     var state:PlayState;
+    var loaded:Bool;
 
     var laneUnderlay:FlxSprite;
     var leftGradient:FlxSprite;
@@ -32,8 +33,9 @@ class ExtraStrumline extends Module {
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (PlayState.instance == null) return;
-
         state = PlayState.instance;
+        loaded = true;
+
         // Center player strumline
         if (save.data.middlescroll && excludedSongs.indexOf(state.currentChart.songName) == -1) {
             state.comboPopUps.offsets = [450, -55];
@@ -79,6 +81,7 @@ class ExtraStrumline extends Module {
             rightGradient.zIndex = -1;
             rightGradient.cameras = [state.camHUD];
             state.add(rightGradient);
+            trace("[BadHUD] Note Underlay Generated");
         }
     }
 
@@ -113,7 +116,9 @@ class ExtraStrumline extends Module {
     }
 
     function updatePosition() {
-        if (PlayState.instance == null && laneUnderlay.x == state.playerStrumline.x) return;
+        if (laneUnderlay == null) return;
+        if (laneUnderlay.x == state.playerStrumline.x) return;
+        trace("[BadHud] Updating Note Underlay Position");
         var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
 
         laneUnderlay.x = state.playerStrumline.x;
@@ -122,8 +127,10 @@ class ExtraStrumline extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (PlayState.instance == null) return;
+        if (state == null && !loaded) return;
+
         if (save.data.underlayOpacity > 0) updatePosition();
+
         if (save.data.middlescroll && !save.data.oppNotes) {
             if (state.currentStage != null && excludedSongs.indexOf(state.currentChart.songName) == -1) {
                 updateNotes();
@@ -133,6 +140,7 @@ class ExtraStrumline extends Module {
         }
     }
 
+    // Cleanup Stuff
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
             cleanup();
@@ -160,6 +168,7 @@ class ExtraStrumline extends Module {
             leftGradient = null;
             rightGradient = null;
         }
+        lodaded = false;
     }
 
     // Gradient Underlay Stuff
