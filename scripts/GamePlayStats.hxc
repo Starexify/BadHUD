@@ -1,5 +1,6 @@
 import funkin.modding.module.Module;
 import funkin.play.PauseSubState;
+import funkin.play.PlayStatePlaylist;
 import funkin.play.PlayState;
 import funkin.Highscore;
 import funkin.Paths;
@@ -34,12 +35,12 @@ class GamePlayStats extends Module {
     var ratingName:String = "?" ;
     var ratingFC:String;
 
-    var totalNotesHit:Float = 0.0 ;
-
     var textSize:Int;
 
     var songScore:Int;
 
+    var tallies:Tallies;
+    var talliesLevel:Tallies;
     var sicks:Int = 0 ;
     var goods:Int = 0 ;
     var bads:Int = 0 ;
@@ -77,13 +78,14 @@ class GamePlayStats extends Module {
         if (PlayState.instance == null) return;
         state = PlayState.instance;
         loaded = true;
-        //state.scoreText.visible = false;
+        if (excludedSongs.indexOf(state.currentChart.songName) != -1) return;
+
+        tallies = Highscore.tallies;
+        state.scoreText.visible = false;
 
         // Binding with BadHUDOptions for fonts
         badHUDOptions = new BadHUDOptions();
         textSize = save.data.hudFontSize;
-
-        if (excludedSongs.indexOf(state.currentChart.songName) != -1) return;
 
         // Create HUD elements
         var scoreTextXPos = 0;
@@ -118,14 +120,17 @@ class GamePlayStats extends Module {
         state.add(scoreText);
         scoreText.cameras = [state.camHUD];
 
+        if (PlayStatePlaylist.isStoryMode) talliesLevel = Highscore.talliesLevel;
+
         resetJudgements();
-        totalNotesPlayed = 0;
         updateScore();
-        trace("[BadHUD] Song Loaded");
     }
 
     override function onCountdownStart(event:CountdownScriptEvent) {
-        totalNotes = Highscore.tallies.totalNotes;
+        totalNotesPlayed = tallies.totalNotesHit;
+        if (PlayStatePlaylist.isStoryMode) {
+            totalNotesPlayed = talliesLevel.totalNotesHit + tallies.totalNotesHit;
+        }
     }
 
     function initJudgements(textSize:Int) {
@@ -237,24 +242,22 @@ class GamePlayStats extends Module {
         var ratingString:String = totalNotesPlayed != 0 ? ratingName + ' (' + ratingPercent + '%) - ' + ratingFC : ratingName;
 
         // Change the scoring system based on accuracyType (funy)
-        songScore = state.songScore;
-        switch (save.data.accuracyType) {
-            case 0: // Vanilla
-            case 1: // Psych Engine
-            case 2: // osu!mania
-                var maxScore = 1000000;
+        if (save.data.accuracyType == 2) {
+            var maxScore = 1000000;
 
-                var hitValue = sicks * 300 + goods * 200 + bads * 100 + shits * 50;
-                var hitBonusValue = sicks * 32 + goods * 16 + bads * 8 + shits * 4;
-                var hitBonus = sicks;
-                var hitPunishment = goods * 8 + bads * 24 + shits * 44 + missed * 100;
+            var hitValue = sicks * 300 + goods * 200 + bads * 100 + shits * 50;
+            var hitBonusValue = sicks * 32 + goods * 16 + bads * 8 + shits * 4;
+            var hitBonus = sicks;
+            var hitPunishment = goods * 8 + bads * 24 + shits * 44 + missed * 100;
 
-                var bonus = Math.max(0, Math.min(100, hitBonus - hitPunishment));
+            var bonus = Math.max(0, Math.min(100, hitBonus - hitPunishment));
 
-                var baseScore = (maxScore * 0.5 / totalNotes) * (hitValue / 300);
-                var bonusScore = (maxScore * 0.5 / totalNotes) * (hitBonusValue * Math.sqrt(bonus) / 300);
+            var baseScore = (maxScore * 0.5 / totalNotes) * (hitValue / 300);
+            var bonusScore = (maxScore * 0.5 / totalNotes) * (hitBonusValue * Math.sqrt(bonus) / 300);
 
-                songScore = Math.round(baseScore + bonusScore);
+            songScore = Math.round(baseScore + bonusScore);
+        } else {
+            songScore = state.songScore;
         }
 
         if (save.data.commaSeparatedScore) {
@@ -285,66 +288,75 @@ class GamePlayStats extends Module {
     }
 
     function resetJudgements() {
-        var tallies = Highscore.tallies;
         combo = tallies.combo;
         sicks = tallies.sick;
         goods = tallies.good;
         bads = tallies.bad;
         shits = tallies.shit;
         missed = tallies.missed;
+        totalNotesPlayed = tallies.totalNotesHit;
+        if (PlayStatePlaylist.isStoryMode) {
+            sicks += talliesLevel.sick;
+            goods += talliesLevel.good;
+            bads += talliesLevel.bad;
+            shits += talliesLevel.shit;
+            missed += talliesLevel.missed;
+            totalNotesPlayed += talliesLevel.totalNotesHit;
+        }
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (save.data.accuracyType == 3 && scoreText == null) return;
-        songScore = state.songScore;
+        if (save.data.accuracyType != 2 && loaded && scoreText != null) updateScore(true);
     }
 
     override function onNoteHit(event:HitNoteScriptEvent) {
-        if (event.healthChange = 0) return;
-        // Fix for judgements starting from 0
-        if (combo >= 0) combo += 1;
+        if (event.healthChange == 0) return;
+
+        if (combo >= 0) combo = tallies.combo + 1;
+
         switch (event.judgement) {
             case "sick":
-                if (sicks >= 0) sicks += 1;
+                if (sicks >= 0) sicks = (PlayStatePlaylist.isStoryMode ? talliesLevel.sick + tallies.sick : tallies.sick) + 1;
             case "good":
-                if (goods >= 0) goods += 1;
+                if (goods >= 0) goods = (PlayStatePlaylist.isStoryMode ? talliesLevel.good + tallies.good : tallies.good) + 1;
             case "bad":
-                if (bads >= 0) bads += 1;
+                if (bads >= 0) bads = (PlayStatePlaylist.isStoryMode ? talliesLevel.bad + tallies.bad : tallies.bad) + 1;
             case "shit":
-                if (shits >= 0) shits += 1;
+                if (shits >= 0) shits = (PlayStatePlaylist.isStoryMode ? talliesLevel.shit + tallies.shit : tallies.shit) + 1;
         }
 
-        totalNotesPlayed += 1;
+        totalNotesPlayed = (PlayStatePlaylist.isStoryMode ? talliesLevel.totalNotesHit + tallies.totalNotesHit : tallies.totalNotesHit) + 1;
 
         updateScore(true);
     }
 
     override function onNoteMiss(event:NoteScriptEvent) {
-        if (!loaded || event.healthChange == 0) return;
-        totalNotesPlayed += 1;
-        if (missed >= 0) missed += 1;
+        combo = 0;
+        if (missed >= 0) missed = PlayStatePlaylist.isStoryMode ? talliesLevel.missed + tallies.missed + 1 : tallies.missed + 1;
         updateScore(false);
     }
 
     override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) {
-        if (!loaded || event.healthChange == 0) return;
+        if (event.healthChange == 0) return;
         updateScore(false);
     }
 
     // Cleanup stuff
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
-            loaded = false;
+            cleanup();
         }
     }
 
     override function onSubStateCloseBegin(event:SubStateScriptEvent) {
         if (Std.isOfType(event.targetState, PlayState)) {
-            loaded = false;
+            cleanup();
         }
     }
 
-    override function onSongEnd(event:ScriptEvent) { cleanup(); }
+    override function onSongEnd(event:ScriptEvent) {
+        cleanup();
+    }
 
     override function onSongRetry(event:ScriptEvent) { cleanup(); }
 
@@ -360,12 +372,13 @@ class GamePlayStats extends Module {
         ratingPercent = 0;
         ratingName = "?";
         ratingFC = "";
-        totalNotesHit = 0;
-        score = 0;
+        totalNotesPlayed = 0;
+        songScore = 0;
 
         scoreText = null;
         judgementsText = null;
         scoreTextTween = null;
+
         loaded = false;
     }
 }
