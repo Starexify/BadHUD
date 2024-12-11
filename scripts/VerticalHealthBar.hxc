@@ -11,60 +11,64 @@ import Std;
 
 class VerticalHealthBar extends Module {
     var save:FlxSave;
-    var loaded:Bool = false;
     var state:PlayState;
+    var loaded:Bool = false ;
     var iconP1:FlxSprite;
     var iconP2:FlxSprite;
 
-    var LOSING_THRESHOLD:Float = 0.4;
-    var WINNING_THRESHOLD:Float = 1.6;
-    var MAXIMUM_HEALTH:Float = 2;
-    var POSITION_OFFSET:Int = 26;
+    var LOSING_THRESHOLD:Float = 0.4 ;
+    var WINNING_THRESHOLD:Float = 1.6 ;
+    var MAXIMUM_HEALTH:Float = 2 ;
+    var POSITION_OFFSET:Int = 26 ;
 
-    var excludedSongs = ["Silly Billy", "Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME", 
-    "Destruction Dance", "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "Overload", "Eradication", 
-    "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2"];
+    var excludedSongs = ["Silly Billy", "Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME",
+    "Destruction Dance", "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "Overload", "Eradication",
+    "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2"] ;
 
     function new() {
         super("VerticalHealthBar");
         save = new FlxSave();
-		save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
+        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
     }
 
-	override function onSongLoaded(event:SongLoadScriptEvent) {
-        if(!loaded) {
-            state = PlayState.instance;
-            iconP1 = state.iconP1;
-            iconP2 = state.iconP2;
+    override function onSongLoaded(event:SongLoadScriptEvent) {
+        if (PlayState.instance == null) return;
+        state = PlayState.instance;
+        if (excludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        loaded = true;
+        iconP1 = state.iconP1;
+        iconP2 = state.iconP2;
 
-            if (excludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        if (save.data.showHPBar) {
+            if (save.data.verticalHPBar) {
+                // Vertical HP Bar
+                state.healthBar.x = FlxG.width * 0.7;
+                state.healthBar.y = FlxG.height * 0.5;
+                state.healthBar.angle = 90;
+                state.healthBarBG.angle = 90;
 
-            if (save.data.showHPBar) {
-                if (save.data.verticalHPBar) {
-                    // Vertical HP Bar
-                    var healthBarXPos = FlxG.width * 0.7;
-                    var healthBarYPos = FlxG.height * 0.5;
-
-		        	state.healthBar.x = healthBarXPos;
-		        	state.healthBar.y = healthBarYPos;
-		        	state.healthBar.angle = 90;
-		        	state.healthBarBG.angle = 90;
-
+                if (!state.isMinimalMode) {
                     iconP1.autoUpdate = false;
                     iconP2.autoUpdate = false;
-		        }
-                state.healthBarBG.setPosition(state.healthBar.x - 4, state.healthBar.y - 4);
+                }
+            }
+            state.healthBarBG.setPosition(state.healthBar.x - 4, state.healthBar.y - 4);
+            if (!state.isMinimalMode) {
                 iconP1.alpha = save.data.hudOpacity;
                 iconP2.alpha = save.data.hudOpacity;
-                state.healthBar.alpha = save.data.hudOpacity;
-                state.healthBarBG.alpha = save.data.hudOpacity;
-            } else {
-                state.healthBar.visible = false;
-                state.healthBarBG.visible = false;
+            }
+            state.healthBar.alpha = save.data.hudOpacity;
+            state.healthBarBG.alpha = save.data.hudOpacity;
+        } else {
+            state.healthBar.visible = false;
+            state.healthBarBG.visible = false;
+            if (!state.isMinimalMode) {
                 iconP1.visible = false;
                 iconP2.visible = false;
             }
+        }
 
+        if (!state.isMinimalMode) {
             // Health Icon Positions
             switch (save.data.healthIconPos) {
                 case 0: // Off
@@ -75,32 +79,25 @@ class VerticalHealthBar extends Module {
                     var healthBarX:Float = state.healthBar.x;
                     var healthBarY:Float = state.healthBar.y;
                     var healthBarWidth:Float = state.healthBar.width;
-                    var healthBarHeight:Float = state.healthBar.height;
-                    var yCentering:Float = healthBarWidth / 2 - 15;
-                    var gapReduction:Float = 5;
                     iconP1.autoUpdate = false;
                     iconP2.autoUpdate = false;
-                if (save.data.verticalHPBar) {
-                    iconP1.y = healthBarY + (healthBarWidth / 2) - (state.iconP1.width / 2);
-                    iconP2.y = healthBarY - (healthBarWidth / 2) - (state.iconP2.width / 2);
-                    iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
-                    iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2);
-                } else {
-                    // Center icons vertically relative to the health bar
-                    iconP1.y = healthBarY - (iconP1.height / 2);
-                    iconP2.y = healthBarY - (iconP2.height / 2);
-                    iconP1.x = healthBarX + healthBarWidth - (iconP1.width / 2);
-                    iconP2.x = healthBarX - (iconP2.width / 2);
-                } 
+                    if (save.data.verticalHPBar) {
+                        iconP1.y = healthBarY + (healthBarWidth / 2) - (state.iconP1.width / 2);
+                        iconP2.y = healthBarY - (healthBarWidth / 2) - (state.iconP2.width / 2);
+                        iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
+                        iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2);
+                    } else {
+                        // Center icons vertically relative to the health bar
+                        iconP1.y = healthBarY - (iconP1.height / 2);
+                        iconP2.y = healthBarY - (iconP2.height / 2);
+                        iconP1.x = healthBarX + healthBarWidth - (iconP1.width / 2);
+                        iconP2.x = healthBarX - (iconP2.width / 2);
+                    }
             }
-            
-            loaded = true;
         }
     }
 
     function updatePosition() {
-        if (!loaded || state == null) return;
-
         // Vertical Health Icons (WORKING SOMEHOW)
         if (save.data.verticalHPBar && save.data.healthIconPos == 1) {
             var healthBarX:Float = state.healthBar.x;
@@ -111,26 +108,26 @@ class VerticalHealthBar extends Module {
 
             // Move icons horizontally relative to health bar
             iconP1.y = healthBarY
-                + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering 
-                - POSITION_OFFSET);
-            iconP2.y = healthBarY 
-                + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering + gapReduction)
-                - (iconP2.height - POSITION_OFFSET);
+            + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering
+            - POSITION_OFFSET);
+            iconP2.y = healthBarY
+            + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering + gapReduction)
+            - (iconP2.height - POSITION_OFFSET);
 
             // Center icons vertically relative to the health bar
             iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
             iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2);
-        
+
             updateHealthIcon(iconP1, state.health);
             updateHealthIcon(iconP2, MAXIMUM_HEALTH - state.health);
-        } 
-        if (save.data.healthIconPos == 2) { 
+        }
+        if (save.data.healthIconPos == 2) {
             updateHealthIcon(iconP1, state.health);
             updateHealthIcon(iconP2, MAXIMUM_HEALTH - state.health);
         }
     }
 
-	function updateHealthIcon(icon:FlxSprite, health:Float):Void {
+    function updateHealthIcon(icon:FlxSprite, health:Float):Void {
         if (health < LOSING_THRESHOLD) {
             icon.playAnimation("losing");
         } else if (health > WINNING_THRESHOLD) {
@@ -142,17 +139,16 @@ class VerticalHealthBar extends Module {
 
     // bop for icons, I think onBeatHit is better than onUpdate and fixes it ?
     override function onBeatHit(event:SongTimeScriptEvent) {
-        if (loaded) updatePosition();
+        if (PlayState.instance == null && !loaded) return;
+        if (iconP1 != null && !state.isMinimalMode) updatePosition();
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (loaded && event.healthChange != 0) updatePosition();
+        if (PlayState.instance == null && !loaded) return;
+        if (event.healthChange != 0 && iconP1 != null && !state.isMinimalMode) updatePosition();
     }
 
-    override function onSongEnd(event) { loaded = false; }
-
-    override function onSongRetry(event) { loaded = false; }
-
+    // Cleanup stuff
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
             loaded = false;
@@ -164,4 +160,8 @@ class VerticalHealthBar extends Module {
             loaded = false;
         }
     }
+
+    override function onSongEnd(event:ScriptEvent) { loaded = false; }
+
+    override function onDestroy(event:ScriptEvent) { loaded = false; }
 }
