@@ -4,10 +4,10 @@ import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.Paths;
 
+import flixel.text.FlxTextBorderStyle;
+import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
-import flixel.text.FlxText;
-import flixel.text.FlxTextBorderStyle;
 import flixel.util.FlxSave;
 import flixel.util.FlxStringUtil;
 import flixel.ui.FlxBar;
@@ -22,16 +22,12 @@ OG Psych Engine HUD by Shadow Mario and his team
 */
 class TimeBar extends Module {
     var save:FlxSave;
-    var loaded:Bool = false ;
     var state:PlayState;
+    var loaded:Bool = false ;
 
-    var timeBar:FlxBar;
     var timeBarBG:FunkinSprite;
+    var timeBar:FlxBar;
     var timeText:FlxText;
-
-    var textFont;
-    var timeBarBGStyle;
-    var timeTextSize;
 
     function new() {
         super("TimeBar");
@@ -40,26 +36,23 @@ class TimeBar extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (!loaded && save.data.timebarPosition != 0) {
+        if (save.data.timebarPosition != 0) {
+            if (PlayState.instance == null) return;
             state = PlayState.instance;
 
-            // Binding with BadHUDOptions for fonts
-            var badHUDOptions = new BadHUDOptions();
-            textFont = badHUDOptions.font;
-            timeBarBGStyle = badHUDOptions.timeBarBGStyle;
-            timeTextSize = badHUDOptions.timeTextSize;
-
-            initTimeBar();
-
+            if (!loaded) initTimeBar();
             loaded = true;
         }
     }
 
     function initTimeBar() {
+        // Binding with BadHUDOptions
+        var badHUDOptions = new BadHUDOptions();
+
         var timeBarXPosV = FlxG.width * 0.82;
         var timeBarYPosV = FlxG.height * 0.5;
 
-        timeBarBG = FunkinSprite.create(0, 0, timeBarBGStyle);
+        timeBarBG = FunkinSprite.create(0, 0, badHUDOptions.timeBarBGStyle);
         timeBarBG.scrollFactor.set(0, 0);
         timeBarBG.zIndex = 800;
 
@@ -70,7 +63,7 @@ class TimeBar extends Module {
         timeBar.zIndex = save.data.timebarStyle == 2 ? 799 : 801;
 
         timeText = new FlxText(0, 0, 400, "", 32);
-        timeText.setFormat(Paths.font(textFont), timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        timeText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
         timeText.borderSize = 1.75;
         timeText.scrollFactor.set();
         timeText.zIndex = 802;
@@ -95,7 +88,7 @@ class TimeBar extends Module {
                 timeBarBG.x = timeBarXPosV + (timeText.height / 5);
                 timeBarBG.y = timeBarYPosV;
                 timeText.angle = timeBarBG.angle = timeBar.angle = 90;
-                timeText.zIndex = state.iconP1.zIndex + 1;
+                if (!state.isMinimalMode) timeText.zIndex = state.iconP1.zIndex + 1;
         }
 
         timeBar.x = timeBarBG.x + 3;
@@ -136,7 +129,7 @@ class TimeBar extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (!loaded || state == null) return;
+        if (PlayState.instance == null || !loaded || save.data.timebarPosition == 0) return;
 
         if (timeBar != null && timeBar.visible) {
             timeBar.value = (state.conductorInUse.songPosition / state.currentSongLengthMs) * 100;
@@ -165,6 +158,29 @@ class TimeBar extends Module {
         }
     }
 
+    // Cleanup stuff
+    override function onSongRetry(event:ScriptEvent) {
+        timeBarBG.visible = false;
+        timeBar.visible = false;
+        timeText.visible = false;
+    }
+
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
+        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
+            cleanup();
+        }
+    }
+
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
+        if (Std.isOfType(event.targetState, PlayState)) {
+            cleanup();
+        }
+    }
+
+    override function onSongEnd(event:ScriptEvent) { cleanup(); }
+
+    override function onDestroy(event:ScriptEvent) { cleanup(); }
+
     function cleanup() {
         var stuffToRemove = [timeBarBG, timeBar, timeText];
 
@@ -175,21 +191,6 @@ class TimeBar extends Module {
         timeBarBG = null;
         timeBar = null;
         timeText = null;
-    }
-
-    override function onSongEnd(event) { loaded = false; cleanup(); }
-
-    override function onSongRetry(event) { loaded = false; cleanup(); }
-
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
-            loaded = false;
-        }
-    }
-
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
-        if (Std.isOfType(event.targetState, PlayState)) {
-            loaded = false;
-        }
+        loaded = false;
     }
 }

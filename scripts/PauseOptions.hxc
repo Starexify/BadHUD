@@ -39,7 +39,6 @@ class PauseOptions extends Module {
         }
     }
 
-
     function optionsCallback() {
         FlxG.switchState(() -> new OptionsState());
         wasPaused = true;
