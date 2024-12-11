@@ -1,0 +1,19 @@
+import funkin.modding.module.Module;
+import funkin.play.PlayState;
+import flixel.util.FlxSave;
+
+class PauseOptions extends Module {
+    var save:FlxSave;
+    var state:PlayState;
+    var loaded:Bool;
+
+    function new() {
+        super("PauseOptions");
+    }
+
+    override function onSongLoaded(event:SongLoadScriptEvent) {
+        if (PlayState.instance == null) return;
+        loaded = true;
+    }
+
+}
