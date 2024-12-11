@@ -127,10 +127,8 @@ class ExtraStrumline extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null && !loaded) return;
-
+        if (PlayState.instance == null && !loaded) return;
         if (save.data.underlayOpacity > 0) updatePosition();
-
         if (save.data.middlescroll && !save.data.oppNotes) {
             if (state.currentStage != null && excludedSongs.indexOf(state.currentChart.songName) == -1) {
                 updateNotes();

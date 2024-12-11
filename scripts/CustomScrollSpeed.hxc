@@ -1,14 +1,12 @@
 import funkin.modding.module.Module;
-import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.Paths;
 
-import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
+import flixel.text.FlxText;
 import flixel.util.FlxSave;
 import flixel.FlxG;
 
-import Std;
 import Math;
 
 class CustomScrollSpeed extends Module {
