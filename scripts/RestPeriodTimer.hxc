@@ -2,13 +2,13 @@ import funkin.modding.module.Module;
 import funkin.play.PlayState;
 import flixel.util.FlxSave;
 
-class PauseOptions extends Module {
+class RestPeriodTimer extends Module {
     var save:FlxSave;
     var state:PlayState;
     var loaded:Bool;
 
     function new() {
-        super("PauseOptions");
+        super("RestPeriodTimer");
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {

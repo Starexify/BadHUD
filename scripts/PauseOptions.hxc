@@ -26,7 +26,7 @@ class PauseOptions extends Module {
     }
 
     override function onSubStateOpenEnd(event:SubStateScriptEvent) {
-        if (Std.isOfType(event.targetState, PauseSubState)) {
+        if (Std.isOfType(event.targetState, PauseSubState) && !PlayState.instance.isMinimalMode) {
             var pauseState = event.targetState;
             var menuEntries = pauseState.currentMenuEntries;
             menuEntries.insert(menuEntries.length - 1, {

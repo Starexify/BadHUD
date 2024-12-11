@@ -83,14 +83,12 @@ class ExtraStrumline extends Module {
         }
     }
 
-    override function onCountdownStep(event:CountdownScriptEvent) {
+    function updateNotes() {
         // Transparent Opponent Strumline
         for (staticNote in state.opponentStrumline.strumlineNotes.members) {
             staticNote.alpha = alpha;
         }
-    }
 
-    function updateNotes() {
         // Incoming Notes
         for (note in state.opponentStrumline.notes.members) {
             if (note == null || !note.alive) continue;
