@@ -22,7 +22,7 @@ class CustomScrollSpeed extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (PlayState.instance == null && !save.data.customScrollSpeed) return;
+        if (PlayState.instance == null || !save.data.customScrollSpeed) return;
 
         state = PlayState.instance;
 
@@ -32,6 +32,7 @@ class CustomScrollSpeed extends Module {
     }
 
     override function onPause(event:PauseScriptEvent) {
+        if (!save.data.customScrollSpeed) return;
         // Binding with BadHUDOptions for font and size
         var badHUDOptions = new BadHUDOptions();
         var font = badHUDOptions.font;
