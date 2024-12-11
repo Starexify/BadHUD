@@ -144,7 +144,7 @@ class VerticalHealthBar extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (PlayState.instance == null && !loaded) return;
+        if (PlayState.instance == null || !loaded) return;
         if (event.healthChange != 0 && iconP1 != null && !state.isMinimalMode) updatePosition();
     }
 
