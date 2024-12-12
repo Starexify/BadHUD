@@ -75,7 +75,10 @@ class VerticalHealthBar extends Module {
                     iconP1.visible = false;
                     iconP2.visible = false;
                 case 1: // Default
-                case 2: // Ends
+                case 2: // Flipped
+                    iconP1.flipX = false;
+                    iconP2.flipX = true;
+                case 3: // Ends
                     var healthBarX:Float = state.healthBar.x;
                     var healthBarY:Float = state.healthBar.y;
                     var healthBarWidth:Float = state.healthBar.width;
@@ -99,7 +102,7 @@ class VerticalHealthBar extends Module {
 
     function updatePosition() {
         // Vertical Health Icons (WORKING SOMEHOW)
-        if (save.data.verticalHPBar && save.data.healthIconPos == 1) {
+        if (save.data.verticalHPBar && (save.data.healthIconPos == 1 || save.data.healthIconPos == 2)) {
             var healthBarX:Float = state.healthBar.x;
             var healthBarY:Float = state.healthBar.y;
             var healthBarWidth:Float = state.healthBar.width;
@@ -121,7 +124,7 @@ class VerticalHealthBar extends Module {
             updateHealthIcon(iconP1, state.health);
             updateHealthIcon(iconP2, MAXIMUM_HEALTH - state.health);
         }
-        if (save.data.healthIconPos == 2) {
+        if (save.data.healthIconPos == 3) {
             updateHealthIcon(iconP1, state.health);
             updateHealthIcon(iconP2, MAXIMUM_HEALTH - state.health);
         }

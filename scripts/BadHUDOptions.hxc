@@ -98,7 +98,8 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemEnum("Health Icons Position", "Change the Health Icon position", [
                     "0" => "Off",
                     "1" => "Default",
-                    "2" => "Ends"
+                    "2" => "Flipped",
+                    "3" => "Ends"
                 ], (value) -> { save.data.healthIconPos = Std.parseInt(value); }, save.data.healthIconPos);
 
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Time Bar:", "bold", function() {});
