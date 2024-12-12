@@ -31,6 +31,7 @@ class BadHUDOptions extends Module {
         save.data.timebarPosition = (save.data.timebarPosition != null) ? save.data.timebarPosition : 1;
         save.data.timebarType = (save.data.timebarType != null) ? save.data.timebarType : 1;
         save.data.timebarStyle = (save.data.timebarStyle != null) ? save.data.timebarStyle : 0;
+        save.data.restBar = (save.data.restBar != null) ? save.data.restBar : false;
         save.data.customScrollSpeed = (save.data.customScrollSpeed != null) ? save.data.customScrollSpeed : false;
         save.data.scrollSpeedFactor = (save.data.scrollSpeedFactor != null) ? save.data.scrollSpeedFactor : 1.8;
         save.data.hudOpacity = (save.data.hudOpacity != null) ? save.data.hudOpacity : 1;
@@ -124,6 +125,9 @@ class BadHUDOptions extends Module {
                     "1" => "Minimal",
                     "2" => "Minimal Rounded"
                 ], (value) -> { save.data.timebarStyle = Std.parseInt(value); }, save.data.timebarStyle);
+
+                preferences.createPrefItemCheckbox("Enable Rest Bar", "", (value) -> {
+                    save.data.restBar = value; }, save.data.restBar);
 
                 preferences.createPrefItemCheckbox("Custom Scroll Speed", "", (value) -> {
                     save.data.customScrollSpeed = value; }, save.data.customScrollSpeed);

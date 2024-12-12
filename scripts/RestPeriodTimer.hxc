@@ -1,19 +1,213 @@
 import funkin.modding.module.Module;
+import funkin.graphics.FunkinSprite;
+import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.Paths;
+import funkin.Preferences;
+
+import flixel.text.FlxTextBorderStyle;
+import flixel.text.FlxText;
 import flixel.util.FlxSave;
+import flixel.util.FlxSpriteUtil;
+import flixel.FlxSprite;
+import flixel.tweens.FlxTween;
+import flixel.tweens.FlxEase;
 
 class RestPeriodTimer extends Module {
     var save:FlxSave;
     var state:PlayState;
-    var loaded:Bool;
+    var loaded:Bool = false ;
+
+    var restBarBG:FunkinSprite;
+
+    var restBar:FlxSprite;
+    var restBarThickness:Float = 13 ;
+    var restBarRadius:Float;
+
+    var restText:FlxText;
+
+    var restTime:Float = 0.0 ;
+    var lastHitNoteTime:Int = 0 ;
 
     function new() {
         super("RestPeriodTimer");
+        save = new FlxSave();
+        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
     }
 
-    override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (PlayState.instance == null) return;
+    override function onSongStart(event:ScriptEvent) {
+        if (PlayState.instance == null || !save.data.restBar) return;
+        state = PlayState.instance;
         loaded = true;
     }
 
+    function initRestBar() {
+        // Binding with BadHUDOptions
+        var badHUDOptions = new BadHUDOptions();
+
+        restBar = new FlxSprite();
+        restBar.scrollFactor.set(0, 0);
+        restBar.zIndex = 801;
+        restBar.alpha = save.data.hudOpacity;
+
+        restBarBG = FunkinSprite.create(0, 0, "restBackground");
+        restBarBG.scrollFactor.set(0, 0);
+        restBarBG.zIndex = 800;
+        restBarBG.alpha = save.data.hudOpacity;
+        restBarBG.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restBarBG.width / 2;
+        restBarBG.y = state.playerStrumline.y + restBarBG.height * 1.75;
+        if (Preferences.downscroll) restBarBG.y = state.playerStrumline.y - restBarBG.height;
+
+        restBarRadius = restBarBG.width / 2.5;
+        var restBarWidth = Std.int((restBarRadius + restBarThickness) * 2);
+        restBar.makeGraphic(restBarWidth, restBarWidth, 0x00000000, true);
+        restBar.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restBar.width / 2;
+        restBar.y = restBarBG.y;
+
+        restText = new FlxText(0, 0, 400, "", 32);
+        restText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        restText.borderSize = 1.75;
+        restText.scrollFactor.set();
+        restText.zIndex = 802;
+        restText.alpha = save.data.hudOpacity;
+
+        restText.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restText.width / 2;
+        restText.y = restBarBG.y + restText.height + 3;
+        if (Preferences.downscroll) restText.y = state.playerStrumline.y - restBarBG.height / 2 - restText.height / 2 + 3;
+
+        state.add(restBarBG);
+        state.add(restBar);
+        state.add(restText);
+
+        // Move the rest bar to the HUD camera.
+        restBarBG.cameras = [state.camHUD];
+        restBar.cameras = [state.camHUD];
+        restText.cameras = [state.camHUD];
+    }
+
+    override function onUpdate(event:UpdateScriptEvent):Void {
+        if (PlayState.instance == null || !loaded || !save.data.restBar) return;
+
+        // Get current song time
+        var currentTime = state.conductorInUse.songPosition;
+        var nextNoteData = getNextNoteAndTime(currentTime);
+        var delayTillNextNote = 5000;
+        var delayTillNextNoteTime = 1000;
+
+        if (nextNoteData != null) {
+            restTime = nextNoteData.time - currentTime;
+            var lastHitNoteTime2 = nextNoteData.time - lastHitNoteTime;
+            if (restTime > delayTillNextNoteTime && lastHitNoteTime2 > delayTillNextNote) {
+                if (restBar == null) initRestBar();
+                if (restText != null) {
+                    restText.text = Std.string(Math.round((restTime - delayTillNextNoteTime) / 1000));
+                    drawCurvedBar(restTime - delayTillNextNoteTime, lastHitNoteTime2 - delayTillNextNoteTime);
+
+                    // Fade out the rest bar when time is less than 1500 milliseconds
+                    var restBarObjects = [restBarBG, restBar, restText];
+                    for (obj in restBarObjects) {
+                        if (restTime <= 1500) {
+                            FlxTween.tween(obj, {alpha: 0}, 0.5, {ease: FlxEase.expoOut});
+                        }
+                    }
+                }
+            } else {
+                if (restText != null) cleanupBar();
+            }
+        } else {
+            restTime = 0.0;
+        }
+    }
+
+    function drawCurvedBar(currentRestTime:Float, totalRestTime:Float) {
+        // Clear previous drawing
+        restBar.graphic.bitmap.fillRect(restBar.graphic.bitmap.rect, 0x00000000);
+        var percentage = 1 - (currentRestTime / totalRestTime);
+
+        var startAngle = -Math.PI / 2;
+        var endAngle = startAngle + (percentage * Math.PI * 2);
+
+        // Center is now the middle of the sprite
+        var centerX = restBarRadius + restBarThickness;
+        var centerY = restBarRadius + restBarThickness;
+        centerY = centerY - 3;
+
+        FlxSpriteUtil.beginDraw(0x00000000, {
+            thickness: restBarThickness,
+            color: 0xFFFFFFFF,
+            capsStyle: 0
+        });
+
+        // Draw the arc
+        var radius = restBarRadius;
+        var flashGfx = FlxSpriteUtil.flashGfx;
+
+        // Move to start point
+        var startX = centerX + radius * Math.cos(startAngle);
+        var startY = centerY + radius * Math.sin(startAngle);
+        flashGfx.moveTo(startX, startY);
+
+        // Draw arc segments
+        var segments = Math.ceil(Math.abs(endAngle - startAngle) / (Math.PI / 36));
+        for (i in 1...segments + 1) {
+            var angle = startAngle + (endAngle - startAngle) * (i / segments);
+            var x = centerX + radius * Math.cos(angle);
+            var y = centerY + radius * Math.sin(angle);
+            flashGfx.lineTo(x, y);
+        }
+
+        restBar.dirty = true;
+        FlxSpriteUtil.endDraw(restBar);
+    }
+
+    function getNextNoteAndTime(currentTime:Float):Null<{note:SongNoteData, time:Float}> {
+        if (state.currentChart == null || state.currentChart.notes == null) return;
+
+        for (note in state.currentChart.notes) {
+            if (note.getMustHitNote() && note.time > currentTime) {
+                return { note: note, time: note.time };
+            }
+        }
+        return;
+    }
+
+    override function onNoteHit(event:HitNoteScriptEvent) {
+        if (event.note.noteData.getMustHitNote()) lastHitNoteTime = event.note.noteData.time;
+    }
+
+    // Cleanup stuff
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
+        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
+            cleanup();
+        }
+    }
+
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
+        if (Std.isOfType(event.targetState, PlayState)) {
+            cleanup();
+        }
+    }
+
+    override function onSongRetry(event:ScriptEvent) { cleanup(); }
+
+    override function onSongEnd(event:ScriptEvent) { cleanup(); }
+
+    override function onDestroy(event:ScriptEvent) { cleanup(); }
+
+    function cleanup() {
+        cleanupBar();
+        loaded = false;
+    }
+
+    function cleanupBar() {
+        var stuffToRemove = [restBarBG, restBar, restText];
+
+        for (thing in stuffToRemove) {
+            if (thing != null) thing.destroy();
+        }
+
+        restBarBG = null;
+        restBar = null;
+        restText = null;
+    }
 }
