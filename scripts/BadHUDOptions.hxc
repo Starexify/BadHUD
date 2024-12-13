@@ -23,6 +23,7 @@ class BadHUDOptions extends Module {
         save.data.underlayOpacity = (save.data.underlayOpacity != null) ? save.data.underlayOpacity : 0;
         save.data.oppNotes = (save.data.oppNotes != null) ? save.data.oppNotes : false;
         save.data.commaSeparatedScore = (save.data.commaSeparatedScore != null) ? save.data.commaSeparatedScore : false;
+        save.data.popUpType = (save.data.popUpType != null) ? save.data.popUpType : 1;
         save.data.accuracyType = (save.data.accuracyType != null) ? save.data.accuracyType : 0;
         save.data.leftPos = (save.data.leftPos != null) ? save.data.leftPos : 1;
         save.data.kpsCounter = (save.data.kpsCounter != null) ? save.data.kpsCounter : false;
@@ -71,7 +72,13 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemCheckbox("Comma Separated Score", "", (value) -> {
                     save.data.commaSeparatedScore = value; }, save.data.commaSeparatedScore);
 
-                preferences.createPrefItemEnum("Accuracy Type", "Changed the accuracy system", [
+                preferences.createPrefItemEnum("Combo Pop Ups", "Change the Combo Pop Ups", [
+                    "0" => "Off",
+                    "1" => "Vanilla",
+                    "2" => "Centered"
+                ], (value) -> { save.data.popUpType = Std.parseInt(value); }, save.data.popUpType);
+
+                preferences.createPrefItemEnum("Accuracy Type", "Change the accuracy/score system (visually)", [
                     "0" => "Vanilla",
                     "1" => "Psych Engine",
                     "2" => "osu!Mania"

@@ -1,9 +1,17 @@
 import funkin.modding.module.Module;
+import funkin.graphics.FunkinSprite;
+import funkin.play.notes.notestyle.NoteStyle;
+import funkin.data.notestyle.NoteStyleRegistry;
 import funkin.play.notes.Strumline;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.util.SortUtil;
+import funkin.Preferences;
 
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
 import flixel.util.FlxSave;
+import flixel.util.FlxSort;
 import flixel.FlxSprite;
 import flixel.FlxG;
 
@@ -21,6 +29,9 @@ class ExtraStrumline extends Module {
     var leftGradient:FlxSprite;
     var rightGradient:FlxSprite;
 
+    var judgementSprite:FunkinSprite;
+    var noteStyle:NoteStyle;
+
     var excludedSongs = ["Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2"] ;
 
     function new() {
@@ -33,11 +44,14 @@ class ExtraStrumline extends Module {
         if (PlayState.instance == null) return;
         state = PlayState.instance;
         loaded = true;
+        var noteStyleId:String = state.currentChart.noteStyle;
+        noteStyle = NoteStyleRegistry.instance.fetchEntry(noteStyleId);
+        if (noteStyle == null) noteStyle = NoteStyleRegistry.instance.fetchDefault();
 
         // Center player strumline
         if (save.data.middlescroll && excludedSongs.indexOf(state.currentChart.songName) == -1) {
-            state.comboPopUps.offsets = [450, -55];
             state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
+            if (save.data.popUpType == 1) state.comboPopUps.offsets = [450, -55];
 
             // Opponent Strumline
             if (!save.data.oppNotes) {
@@ -79,8 +93,10 @@ class ExtraStrumline extends Module {
             rightGradient.zIndex = -1;
             rightGradient.cameras = [state.camHUD];
             state.add(rightGradient);
-            trace("[BadHUD] Note Underlay Generated");
         }
+
+        // Remove comboPopUps
+        if (save.data.popUpType == 0 || save.data.popUpType > 1) state.comboPopUps.visible = false;
     }
 
     function updateNotes() {
@@ -134,6 +150,68 @@ class ExtraStrumline extends Module {
         }
     }
 
+    override function onNoteHit(event:HitNoteScriptEvent) {
+        if (event.note.noteData.getMustHitNote() && save.data.popUpType == 2) displayRating(event.judgement);
+    }
+
+    function displayRating(daRating:Null<String>) {
+        if (daRating == null) return;
+
+        // Remove existing judgement sprite if it exists
+        if (judgementSprite != null) {
+            state.remove(judgementSprite);
+            judgementSprite.destroy();
+            judgementSprite = null;
+        }
+
+        // Create new rating sprite
+        var rating:Null<FunkinSprite> = noteStyle.buildJudgementSprite(daRating);
+        if (rating == null) return;
+
+        var originalScaleX = rating.scale.x;
+        var originalScaleY = rating.scale.y;
+
+        // Center horizontally
+        rating.x = state.playerStrumline.x + (state.playerStrumline.width / 2) - (rating.width / 2);
+        rating.y = FlxG.height / 2 - rating.height * 1.5;
+        if (!Preferences.downscroll) rating.y = FlxG.height / 2 + rating.height;
+
+        // Apply note style offsets
+        var styleOffsets = noteStyle.getJudgementSpriteOffsets(daRating);
+        rating.x += styleOffsets[0];
+        rating.y += styleOffsets[1];
+
+        // Save reference to current sprite
+        judgementSprite = rating;
+
+        // Add to state
+        rating.zIndex = 900;
+        rating.cameras = [state.camHUD];
+        state.add(rating);
+        state.sort(SortUtil.byZIndex, FlxSort.ASCENDING);
+
+        rating.scale.set(0.8, 0.8);
+
+        // Pop-in tween with scale
+        FlxTween.tween(rating.scale, {x: originalScaleX, y: originalScaleY}, 0.2, {
+            ease: FlxEase.backOut,
+            onComplete: function(tween:FlxTween) {
+                // Fade out
+                FlxTween.tween(rating, {alpha: 0}, 0.3, {
+                    onComplete: function(tween:FlxTween) {
+                        state.remove(rating);
+                        rating.destroy();
+                        if (judgementSprite == rating) {
+                            judgementSprite = null;
+                        }
+                    },
+                    startDelay: state.conductorInUse.beatLengthMs * 0.001,
+                    ease: FlxEase.expoOut
+                });
+            }
+        });
+    }
+
     // Cleanup Stuff
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
@@ -161,6 +239,10 @@ class ExtraStrumline extends Module {
             laneUnderlay = null;
             leftGradient = null;
             rightGradient = null;
+        }
+        if (judgementSprite != null) {
+            judgementSprite.destroy();
+            judgementSprite = null;
         }
         lodaded = false;
     }
