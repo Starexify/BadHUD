@@ -120,6 +120,13 @@ class RestPeriodTimer extends Module {
     }
 
     function drawCurvedBar(currentRestTime:Float, totalRestTime:Float) {
+        if (restBar == null) return;
+
+        if (restBar.graphic == null) {
+            var restBarWidth = Std.int((restBarRadius + restBarThickness) * 2);
+            restBar.makeGraphic(restBarWidth, restBarWidth, 0x00000000, true);
+        }
+
         // Clear previous drawing
         restBar.graphic.bitmap.fillRect(restBar.graphic.bitmap.rect, 0x00000000);
         var percentage = 1 - (currentRestTime / totalRestTime);
@@ -132,32 +139,36 @@ class RestPeriodTimer extends Module {
         var centerY = restBarRadius + restBarThickness;
         centerY = centerY - 3;
 
-        FlxSpriteUtil.beginDraw(0x00000000, {
-            thickness: restBarThickness,
-            color: 0xFFFFFFFF,
-            capsStyle: 0
-        });
+        try {
+            FlxSpriteUtil.beginDraw(0x00000000, {
+                thickness: restBarThickness,
+                color: 0xFFFFFFFF,
+                capsStyle: 0
+            });
 
-        // Draw the arc
-        var radius = restBarRadius;
-        var flashGfx = FlxSpriteUtil.flashGfx;
+            // Draw the arc
+            var radius = restBarRadius;
+            var flashGfx = FlxSpriteUtil.flashGfx;
 
-        // Move to start point
-        var startX = centerX + radius * Math.cos(startAngle);
-        var startY = centerY + radius * Math.sin(startAngle);
-        flashGfx.moveTo(startX, startY);
+            // Move to start point
+            var startX = centerX + radius * Math.cos(startAngle);
+            var startY = centerY + radius * Math.sin(startAngle);
+            flashGfx.moveTo(startX, startY);
 
-        // Draw arc segments
-        var segments = Math.ceil(Math.abs(endAngle - startAngle) / (Math.PI / 36));
-        for (i in 1...segments + 1) {
-            var angle = startAngle + (endAngle - startAngle) * (i / segments);
-            var x = centerX + radius * Math.cos(angle);
-            var y = centerY + radius * Math.sin(angle);
-            flashGfx.lineTo(x, y);
+            // Draw arc segments
+            var segments = Math.ceil(Math.abs(endAngle - startAngle) / (Math.PI / 36));
+            for (i in 1...segments + 1) {
+                var angle = startAngle + (endAngle - startAngle) * (i / segments);
+                var x = centerX + radius * Math.cos(angle);
+                var y = centerY + radius * Math.sin(angle);
+                flashGfx.lineTo(x, y);
+            }
+
+            restBar.dirty = true;
+            FlxSpriteUtil.endDraw(restBar);
+        } catch (e:Dynamic) {
+            trace('Error in drawCurvedBar: ' + e);
         }
-
-        restBar.dirty = true;
-        FlxSpriteUtil.endDraw(restBar);
     }
 
     function getNextNoteAndTime(currentTime:Float):Null<{note:SongNoteData, time:Float}> {
