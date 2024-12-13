@@ -50,8 +50,8 @@ class ExtraStrumline extends Module {
 
         // Center player strumline
         if (save.data.middlescroll && excludedSongs.indexOf(state.currentChart.songName) == -1) {
-            state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
             if (save.data.popUpType == 1) state.comboPopUps.offsets = [450, -55];
+            state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
 
             // Opponent Strumline
             if (!save.data.oppNotes) {
