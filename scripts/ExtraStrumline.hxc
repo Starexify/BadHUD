@@ -5,13 +5,11 @@ import funkin.data.notestyle.NoteStyleRegistry;
 import funkin.play.notes.Strumline;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
-import funkin.util.SortUtil;
 import funkin.Preferences;
 
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxSave;
-import flixel.util.FlxSort;
 import flixel.FlxSprite;
 import flixel.FlxG;
 
@@ -188,7 +186,7 @@ class ExtraStrumline extends Module {
         rating.zIndex = 900;
         rating.cameras = [state.camHUD];
         state.add(rating);
-        state.sort(SortUtil.byZIndex, FlxSort.ASCENDING);
+        state.refresh();
 
         rating.scale.set(0.8, 0.8);
 
