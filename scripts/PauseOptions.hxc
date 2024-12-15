@@ -1,6 +1,8 @@
 import funkin.modding.module.Module;
+import funkin.audio.FunkinSound;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.ui.debug.latency.LatencyState;
 import funkin.ui.options.OptionsState;
 
 import flixel.FlxG;
@@ -8,6 +10,7 @@ import flixel.FlxG;
 class PauseOptions extends Module {
     var wasPaused:Bool = false ;
     var stateParams:PlayStateParams;
+    var isChartingState:Bool = false ;
 
     function new() {
         super("PauseOptions");
@@ -19,9 +22,15 @@ class PauseOptions extends Module {
     }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (event.targetState != PlayState.instance && wasPaused) {
-            FlxG.switchState(() -> new PlayState(stateParams));
-            wasPaused = false;
+        if (isChartingState) {
+            if (event.targetState != PlayState.instance && !Std.isOfType(event.targetState, LatencyState) && wasPaused) {
+                //FlxG.switchState(() -> new ChartEditorState(chartEditorParams));
+            }
+        } else {
+            if (event.targetState != PlayState.instance && !Std.isOfType(event.targetState, LatencyState) && wasPaused) {
+                FlxG.switchState(() -> new PlayState(stateParams));
+                wasPaused = false;
+            }
         }
     }
 
@@ -40,7 +49,8 @@ class PauseOptions extends Module {
     }
 
     function optionsCallback() {
-        FlxG.switchState(() -> new OptionsState());
         wasPaused = true;
+        FlxG.switchState(() -> new OptionsState());
+        //FunkinSound.playMusic('freakyMenu', {overrideExisting: true, persist: true});
     }
 }
