@@ -134,7 +134,7 @@ class BadHUDOptions extends Module {
                     "2" => "Minimal Rounded"
                 ], (value) -> { save.data.timebarStyle = Std.parseInt(value); }, save.data.timebarStyle);
 
-                preferences.createPrefItemCheckbox("Enable Rest Bar", "", (value) -> {
+                preferences.createPrefItemCheckbox("Show Rest Bar", "", (value) -> {
                     save.data.restBar = value; }, save.data.restBar);
 
                 preferences.createPrefItemCheckbox("Custom Scroll Speed", "", (value) -> {
