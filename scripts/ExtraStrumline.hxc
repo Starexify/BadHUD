@@ -60,9 +60,11 @@ class ExtraStrumline extends Module {
                     var note = state.opponentStrumline.strumlineNotes.members[i];
                     note.x = FlxG.width - state.opponentStrumline.width - rightXOffset + Strumline.NOTE_SPACING * (i - 2);
                 }
-            } else {
-                state.opponentStrumline.visible = false;
             }
+        }
+
+        if (save.data.oppNotes) {
+            state.opponentStrumline.visible = false;
         }
 
         // Create the note underlay with gradient
