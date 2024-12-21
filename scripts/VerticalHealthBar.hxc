@@ -21,9 +21,14 @@ class VerticalHealthBar extends Module {
     var MAXIMUM_HEALTH:Float = 2 ;
     var POSITION_OFFSET:Int = 26 ;
 
-    var excludedSongs = ["Silly Billy", "Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME",
-    "Destruction Dance", "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "Overload", "Eradication",
-    "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2"] ;
+    var excludedSongs = ["Silly Billy",
+    "Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME", "Destruction Dance", "Portal Power",
+    "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "Overload", "Eradication", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2",
+        // Indie Cross
+    "Snake-Eyes", "Technicolor-Tussle", "Knockout", "Whoopee", "Sansational", "Burning-In-Hell", "Imminent-Demise", "Terrible-Sin", "Last-Reel", "Nightmare-Run", "Satanic-Funkin",
+    "Final-Stretch",
+
+    "Tomo", "Knucklehead", "Spunk", "Ghoulish"] ;
 
     function new() {
         super("VerticalHealthBar");
