@@ -160,9 +160,11 @@ class TimeBar extends Module {
 
     // Cleanup stuff
     override function onSongRetry(event:ScriptEvent) {
-        timeBarBG.visible = false;
-        timeBar.visible = false;
-        timeText.visible = false;
+        var stuffToHide = [timeBarBG, timeBar, timeText];
+
+        for (thing in stuffToHide) {
+            if (thing != null) thing.visible = false;
+        }
     }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
