@@ -52,14 +52,14 @@ class VerticalHealthBar extends Module {
                 state.healthBarBG.angle = 90;
 
                 if (!state.isMinimalMode) {
-                    iconP1.autoUpdate = false;
-                    iconP2.autoUpdate = false;
+                    if (iconP1 != null) iconP1.autoUpdate = false;
+                    if (iconP2 != null) iconP2.autoUpdate = false;
                 }
             }
             state.healthBarBG.setPosition(state.healthBar.x - 4, state.healthBar.y - 4);
             if (!state.isMinimalMode) {
                 iconP1.alpha = save.data.hudOpacity;
-                iconP2.alpha = save.data.hudOpacity;
+                if (iconP2 != null) iconP2.alpha = save.data.hudOpacity;
             }
             state.healthBar.alpha = save.data.hudOpacity;
             state.healthBarBG.alpha = save.data.hudOpacity;
@@ -67,8 +67,8 @@ class VerticalHealthBar extends Module {
             state.healthBar.visible = false;
             state.healthBarBG.visible = false;
             if (!state.isMinimalMode) {
-                iconP1.visible = false;
-                iconP2.visible = false;
+                if (iconP1 != null) iconP1.visible = false;
+                if (iconP2 != null) iconP2.visible = false;
             }
         }
 
@@ -76,29 +76,29 @@ class VerticalHealthBar extends Module {
             // Health Icon Positions
             switch (save.data.healthIconPos) {
                 case 0: // Off
-                    iconP1.visible = false;
-                    iconP2.visible = false;
+                    if (iconP1 != null) iconP1.visible = false;
+                    if (iconP2 != null) iconP2.visible = false;
                 case 1: // Default
                 case 2: // Flipped
-                    iconP1.flipX = false;
-                    iconP2.flipX = true;
+                    if (iconP1 != null) iconP1.flipX = false;
+                    if (iconP2 != null) iconP2.flipX = true;
                 case 3: // Ends
                     var healthBarX:Float = state.healthBar.x;
                     var healthBarY:Float = state.healthBar.y;
                     var healthBarWidth:Float = state.healthBar.width;
-                    iconP1.autoUpdate = false;
-                    iconP2.autoUpdate = false;
+                    if (iconP1 != null) iconP1.autoUpdate = false;
+                    if (iconP2 != null) iconP2.autoUpdate = false;
                     if (save.data.verticalHPBar) {
-                        iconP1.y = healthBarY + (healthBarWidth / 2) - (state.iconP1.width / 2);
-                        iconP2.y = healthBarY - (healthBarWidth / 2) - (state.iconP2.width / 2);
-                        iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
-                        iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2);
+                        if (iconP1 != null) iconP1.y = healthBarY + (healthBarWidth / 2) - (state.iconP1.width / 2);
+                        if (iconP2 != null) iconP2.y = healthBarY - (healthBarWidth / 2) - (state.iconP2.width / 2);
+                        if (iconP1 != null) iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
+                        if (iconP2 != null) iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2);
                     } else {
                         // Center icons vertically relative to the health bar
-                        iconP1.y = healthBarY - (iconP1.height / 2);
-                        iconP2.y = healthBarY - (iconP2.height / 2);
-                        iconP1.x = healthBarX + healthBarWidth - (iconP1.width / 2);
-                        iconP2.x = healthBarX - (iconP2.width / 2);
+                        if (iconP1 != null) iconP1.y = healthBarY - (iconP1.height / 2);
+                        if (iconP2 != null) iconP2.y = healthBarY - (iconP2.height / 2);
+                        if (iconP1 != null) iconP1.x = healthBarX + healthBarWidth - (iconP1.width / 2);
+                        if (iconP2 != null) iconP2.x = healthBarX - (iconP2.width / 2);
                     }
             }
         }
@@ -135,6 +135,7 @@ class VerticalHealthBar extends Module {
     }
 
     function updateHealthIcon(icon:FlxSprite, health:Float):Void {
+        if (icon == null) return;
         if (health < LOSING_THRESHOLD) {
             icon.playAnimation("losing");
         } else if (health > WINNING_THRESHOLD) {
