@@ -18,7 +18,7 @@ class BadHUDOptions extends Module {
         save = new FlxSave();
         save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
 
-        // Options when game loaded for first time
+        // Default Options (First Start)
         save.data.middlescroll = (save.data.middlescroll != null) ? save.data.middlescroll : false;
         save.data.underlayOpacity = (save.data.underlayOpacity != null) ? save.data.underlayOpacity : 0;
         save.data.oppNotes = (save.data.oppNotes != null) ? save.data.oppNotes : false;
@@ -27,8 +27,7 @@ class BadHUDOptions extends Module {
         save.data.accuracyType = (save.data.accuracyType != null) ? save.data.accuracyType : 0;
         save.data.leftPos = (save.data.leftPos != null) ? save.data.leftPos : 1;
         save.data.kpsCounter = (save.data.kpsCounter != null) ? save.data.kpsCounter : false;
-        save.data.showHPBar = (save.data.showHPBar != null) ? save.data.showHPBar : true;
-        save.data.verticalHPBar = (save.data.verticalHPBar != null) ? save.data.verticalHPBar : false;
+        save.data.healthBarPosition = (save.data.healthBarPosition != null) ? save.data.healthBarPosition : 1;
         save.data.timebarPosition = (save.data.timebarPosition != null) ? save.data.timebarPosition : 1;
         save.data.timebarType = (save.data.timebarType != null) ? save.data.timebarType : 1;
         save.data.timebarStyle = (save.data.timebarStyle != null) ? save.data.timebarStyle : 0;
@@ -47,7 +46,6 @@ class BadHUDOptions extends Module {
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
         if (Std.isOfType(event.targetState, OptionsState)) {
             var preferences = event.targetState.pages.get("preferences");
-
             if (preferences != null) {
                 updatetypetext();
 
@@ -96,15 +94,15 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemCheckbox("Show KPS Counter", "", (value) -> {
                     save.data.kpsCounter = value; }, save.data.kpsCounter);
 
-                preferences.createPrefItemCheckbox("Show Health Bar", "", (value) -> {
-                    save.data.showHPBar = value; }, save.data.showHPBar);
-
-                preferences.createPrefItemCheckbox("Vertical Health Bar", "", (value) -> {
-                    save.data.verticalHPBar = value; }, save.data.verticalHPBar);
+                preferences.createPrefItemEnum("Health Bar Position", "Changes position of the Health Bar", [
+                    "0" => "Off",
+                    "1" => "Vanilla",
+                    "2" => "Vertical"
+                ], (value) -> { save.data.healthBarPosition = Std.parseInt(value); }, save.data.healthBarPosition);
 
                 preferences.createPrefItemEnum("Health Icons Position", "Change the Health Icon position", [
                     "0" => "Off",
-                    "1" => "Default",
+                    "1" => "Vanilla",
                     "2" => "Flipped",
                     "3" => "Ends"
                 ], (value) -> { save.data.healthIconPos = Std.parseInt(value); }, save.data.healthIconPos);

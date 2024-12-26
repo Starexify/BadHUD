@@ -9,7 +9,7 @@ import flixel.FlxSprite;
 
 import Std;
 
-class VerticalHealthBar extends Module {
+class BadHealthBar extends Module {
     var save:FlxSave;
     var state:PlayState;
     var loaded:Bool = false ;
@@ -30,7 +30,7 @@ class VerticalHealthBar extends Module {
     "Tomo", "Knucklehead", "Spunk", "Ghoulish"] ;
 
     function new() {
-        super("VerticalHealthBar");
+        super("BadHealthBar");
         save = new FlxSave();
         save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
     }
@@ -43,8 +43,9 @@ class VerticalHealthBar extends Module {
         iconP1 = state.iconP1;
         iconP2 = state.iconP2;
 
-        if (save.data.showHPBar) {
-            if (save.data.verticalHPBar) {
+        // Health Bar
+        if (save.data.healthBarPosition != 0) {
+            if (save.data.healthBarPosition == 2) {
                 // Vertical HP Bar
                 state.healthBar.x = FlxG.width * 0.7;
                 state.healthBar.y = FlxG.height * 0.5;
@@ -58,7 +59,7 @@ class VerticalHealthBar extends Module {
             }
             state.healthBarBG.setPosition(state.healthBar.x - 4, state.healthBar.y - 4);
             if (!state.isMinimalMode) {
-                iconP1.alpha = save.data.hudOpacity;
+                if (iconP1 != null) iconP1.alpha = save.data.hudOpacity;
                 if (iconP2 != null) iconP2.alpha = save.data.hudOpacity;
             }
             state.healthBar.alpha = save.data.hudOpacity;
@@ -72,8 +73,8 @@ class VerticalHealthBar extends Module {
             }
         }
 
+        // Health Icon Positions
         if (!state.isMinimalMode) {
-            // Health Icon Positions
             switch (save.data.healthIconPos) {
                 case 0: // Off
                     if (iconP1 != null) iconP1.visible = false;
@@ -88,7 +89,7 @@ class VerticalHealthBar extends Module {
                     var healthBarWidth:Float = state.healthBar.width;
                     if (iconP1 != null) iconP1.autoUpdate = false;
                     if (iconP2 != null) iconP2.autoUpdate = false;
-                    if (save.data.verticalHPBar) {
+                    if (save.data.healthBarPosition == 2) {
                         if (iconP1 != null) iconP1.y = healthBarY + (healthBarWidth / 2) - (state.iconP1.width / 2);
                         if (iconP2 != null) iconP2.y = healthBarY - (healthBarWidth / 2) - (state.iconP2.width / 2);
                         if (iconP1 != null) iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
@@ -106,7 +107,7 @@ class VerticalHealthBar extends Module {
 
     function updatePosition() {
         // Vertical Health Icons (WORKING SOMEHOW)
-        if (save.data.verticalHPBar && (save.data.healthIconPos == 1 || save.data.healthIconPos == 2)) {
+        if (save.data.healthBarPosition == 2 && (save.data.healthIconPos == 1 || save.data.healthIconPos == 2)) {
             var healthBarX:Float = state.healthBar.x;
             var healthBarY:Float = state.healthBar.y;
             var healthBarWidth:Float = state.healthBar.width;
