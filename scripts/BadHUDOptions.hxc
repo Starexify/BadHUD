@@ -36,7 +36,6 @@ class BadHUDOptions extends Module {
         save.data.popUpType = (save.data.popUpType != null) ? save.data.popUpType : 1;
         save.data.underlayOpacity = (save.data.underlayOpacity != null) ? save.data.underlayOpacity : 0;
         save.data.kpsCounter = (save.data.kpsCounter != null) ? save.data.kpsCounter : false;
-
         save.data.customScrollSpeed = (save.data.customScrollSpeed != null) ? save.data.customScrollSpeed : false;
         save.data.scrollSpeedFactor = (save.data.scrollSpeedFactor != null) ? save.data.scrollSpeedFactor : 1.8;
 
@@ -114,7 +113,7 @@ class BadHUDOptions extends Module {
                     } else {
                         save.data.hudOpacity = value;
                     }
-                }, function(value:Float):String { value = save.data.hudOpacity; }, save.data.hudOpacity, 0.0, 1.0, 0.1, 1);
+                }, function(value:Float):String { value = save.data.hudOpacity; }, save.data.hudOpacity, 0, 1, 0.1, 1);
 
                 preferences.createPrefItemEnum("HUD Font", "Changes the font of the HUD", [
                     "0" => "VCR OSD Mono (Vanilla)",
@@ -168,8 +167,12 @@ class BadHUDOptions extends Module {
                     save.data.customScrollSpeed = value; }, save.data.customScrollSpeed);
 
                 preferences.createPrefItemNumber("Scroll Speed Factor", "Changes the speed of the notes", function(value:Float) {
-                    save.data.scrollSpeedFactor = value;
-                }, function(value:Float):String { value = save.data.scrollSpeedFactor; }, save.data.scrollSpeedFactor, 0.1, 999, 0.1, 1);
+                    if (value < 0.1) {
+                        save.data.scrollSpeedFactor = 0.1;
+                    } else {
+                        save.data.scrollSpeedFactor = value;
+                    }
+                }, function(value:Float):String { value = save.data.scrollSpeedFactor; }, save.data.scrollSpeedFactor, 0, 999, 0.1, 1);
             }
         }
     }
