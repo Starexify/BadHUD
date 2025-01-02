@@ -26,7 +26,7 @@ class CustomScrollSpeed extends Module {
 
         state = PlayState.instance;
 
-        var scrollSpeed:Float = Math.round(save.data.scrollSpeedFactor * 10) / 10;
+        var scrollSpeed:Float = save.data.scrollSpeedFactor/ 10;
         state.playerStrumline.scrollSpeed = scrollSpeed;
         state.opponentStrumline.scrollSpeed = scrollSpeed;
     }
@@ -44,7 +44,7 @@ class CustomScrollSpeed extends Module {
         speedText.scrollFactor.set(0, 0);
         speedText.alignment = "right";
         speedText.cameras = [state.camHUD];
-        speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + Math.round(save.data.scrollSpeedFactor * 10) / 10;
+        speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + save.data.scrollSpeedFactor / 10;
         state.add(speedText);
     }
 

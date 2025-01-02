@@ -59,11 +59,11 @@ class BadHealthBar extends Module {
             }
             state.healthBarBG.setPosition(state.healthBar.x - 4, state.healthBar.y - 4);
             if (!state.isMinimalMode) {
-                if (iconP1 != null) iconP1.alpha = save.data.hudOpacity;
-                if (iconP2 != null) iconP2.alpha = save.data.hudOpacity;
+                if (iconP1 != null) iconP1.alpha = save.data.hudOpacity / 100;
+                if (iconP2 != null) iconP2.alpha = save.data.hudOpacity / 100;
             }
-            state.healthBar.alpha = save.data.hudOpacity;
-            state.healthBarBG.alpha = save.data.hudOpacity;
+            state.healthBar.alpha = save.data.hudOpacity / 100;
+            state.healthBarBG.alpha = save.data.hudOpacity / 100;
         } else {
             state.healthBar.visible = false;
             state.healthBarBG.visible = false;

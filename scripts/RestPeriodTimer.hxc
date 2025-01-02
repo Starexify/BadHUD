@@ -48,12 +48,12 @@ class RestPeriodTimer extends Module {
         restBar = new FlxSprite();
         restBar.scrollFactor.set(0, 0);
         restBar.zIndex = 801;
-        restBar.alpha = save.data.hudOpacity;
+        restBar.alpha = save.data.hudOpacity / 100;
 
         restBarBG = FunkinSprite.create(0, 0, "restBackground");
         restBarBG.scrollFactor.set(0, 0);
         restBarBG.zIndex = 800;
-        restBarBG.alpha = save.data.hudOpacity;
+        restBarBG.alpha = save.data.hudOpacity / 100;
         restBarBG.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restBarBG.width / 2;
         restBarBG.y = state.playerStrumline.y + restBarBG.height * 1.75;
         if (Preferences.downscroll) restBarBG.y = state.playerStrumline.y - restBarBG.height;
@@ -69,7 +69,7 @@ class RestPeriodTimer extends Module {
         restText.borderSize = 1.75;
         restText.scrollFactor.set();
         restText.zIndex = 802;
-        restText.alpha = save.data.hudOpacity;
+        restText.alpha = save.data.hudOpacity / 100;
 
         restText.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restText.width / 2;
         restText.y = restBarBG.y + restText.height + 3;

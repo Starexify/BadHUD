@@ -72,7 +72,7 @@ class ExtraStrumline extends Module {
             laneUnderlay = new FlxSprite(0, 0).makeGraphic(state.playerStrumline.get_width(), FlxG.height * 2);
             laneUnderlay.x = state.playerStrumline.x;
             laneUnderlay.color = 0x000000;
-            laneUnderlay.alpha = save.data.underlayOpacity;
+            laneUnderlay.alpha = save.data.underlayOpacity / 100;
             laneUnderlay.scrollFactor.set();
             laneUnderlay.zIndex = -1;
             laneUnderlay.cameras = [state.camHUD];
@@ -80,14 +80,14 @@ class ExtraStrumline extends Module {
 
             var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
 
-            leftGradient = createLeftGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity);
+            leftGradient = createLeftGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity / 100);
             leftGradient.x = state.playerStrumline.x - fadeRegionWidth;
             leftGradient.scrollFactor.set();
             leftGradient.zIndex = -1;
             leftGradient.cameras = [state.camHUD];
             state.add(leftGradient);
 
-            rightGradient = createRightGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity);
+            rightGradient = createRightGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity / 100);
             rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
             rightGradient.scrollFactor.set();
             rightGradient.zIndex = -1;

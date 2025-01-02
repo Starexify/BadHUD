@@ -119,10 +119,10 @@ class TimeBar extends Module {
         var timeBarObjects = [timeBarBG, timeBar, timeText];
 
         for (obj in timeBarObjects) {
-            if (obj != null && (obj.alpha != save.data.hudOpacity || !obj.visible)) {
+            if (obj != null && (obj.alpha != (save.data.hudOpacity / 100) || !obj.visible)) {
                 obj.alpha = 0;
 
-                FlxTween.tween(obj, {alpha: save.data.hudOpacity}, 0.5, {ease: FlxEase.circOut});
+                FlxTween.tween(obj, {alpha: save.data.hudOpacity / 100}, 0.5, {ease: FlxEase.circOut});
                 obj.visible = true;
             }
         }

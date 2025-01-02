@@ -4,6 +4,7 @@ import funkin.ui.options.OptionsState;
 import flixel.util.FlxSave;
 
 import Std;
+import funkin.ui.options.items.NumberPreferenceItem;
 
 class BadHUDOptions extends Module {
     var save:FlxSave = new FlxSave() ;
@@ -28,7 +29,7 @@ class BadHUDOptions extends Module {
         save.data.timebarStyle = (save.data.timebarStyle != null) ? save.data.timebarStyle : 0;
         save.data.restBar = (save.data.restBar != null) ? save.data.restBar : false;
         save.data.leftPos = (save.data.leftPos != null) ? save.data.leftPos : 1;
-        save.data.hudOpacity = (save.data.hudOpacity != null) ? save.data.hudOpacity : 1;
+        save.data.hudOpacity = (save.data.hudOpacity != null) ? save.data.hudOpacity : 100;
         save.data.hudFont = (save.data.hudFont != null) ? save.data.hudFont : 0;
         save.data.hudFontSize = (save.data.hudFontSize != null) ? save.data.hudFontSize : 21;
         save.data.accuracyType = (save.data.accuracyType != null) ? save.data.accuracyType : 0;
@@ -37,7 +38,7 @@ class BadHUDOptions extends Module {
         save.data.underlayOpacity = (save.data.underlayOpacity != null) ? save.data.underlayOpacity : 0;
         save.data.kpsCounter = (save.data.kpsCounter != null) ? save.data.kpsCounter : false;
         save.data.customScrollSpeed = (save.data.customScrollSpeed != null) ? save.data.customScrollSpeed : false;
-        save.data.scrollSpeedFactor = (save.data.scrollSpeedFactor != null) ? save.data.scrollSpeedFactor : 1.8;
+        save.data.scrollSpeedFactor = (save.data.scrollSpeedFactor != null) ? save.data.scrollSpeedFactor : 18;
 
         updatetypetext();
         save.flush();
@@ -107,13 +108,8 @@ class BadHUDOptions extends Module {
                     "3" => "Judgements and Stats",
                 ], (value) -> { save.data.leftPos = Std.parseInt(value); }, save.data.leftPos);
 
-                preferences.createPrefItemNumber("HUD Opacity", "Changes the opacity of the HUD", function(value:Float) {
-                    if (value < 0.1) {
-                        save.data.hudOpacity = 0;
-                    } else {
-                        save.data.hudOpacity = value;
-                    }
-                }, function(value:Float):String { value = save.data.hudOpacity; }, save.data.hudOpacity, 0, 1, 0.1, 1);
+                preferences.createPrefItemPercentage("HUD Opacity", "Changes the opacity of the HUD", (value) -> {
+                    save.data.hudOpacity = value; }, save.data.hudOpacity);
 
                 preferences.createPrefItemEnum("HUD Font", "Changes the font of the HUD", [
                     "0" => "VCR OSD Mono (Vanilla)",
@@ -148,17 +144,13 @@ class BadHUDOptions extends Module {
                     "2" => "Centered"
                 ], (value) -> { save.data.popUpType = Std.parseInt(value); }, save.data.popUpType);
 
-                preferences.createPrefItemNumber("Note Underlay Opacity", "Changes the opacity of the Note Underlay", function(value:Float) {
-                    if (value < 0.05) {
-                        save.data.underlayOpacity = 0;
-                    } else if (value > 0.95) {
-                        save.data.underlayOpacity = 1;
-                    } else if (value < 0.1 && value > 0.05) {
-                        save.data.underlayOpacity = 0.1;
-                    } else {
-                        save.data.underlayOpacity = value;
-                    }
-                }, function(value:Float):String { value = save.data.underlayOpacity; }, save.data.underlayOpacity, 0, 1, 0.05, 2);
+                var underlayOpacityItem = new NumberPreferenceItem(0, (120 * preferences.items.length) + 30, "Note Underlay Opacity",
+                save.data.underlayOpacity, 0, 100, 5, 0,
+                (value) -> { save.data.underlayOpacity = Std.int(value); },
+                (value) -> return save.data.underlayOpacity + "%"
+                );
+                preferences.items.addItem("Note Underlay Opacity", underlayOpacityItem);
+                preferences.preferenceItems.add(underlayOpacityItem.lefthandText);
 
                 preferences.createPrefItemCheckbox("Show KPS Counter", "", (value) -> {
                     save.data.kpsCounter = value; }, save.data.kpsCounter);
@@ -166,13 +158,10 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemCheckbox("Custom Scroll Speed", "", (value) -> {
                     save.data.customScrollSpeed = value; }, save.data.customScrollSpeed);
 
-                preferences.createPrefItemNumber("Scroll Speed Factor", "Changes the speed of the notes", function(value:Float) {
-                    if (value < 0.1) {
-                        save.data.scrollSpeedFactor = 0.1;
-                    } else {
-                        save.data.scrollSpeedFactor = value;
-                    }
-                }, function(value:Float):String { value = save.data.scrollSpeedFactor; }, save.data.scrollSpeedFactor, 0, 999, 0.1, 1);
+                preferences.createPrefItemNumber("Scroll Speed Factor", "Changes the speed of the notes",
+                (value) -> { save.data.scrollSpeedFactor = value; },
+                (value) -> return save.data.scrollSpeedFactor / 10,
+                save.data.scrollSpeedFactor, 1, 9999, 1, 0);
             }
         }
     }
