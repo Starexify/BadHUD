@@ -184,15 +184,18 @@ class TimeBar extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        var stuffToRemove = [timeBarBG, timeBar, timeText];
+        var timeBarObjects = [timeBarBG, timeBar, timeText];
 
-        for (thing in stuffToRemove) {
-            if (thing != null) thing.destroy();
+        for (obj in timeBarObjects) {
+            if (obj != null && (obj.alpha != (save.data.hudOpacity / 100) || !obj.visible)) {
+                obj.alpha = save.data.hudOpacity / 100;
+
+                FlxTween.tween(obj, {alpha: 0}, 0.5, {ease: FlxEase.circOut});
+                obj.visible = true;
+                obj = null;
+            }
         }
 
-        timeBarBG = null;
-        timeBar = null;
-        timeText = null;
         loaded = false;
     }
 }

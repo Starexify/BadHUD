@@ -154,6 +154,14 @@ class ExtraStrumline extends Module {
         if (event.note.noteData.getMustHitNote() && save.data.popUpType == 2 && loaded) displayRating(event.judgement);
     }
 
+    override function onNoteMiss(event:NoteScriptEvent) {
+        event.playSound = !save.data.muteMiss;
+    }
+
+    override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) {
+       event.playSound = !save.data.muteMiss;
+    }
+
     function displayRating(daRating:Null<String>) {
         if (daRating == null) return;
 

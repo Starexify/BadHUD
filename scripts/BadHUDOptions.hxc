@@ -35,6 +35,7 @@ class BadHUDOptions extends Module {
         save.data.accuracyType = (save.data.accuracyType != null) ? save.data.accuracyType : 0;
         save.data.commaSeparatedScore = (save.data.commaSeparatedScore != null) ? save.data.commaSeparatedScore : false;
         save.data.popUpType = (save.data.popUpType != null) ? save.data.popUpType : 1;
+        save.data.muteMiss = (save.data.muteMiss != null) ? save.data.muteMiss : false;
         save.data.underlayOpacity = (save.data.underlayOpacity != null) ? save.data.underlayOpacity : 0;
         save.data.kpsCounter = (save.data.kpsCounter != null) ? save.data.kpsCounter : false;
         save.data.customScrollSpeed = (save.data.customScrollSpeed != null) ? save.data.customScrollSpeed : false;
@@ -143,6 +144,9 @@ class BadHUDOptions extends Module {
                     "1" => "Vanilla",
                     "2" => "Centered"
                 ], (value) -> { save.data.popUpType = Std.parseInt(value); }, save.data.popUpType);
+
+                preferences.createPrefItemCheckbox("Mute Miss Sounds", "", (value) -> {
+                    save.data.muteMiss = value; }, save.data.muteMiss);
 
                 var underlayOpacityItem = new NumberPreferenceItem(0, (120 * preferences.items.length) + 30, "Note Underlay Opacity",
                 save.data.underlayOpacity, 0, 100, 5, 0,
