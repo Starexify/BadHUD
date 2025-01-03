@@ -85,7 +85,7 @@ class RestPeriodTimer extends Module {
         restText.cameras = [state.camHUD];
     }
 
-    override function onUpdate(event:UpdateScriptEvent):Void {
+    override function onUpdate(event:UpdateScriptEvent) {
         if (PlayState.instance == null || !loaded || !save.data.restBar) return;
 
         // Get current song time
@@ -183,7 +183,11 @@ class RestPeriodTimer extends Module {
     }
 
     override function onNoteHit(event:HitNoteScriptEvent) {
-        if (event.note.noteData.getMustHitNote()) lastHitNoteTime = event.note.noteData.time;
+        if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time);
+    }
+
+    override function onNoteMiss(event:NoteScriptEvent) {
+        if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time);
     }
 
     // Cleanup stuff
