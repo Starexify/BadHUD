@@ -27,7 +27,7 @@ class BadHUDOptions extends Module {
         save.data.timebarPosition = (save.data.timebarPosition != null) ? save.data.timebarPosition : 1;
         save.data.timebarType = (save.data.timebarType != null) ? save.data.timebarType : 1;
         save.data.timebarStyle = (save.data.timebarStyle != null) ? save.data.timebarStyle : 0;
-        save.data.restBar = (save.data.restBar != null) ? save.data.restBar : false;
+        save.data.restBar = (save.data.restBar != null) ? save.data.restBar : 0;
         save.data.leftPos = (save.data.leftPos != null) ? save.data.leftPos : 1;
         save.data.hudOpacity = (save.data.hudOpacity != null) ? save.data.hudOpacity : 100;
         save.data.hudFont = (save.data.hudFont != null) ? save.data.hudFont : 0;
@@ -96,8 +96,11 @@ class BadHUDOptions extends Module {
                     "2" => "Minimal Rounded"
                 ], (value) -> { save.data.timebarStyle = Std.parseInt(value); }, save.data.timebarStyle);
 
-                preferences.createPrefItemCheckbox("Show Rest Bar", "", (value) -> {
-                    save.data.restBar = value; }, save.data.restBar);
+                preferences.createPrefItemEnum("Rest Bar Display", "Changes the display of the Rest Bar", [
+                    "0" => "Off",
+                    "1" => "Countdown",
+                    "2" => "Countup"
+                ], (value) -> { save.data.restBar = Std.parseInt(value); }, save.data.restBar);
 
                 // HUD Customization
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold", function() {});

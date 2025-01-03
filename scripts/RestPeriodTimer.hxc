@@ -36,7 +36,7 @@ class RestPeriodTimer extends Module {
     }
 
     override function onSongStart(event:ScriptEvent) {
-        if (PlayState.instance == null || !save.data.restBar) return;
+        if (PlayState.instance == null || save.data.restBar == 0) return;
         state = PlayState.instance;
         loaded = true;
     }
@@ -86,7 +86,7 @@ class RestPeriodTimer extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (PlayState.instance == null || !loaded || !save.data.restBar) return;
+        if (PlayState.instance == null || !loaded || save.data.restBar == 0) return;
 
         // Get current song time
         var currentTime = state.conductorInUse.songPosition;
@@ -129,7 +129,13 @@ class RestPeriodTimer extends Module {
 
         // Clear previous drawing
         restBar.graphic.bitmap.fillRect(restBar.graphic.bitmap.rect, 0x00000000);
-        var percentage = 1 - (currentRestTime / totalRestTime);
+        var percentage;
+        switch (save.data.restBar) {
+            case 1: // Countdown
+                percentage = currentRestTime / totalRestTime;
+            case 2: // Countup
+                percentage = 1 - (currentRestTime / totalRestTime);
+        }
 
         var startAngle = -Math.PI / 2;
         var endAngle = startAngle + (percentage * Math.PI * 2);
