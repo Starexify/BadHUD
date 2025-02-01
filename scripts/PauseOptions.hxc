@@ -51,6 +51,6 @@ class PauseOptions extends Module {
     function optionsCallback() {
         wasPaused = true;
         FlxG.switchState(() -> new OptionsState());
-        //FunkinSound.playMusic('freakyMenu', {overrideExisting: true, persist: true});
+        FunkinSound.playMusic('freakyMenu', {overrideExisting: true, persist: true});
     }
 }
