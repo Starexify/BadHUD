@@ -1,16 +1,20 @@
 import funkin.modding.module.Module;
-import funkin.audio.FunkinSound;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.ui.debug.latency.LatencyState;
 import funkin.ui.options.OptionsState;
 
 import flixel.FlxG;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxTimer;
+import flixel.tweens.FlxEase;
+import flixel.addons.transition.FlxTransitionableState;
 
 class PauseOptions extends Module {
     var wasPaused:Bool = false ;
     var stateParams:PlayStateParams;
     var isChartingState:Bool = false ;
+    var pauseState = null ;
 
     function new() {
         super("PauseOptions");
@@ -19,6 +23,12 @@ class PauseOptions extends Module {
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (PlayState.instance == null) return;
         stateParams = PlayState.instance.lastParams;
+    }
+
+    override function onStateChangeEnd(event:SubStateScriptEvent) {
+        if (Std.isOfType(event.targetState, OptionsState) && wasPaused && pauseState != null) {
+            pauseState.startPauseMusic();
+        }
     }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
@@ -36,7 +46,7 @@ class PauseOptions extends Module {
 
     override function onSubStateOpenEnd(event:SubStateScriptEvent) {
         if (Std.isOfType(event.targetState, PauseSubState) && !PlayState.instance.isMinimalMode) {
-            var pauseState = event.targetState;
+            pauseState = event.targetState;
             var menuEntries = pauseState.currentMenuEntries;
             menuEntries.insert(menuEntries.length - 1, {
                 text: "Options",
@@ -50,7 +60,19 @@ class PauseOptions extends Module {
 
     function optionsCallback() {
         wasPaused = true;
-        FlxG.switchState(() -> new OptionsState());
-        FunkinSound.playMusic('freakyMenu', {overrideExisting: true, persist: true});
+        if (pauseState == null) return;
+        // Fade out animation
+        var duration = 0.4;
+        for (entry in pauseState.currentMenuEntries.copy()) {
+            if (entry.sprite != null) {
+                if (entry.text == "Options") {
+                    FlxTween.tween(entry.sprite, {alpha: 0}, duration, {ease: FlxEase.quadOut});
+                } else {
+                    entry.sprite.visible = false;
+                }
+            }
+        }
+
+        new FlxTimer().start(duration, timer -> FlxG.switchState(() -> new OptionsState()));
     }
 }

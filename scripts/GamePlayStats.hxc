@@ -7,6 +7,7 @@ import funkin.Paths;
 
 import flixel.text.FlxTextBorderStyle;
 import flixel.text.FlxText;
+import flixel.text.FlxTextFormat;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxSave;
 import flixel.util.FlxStringUtil;
@@ -169,23 +170,38 @@ class GamePlayStats extends Module {
 
         // Judgements Screen and Score Bar for update
         var ratingString:String = totalNotesPlayed != 0 ? save.data.accuracyType == "psych" ? ratingName + ' (' + ratingPercent + '%) - ' + ratingFC : ratingPercent + '% - ' + ratingFC : ratingName;
-        var tempScore:String = 'Score: ' + songScore + ' | Combo Breaks: ' + missed + ' | Rating: ' + ratingString;
+        var tempScore:String = "Score: " + songScore + " | Combo Breaks: " + missed + " | Rating: " + ratingString;
         var tempJudgements:String = "";
         switch (save.data.leftPos) {
             case 0: // None
             case 1: // Judgements
-                tempJudgements = 'Sicks: ' + sicks + '\nGoods: ' + goods + '\nBads: ' + bads + '\nShits: ' + shits;
+                tempJudgements = "Sicks: " + sicks + "\nGoods: " + goods + "\nBads: " + bads + "\nShits: " + shits;
             case 2: // Score
-                ratingString = totalNotesPlayed != 0 ? ratingPercent + '% - ' + ratingFC : ratingName;
-                tempScore = 'Score: ' + songScore + '\nCombo Breaks: ' + missed + '\nRating: ' + ratingString + '\nCombo: ' + combo;
+                ratingString = totalNotesPlayed != 0 ? ratingPercent + "% - " + ratingFC : ratingName;
+                tempScore = "Score: " + songScore + "\nCombo Breaks: " + missed + "\nRating: " + ratingString + "\nCombo: " + combo;
             case 3: // Judgements and Score
-                ratingString = totalNotesPlayed != 0 ? ratingPercent + '% - ' + ratingFC : ratingName;
-                tempJudgements = 'Sicks: ' + sicks + '\nGoods: ' + goods + '\nBads: ' + bads + '\nShits: ' + shits;
-                tempScore = 'Score: ' + songScore + '\nCombo Breaks: ' + missed + '\nRating: ' + ratingString + '\nCombo: ' + combo;
+                ratingString = totalNotesPlayed != 0 ? ratingPercent + "% - " + ratingFC : ratingName;
+                tempJudgements = "Sicks: " + sicks + "\nGoods: " + goods + "\nBads: " + bads + "\nShits: " + shits;
+                tempScore = "Score: " + songScore + "\nCombo Breaks: " + missed + "\nRating: " + ratingString + "\nCombo: " + combo;
         }
 
-        if (judgementsText != null) judgementsText.text = tempJudgements + '\n';
-        if (scoreText != null) scoreText.text = tempScore + '\n';
+        var perfectFormat = new FlxTextFormat(0xFFFFFF00); // Yellow for Perfect+/Perfect
+        var excellentFormat = new FlxTextFormat(0xFF00FF00); // Green for Excellent
+        var greatFormat = new FlxTextFormat(0xFF4287f5); // Light blue for Great
+        var goodFormat = new FlxTextFormat(0xFFFF7F00); // Orange for Good
+        var lossFormat = new FlxTextFormat(0xFFFF0000); // Red for Loss
+
+        if (judgementsText != null) judgementsText.text = tempJudgements + "\n";
+        if (scoreText != null) {
+            scoreText.text = tempScore + "\n";
+            if (save.data.accuracyType == "vanilla") {
+                var ratingStart = tempScore.indexOf(ratingFC);
+                var ratingEnd = tempScore.indexOf(ratingFC) + 1;
+                //scoreText.addFormat(new FlxTextFormat(0xFFFFFF00), ratingStart, ratingEnd);
+                //trace(ratingStart);
+                //trace(ratingEnd);
+            }
+        }
 
         if (!miss) doScoreBop();
     }
@@ -222,53 +238,42 @@ class GamePlayStats extends Module {
             ratingPercent = 0;
         }
 
-        ratingFC = '';
+        ratingFC = "";
 
         // Rating grades based on AccuracyType
         switch (save.data.accuracyType) {
             case "vanilla": ratingFC = vanillaRatingNames();
-            case "psych": psychRatingNames();
-            case "osu": osuGrades();
+            case "psych": ratingFC = psychRatingNames();
+            case "osu": ratingFC = osuGrades();
         }
     }
 
     function vanillaRatingNames() {
-        return if (ratingPercent == 100 && goods == 0) {
-            "P (Perfect+)";
-        } else if (ratingPercent == 100 && goods >= 1) {
-            "P (Perfect)";
-        } else if (ratingPercent >= 90) {
-            "E (Excellent)";
-        } else if (ratingPercent >= 80) {
-            "G (Great)";
-        } else if (ratingPercent >= 60) {
-            "G (Good)";
-        } else "L (Loss)";
+        return if (ratingPercent == 100 && goods == 0) "P (Perfect+)";
+        else if (ratingPercent == 100 && goods >= 1) "P (Perfect)";
+        else if (ratingPercent >= 90) "E (Excellent)";
+        else if (ratingPercent >= 80) "G (Great)";
+        else if (ratingPercent >= 60) "G (Good)";
+        else "L (Loss)";
     }
 
     function psychRatingNames() {
-        if (missed == 0) {
-            if (shits == 0 && bads == 0 && goods == 0) ratingFC = 'PFC';
-            else if (shits > 0 || bads > 0) ratingFC = 'FC';
-            else if (goods > 0) ratingFC = 'GFC';
-            else if (sicks > 0) ratingFC = 'SFC';
-        } else if (missed < 10) {
-            ratingFC = 'SDCB';
-        } else ratingFC = 'Clear';
+        return if (missed == 0) {
+            if (shits == 0 && bads == 0 && goods == 0) "PFC";
+            else if (shits > 0 || bads > 0) "FC";
+            else if (goods > 0) "GFC";
+            else if (sicks > 0) "SFC";
+        } else if (missed < 10) "SDCB";
+        else "Clear";
     }
 
     function osuGrades() {
-        if (ratingPercent == 100) {
-            ratingFC = 'SS';
-        } else if (ratingPercent > 95) {
-            ratingFC = 'S';
-        } else if (ratingPercent > 90) {
-            ratingFC = 'A';
-        } else if (ratingPercent > 80) {
-            ratingFC = 'B';
-        } else if (ratingPercent > 70) {
-            ratingFC = 'C';
-        } else ratingFC = 'D';
+        return if (ratingPercent == 100) "SS";
+        else if (ratingPercent > 95) "S";
+        else if (ratingPercent > 90) "A";
+        else if (ratingPercent > 80) "B";
+        else if (ratingPercent > 70) "C";
+        else "D";
     }
 
     function resetJudgements() {
