@@ -16,6 +16,7 @@ import flixel.FlxG;
 import openfl.display.BitmapData;
 
 import Std;
+import funkin.util.Constants;
 
 class ExtraStrumline extends Module {
     var save:FlxSave;
@@ -69,7 +70,7 @@ class ExtraStrumline extends Module {
 
         // Create the note underlay with gradient
         if (save.data.underlayOpacity > 0) {
-            laneUnderlay = new FlxSprite(0, 0).makeGraphic(state.playerStrumline.get_width(), FlxG.height * 2);
+            laneUnderlay = new FlxSprite(0, 0).makeGraphic(Std.int(state.playerStrumline.get_width()), FlxG.height * 2);
             laneUnderlay.x = state.playerStrumline.x;
             laneUnderlay.color = 0x000000;
             laneUnderlay.alpha = save.data.underlayOpacity / 100;

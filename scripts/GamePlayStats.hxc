@@ -52,21 +52,21 @@ class GamePlayStats extends Module {
 
     var badHUDOptions;
 
-    public static var ratingStuff = [
-        {name: 'You Suck!', score: s -> s <= 19},
-        {name: 'Shit', score: s -> s >= 20 && s <= 39},
-        {name: 'Bad', score: s -> s >= 40 && s <= 49},
-        {name: 'Bruh', score: s -> s >= 50 && s <= 59},
-        {name: 'Meh', score: s -> s >= 60 && s <= 68},
-        {name: 'Nice', score: s -> s == 69},
-        {name: 'Good', score: s -> s >= 70 && s <= 79},
-        {name: 'Great', score: s -> s >= 80 && s <= 89},
-        {name: 'Sick!', score: s -> s >= 90 && s <= 99},
-        {name: 'Perfect!!', score: s -> s == 100}
+    var ratings:Map<String, {name:String, min:Float, max:Float}> = [
+        "YOU_SUCK" => {name: "You Suck!", min: 0, max: 19},
+        "SHIT" => {name: "Shit", min: 20, max: 39},
+        "BAD" => {name: "Bad", min: 40, max: 49},
+        "BRUH" => {name: "Bruh", min: 50, max: 59},
+        "MEH" => {name: "Meh", min: 60, max: 68},
+        "NICE" => {name: "Nice", min: 69, max: 69},
+        "GOOD" => {name: "Good", min: 70, max: 79},
+        "GREAT" => {name: "Great", min: 80, max: 89},
+        "SICK" => {name: "Sick!", min: 90, max: 99},
+        "PERFECT" => {name: "Perfect!!", min: 100, max: 100}
     ] ;
 
-    var excludedSongs = ["Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME", "Destruction Dance",
-    "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine"] ;
+    var excludedSongs = ["Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME",
+    "Destruction Dance", "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine"] ;
 
     function new() {
         super("GamePlayStats");
@@ -143,82 +143,6 @@ class GamePlayStats extends Module {
         judgementsText.cameras = [state.camHUD];
     }
 
-    function calculateRating() {
-        if (totalNotesPlayed != 0) {
-            switch (save.data.accuracyType) {
-                case 0: // Vanilla
-                    ratingPercent = Math.min(100, Math.max(0, 100 - ((shits + bads + missed) / totalNotes) * 100));
-                case 1: // Psych Engine
-                    ratingPercent = Math.min(100, Math.max(0, 100 - ((sicks * 0 + goods * 0.33 + bads * 0.67 + shits * 1) / totalNotes) * 100));
-                case 2: // osu!mania
-                    ratingPercent = Math.min(100, Math.max(0, ((300 * sicks + 200 * goods + 100 * bads + 50 * shits) / (300 * (sicks + goods + bads + shits + missed))) * 100));
-            }
-            //ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalNotesPlayed)); // Old rating percent
-
-            ratingPercent = Math.round(ratingPercent * 100) / 100;
-            for (rating in ratingStuff) {
-                if (rating.score(ratingPercent)) {
-                    ratingName = rating.name;
-                    break;
-                }
-            }
-        } else {
-            ratingName = "?";
-            ratingPercent = 0;
-        }
-
-        ratingFC = '';
-
-        // Rating grades based on
-        switch (save.data.accuracyType) {
-            case 0: // Vanilla
-                vanillaRatingNames();
-            case 1: // Psych Engine
-                psychRatingNames();
-            case 2: // osu!mania
-                osuGrades();
-        }
-    }
-
-    function vanillaRatingNames() {
-        if (ratingPercent == 100 && goods == 0) {
-            ratingFC = 'P (Perfect+)';
-        } else if (ratingPercent == 100 && goods >= 1) {
-            ratingFC = 'P (Perfect)';
-        } else if (ratingPercent >= 90) {
-            ratingFC = 'E (Excellent)';
-        } else if (ratingPercent >= 80) {
-            ratingFC = 'G (Great)';
-        } else if (ratingPercent >= 60) {
-            ratingFC = 'G (Good)';
-        } else ratingFC = 'L (Loss)';
-    }
-
-    function psychRatingNames() {
-        if (missed == 0) {
-            if (shits == 0 && bads == 0 && goods == 0) ratingFC = 'PFC';
-            else if (shits > 0 || bads > 0) ratingFC = 'FC';
-            else if (goods > 0) ratingFC = 'GFC';
-            else if (sicks > 0) ratingFC = 'SFC';
-        } else if (missed < 10) {
-            ratingFC = 'SDCB';
-        } else ratingFC = 'Clear';
-    }
-
-    function osuGrades() {
-        if (ratingPercent == 100) {
-            ratingFC = 'SS';
-        } else if (ratingPercent > 95) {
-            ratingFC = 'S';
-        } else if (ratingPercent > 90) {
-            ratingFC = 'A';
-        } else if (ratingPercent > 80) {
-            ratingFC = 'B';
-        } else if (ratingPercent > 70) {
-            ratingFC = 'C';
-        } else ratingFC = 'D';
-    }
-
     function doScoreBop() {
         if (!scoreZoom || scoreText == null || !loaded) return;
         if (save.data.leftPos != 2 || save.data.leftPos != 3) return;
@@ -281,6 +205,79 @@ class GamePlayStats extends Module {
         if (!miss) doScoreBop();
     }
 
+    function calculateRating() {
+        if (totalNotesPlayed != 0) {
+            //ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalNotesPlayed)); // Old rating percent
+            switch (save.data.accuracyType) {
+                case 0: // Vanilla
+                    ratingPercent = Std.int(Math.min(100, Math.max(0, 100 - (shits + bads + missed) / totalNotes * 100)));
+                case 1: // Psych Engine
+                    ratingPercent = Math.min(100, Math.max(0, 100 - ((sicks * 0 + goods * 0.33 + bads * 0.67 + shits * 1) / totalNotes) * 100));
+                    ratingPercent = Math.round(ratingPercent * 100) / 100;
+                    for (rating in ratings) {
+                        if (ratingPercent >= rating.min && ratingPercent <= rating.max) ratingName = rating.name;
+                    }
+                case 2: // osu!mania
+                    ratingPercent = Math.min(100, Math.max(0, ((300 * sicks + 200 * goods + 100 * bads + 50 * shits) / (300 * (sicks + goods + bads + shits + missed))) * 100));
+                    ratingPercent = Math.round(ratingPercent * 100) / 100;
+            }
+        } else {
+            ratingName = "?";
+            ratingPercent = 0;
+        }
+
+        ratingFC = '';
+
+        // Rating grades based on AccuracyType
+        switch (save.data.accuracyType) {
+            case 0: // Vanilla
+                vanillaRatingNames();
+            case 1: // Psych Engine
+                psychRatingNames();
+            case 2: // osu!mania
+                osuGrades();
+        }
+    }
+
+    function vanillaRatingNames() {
+        if (ratingPercent == 100 && goods == 0) {
+            ratingFC = 'P (Perfect+)';
+        } else if (ratingPercent == 100 && goods >= 1) {
+            ratingFC = 'P (Perfect)';
+        } else if (ratingPercent >= 90) {
+            ratingFC = 'E (Excellent)';
+        } else if (ratingPercent >= 80) {
+            ratingFC = 'G (Great)';
+        } else if (ratingPercent >= 60) {
+            ratingFC = 'G (Good)';
+        } else ratingFC = 'L (Loss)';
+    }
+
+    function psychRatingNames() {
+        if (missed == 0) {
+            if (shits == 0 && bads == 0 && goods == 0) ratingFC = 'PFC';
+            else if (shits > 0 || bads > 0) ratingFC = 'FC';
+            else if (goods > 0) ratingFC = 'GFC';
+            else if (sicks > 0) ratingFC = 'SFC';
+        } else if (missed < 10) {
+            ratingFC = 'SDCB';
+        } else ratingFC = 'Clear';
+    }
+
+    function osuGrades() {
+        if (ratingPercent == 100) {
+            ratingFC = 'SS';
+        } else if (ratingPercent > 95) {
+            ratingFC = 'S';
+        } else if (ratingPercent > 90) {
+            ratingFC = 'A';
+        } else if (ratingPercent > 80) {
+            ratingFC = 'B';
+        } else if (ratingPercent > 70) {
+            ratingFC = 'C';
+        } else ratingFC = 'D';
+    }
+
     function resetJudgements() {
         combo = tallies.combo;
         sicks = tallies.sick;
@@ -331,7 +328,6 @@ class GamePlayStats extends Module {
     }
 
     override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) {
-        if (event.healthChange == 0) return;
         updateScore(false);
     }
 
@@ -348,9 +344,7 @@ class GamePlayStats extends Module {
         }
     }
 
-    override function onSongEnd(event:ScriptEvent) {
-        cleanup();
-    }
+    override function onSongEnd(event:ScriptEvent) { cleanup(); }
 
     override function onSongRetry(event:ScriptEvent) { cleanup(); }
 
