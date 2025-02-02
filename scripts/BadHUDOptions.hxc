@@ -32,7 +32,7 @@ class BadHUDOptions extends Module {
         save.data.hudOpacity = (save.data.hudOpacity != null) ? save.data.hudOpacity : 100;
         save.data.hudFont = (save.data.hudFont != null) ? save.data.hudFont : 0;
         save.data.hudFontSize = (save.data.hudFontSize != null) ? save.data.hudFontSize : 21;
-        save.data.accuracyType = (save.data.accuracyType != null) ? save.data.accuracyType : 0;
+        save.data.accuracyType = (save.data.accuracyType != null) ? save.data.accuracyType : "vanilla";
         save.data.commaSeparatedScore = (save.data.commaSeparatedScore != null) ? save.data.commaSeparatedScore : false;
         save.data.popUpType = (save.data.popUpType != null) ? save.data.popUpType : 1;
         save.data.muteMiss = (save.data.muteMiss != null) ? save.data.muteMiss : false;
@@ -128,10 +128,10 @@ class BadHUDOptions extends Module {
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold", function() {});
 
                 preferences.createPrefItemEnum("Accuracy Type", "Change the accuracy/score system (visually)", [
-                    "0" => "Vanilla",
-                    "1" => "Psych Engine",
-                    "2" => "osu!Mania"
-                ], value -> save.data.accuracyType = Std.parseInt(value), save.data.accuracyType);
+                    "vanilla" => "Vanilla",
+                    "psych" => "Psych Engine",
+                    "osu" => "osu!Mania"
+                ], value -> save.data.accuracyType = value, save.data.accuracyType);
 
                 preferences.createPrefItemCheckbox("Comma Separated Score", "", value -> save.data.commaSeparatedScore = value, save.data.commaSeparatedScore);
 

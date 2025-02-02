@@ -143,26 +143,11 @@ class GamePlayStats extends Module {
         judgementsText.cameras = [state.camHUD];
     }
 
-    function doScoreBop() {
-        if (!scoreZoom || scoreText == null || !loaded) return;
-        if (save.data.leftPos != 2 || save.data.leftPos != 3) return;
-
-        if (scoreTextTween != null) scoreTextTween.cancel();
-        scoreText.scale.set(1.075, 1.075);
-        scoreTextTween = FlxTween.tween(scoreText.scale, {x: 1, y: 1}, 0.2, {
-            onComplete: function(twn:FlxTween) {
-                scoreTextTween = null;
-            }
-        });
-    }
-
     function updateScore(miss:Bool = false) {
         calculateRating();
 
-        var ratingString:String = totalNotesPlayed != 0 ? ratingName + ' (' + ratingPercent + '%) - ' + ratingFC : ratingName;
-
         // Change the scoring system based on accuracyType (funy)
-        if (save.data.accuracyType == 2) {
+        if (save.data.accuracyType == "osu") {
             var maxScore = 1000000;
 
             var hitValue = sicks * 300 + goods * 200 + bads * 100 + shits * 50;
@@ -180,12 +165,12 @@ class GamePlayStats extends Module {
             songScore = state.songScore;
         }
 
-        if (save.data.commaSeparatedScore) songScore = Std.parseInt(FlxStringUtil.formatMoney(songScore, false, true));
+        if (save.data.commaSeparatedScore) songScore = FlxStringUtil.formatMoney(songScore, false, true);
 
         // Judgements Screen and Score Bar for update
+        var ratingString:String = totalNotesPlayed != 0 ? save.data.accuracyType == "psych" ? ratingName + ' (' + ratingPercent + '%) - ' + ratingFC : ratingPercent + '% - ' + ratingFC : ratingName;
         var tempScore:String = 'Score: ' + songScore + ' | Combo Breaks: ' + missed + ' | Rating: ' + ratingString;
         var tempJudgements:String = "";
-
         switch (save.data.leftPos) {
             case 0: // None
             case 1: // Judgements
@@ -205,19 +190,30 @@ class GamePlayStats extends Module {
         if (!miss) doScoreBop();
     }
 
+    function doScoreBop() {
+        if (!scoreZoom || scoreText == null || !loaded) return;
+        if (save.data.leftPos != 2 || save.data.leftPos != 3) return;
+
+        if (scoreTextTween != null) scoreTextTween.cancel();
+        scoreText.scale.set(1.075, 1.075);
+        scoreTextTween = FlxTween.tween(scoreText.scale, {x: 1, y: 1}, 0.2, {
+            onComplete: tween -> scoreTextTween = null
+        });
+    }
+
     function calculateRating() {
         if (totalNotesPlayed != 0) {
             //ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalNotesPlayed)); // Old rating percent
             switch (save.data.accuracyType) {
-                case 0: // Vanilla
+                case "vanilla":
                     ratingPercent = Std.int(Math.min(100, Math.max(0, 100 - (shits + bads + missed) / totalNotes * 100)));
-                case 1: // Psych Engine
+                case "psych":
                     ratingPercent = Math.min(100, Math.max(0, 100 - ((sicks * 0 + goods * 0.33 + bads * 0.67 + shits * 1) / totalNotes) * 100));
                     ratingPercent = Math.round(ratingPercent * 100) / 100;
                     for (rating in ratings) {
                         if (ratingPercent >= rating.min && ratingPercent <= rating.max) ratingName = rating.name;
                     }
-                case 2: // osu!mania
+                case "osu":
                     ratingPercent = Math.min(100, Math.max(0, ((300 * sicks + 200 * goods + 100 * bads + 50 * shits) / (300 * (sicks + goods + bads + shits + missed))) * 100));
                     ratingPercent = Math.round(ratingPercent * 100) / 100;
             }
@@ -230,27 +226,24 @@ class GamePlayStats extends Module {
 
         // Rating grades based on AccuracyType
         switch (save.data.accuracyType) {
-            case 0: // Vanilla
-                vanillaRatingNames();
-            case 1: // Psych Engine
-                psychRatingNames();
-            case 2: // osu!mania
-                osuGrades();
+            case "vanilla": ratingFC = vanillaRatingNames();
+            case "psych": psychRatingNames();
+            case "osu": osuGrades();
         }
     }
 
     function vanillaRatingNames() {
-        if (ratingPercent == 100 && goods == 0) {
-            ratingFC = 'P (Perfect+)';
+        return if (ratingPercent == 100 && goods == 0) {
+            "P (Perfect+)";
         } else if (ratingPercent == 100 && goods >= 1) {
-            ratingFC = 'P (Perfect)';
+            "P (Perfect)";
         } else if (ratingPercent >= 90) {
-            ratingFC = 'E (Excellent)';
+            "E (Excellent)";
         } else if (ratingPercent >= 80) {
-            ratingFC = 'G (Great)';
+            "G (Great)";
         } else if (ratingPercent >= 60) {
-            ratingFC = 'G (Good)';
-        } else ratingFC = 'L (Loss)';
+            "G (Good)";
+        } else "L (Loss)";
     }
 
     function psychRatingNames() {
@@ -297,7 +290,7 @@ class GamePlayStats extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (save.data.accuracyType != 2 && loaded && scoreText != null) updateScore(true);
+        if (save.data.accuracyType != "osu" && loaded && scoreText != null) updateScore(true);
     }
 
     override function onNoteHit(event:HitNoteScriptEvent) {
