@@ -6,6 +6,7 @@ import funkin.Highscore;
 import funkin.Paths;
 
 import flixel.text.FlxTextBorderStyle;
+import flixel.text.FlxTextFormatMarkerPair;
 import flixel.text.FlxText;
 import flixel.text.FlxTextFormat;
 import flixel.tweens.FlxTween;
@@ -185,21 +186,20 @@ class GamePlayStats extends Module {
                 tempScore = "Score: " + songScore + "\nCombo Breaks: " + missed + "\nRating: " + ratingString + "\nCombo: " + combo;
         }
 
-        var perfectFormat = new FlxTextFormat(0xFFFFFF00); // Yellow for Perfect+/Perfect
-        var excellentFormat = new FlxTextFormat(0xFF00FF00); // Green for Excellent
-        var greatFormat = new FlxTextFormat(0xFF4287f5); // Light blue for Great
-        var goodFormat = new FlxTextFormat(0xFFFF7F00); // Orange for Good
-        var lossFormat = new FlxTextFormat(0xFFFF0000); // Red for Loss
 
-        if (judgementsText != null) judgementsText.text = tempJudgements + "\n";
+        if (judgementsText != null) judgementsText.text = tempJudgements;
         if (scoreText != null) {
-            scoreText.text = tempScore + "\n";
+            scoreText.text = tempScore;
             if (save.data.accuracyType == "vanilla") {
-                var ratingStart = tempScore.indexOf(ratingFC);
-                var ratingEnd = tempScore.indexOf(ratingFC) + 1;
-                //scoreText.addFormat(new FlxTextFormat(0xFFFFFF00), ratingStart, ratingEnd);
-                //trace(ratingStart);
-                //trace(ratingEnd);
+                var formatPairs = [
+                    new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFF25C), "<$>"), // P+
+                    new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFA9FF), "<p>"), // P
+                    new FlxTextFormatMarkerPair(new FlxTextFormat(0xFDFCB7), "<e>"), // E
+                    new FlxTextFormatMarkerPair(new FlxTextFormat(0xEBF7FF), "<&>"), // G
+                    new FlxTextFormatMarkerPair(new FlxTextFormat(0xED9C7A), "<g>"), // G
+                    new FlxTextFormatMarkerPair(new FlxTextFormat(0x6B8CFF), "<l>"), // L
+                ];
+                scoreText.applyMarkup(tempScore, formatPairs);
             }
         }
 
@@ -249,12 +249,12 @@ class GamePlayStats extends Module {
     }
 
     function vanillaRatingNames() {
-        return if (ratingPercent == 100 && goods == 0) "P (Perfect+)";
-        else if (ratingPercent == 100 && goods >= 1) "P (Perfect)";
-        else if (ratingPercent >= 90) "E (Excellent)";
-        else if (ratingPercent >= 80) "G (Great)";
-        else if (ratingPercent >= 60) "G (Good)";
-        else "L (Loss)";
+        return if (ratingPercent == 100 && goods == 0) "<$>P<$> (Perfect+)";
+        else if (ratingPercent == 100 && goods >= 1) "<p>P<p> (Perfect)";
+        else if (ratingPercent >= 90) "<e>E<e> (Excellent)";
+        else if (ratingPercent >= 80) "<&>G<&> (Great)";
+        else if (ratingPercent >= 60) "<g>G<g> (Good)";
+        else "<l>L<l> (Loss)";
     }
 
     function psychRatingNames() {
