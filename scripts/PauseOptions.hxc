@@ -1,20 +1,21 @@
 import funkin.modding.module.Module;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.debug.latency.LatencyState;
 import funkin.ui.options.OptionsState;
 
 import flixel.FlxG;
+import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
-import flixel.tweens.FlxEase;
-import flixel.addons.transition.FlxTransitionableState;
 
 class PauseOptions extends Module {
     var wasPaused:Bool = false ;
-    var stateParams:PlayStateParams;
     var isChartingState:Bool = false ;
-    var pauseState = null ;
+    var stateParams:PlayStateParams;
+    var pauseState:ChartEditorParams;
+    var currentSongId:String;
 
     function new() {
         super("PauseOptions");
@@ -23,18 +24,27 @@ class PauseOptions extends Module {
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (PlayState.instance == null) return;
         stateParams = PlayState.instance.lastParams;
+        isChartingState = PlayState.instance.isChartingMode;
+        currentSongId = PlayState.instance.currentSong.id;
     }
 
-    override function onStateChangeEnd(event:SubStateScriptEvent) {
+    override function onStateChangeEnd(event:StateChangeScriptEvent) {
         if (Std.isOfType(event.targetState, OptionsState) && wasPaused && pauseState != null) {
             pauseState.startPauseMusic();
+        }
+        if (Std.isOfType(event.targetState, ChartEditorState)) {
+            trace("ChartingState Params: " + event.targetState.params);
         }
     }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         if (isChartingState) {
             if (event.targetState != PlayState.instance && !Std.isOfType(event.targetState, LatencyState) && wasPaused) {
-                //FlxG.switchState(() -> new ChartEditorState(chartEditorParams));
+                FlxG.switchState(() -> new ChartEditorState({
+                    targetSongId: currentSongId
+                }));
+                wasPaused = false;
+                isChartingState = false;
             }
         } else {
             if (event.targetState != PlayState.instance && !Std.isOfType(event.targetState, LatencyState) && wasPaused) {
