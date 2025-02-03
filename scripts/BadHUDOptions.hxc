@@ -21,7 +21,7 @@ class BadHUDOptions extends Module {
 
         // Default Options (First Start)
         save.data.middlescroll = (save.data.middlescroll != null) ? save.data.middlescroll : false;
-        save.data.oppNotes = (save.data.oppNotes != null) ? save.data.oppNotes : false;
+        save.data.oppNotesOpacity = (save.data.oppNotesOpacity != null) ? save.data.oppNotesOpacity : 100;
         save.data.healthBarPosition = (save.data.healthBarPosition != null) ? save.data.healthBarPosition : 1;
         save.data.healthIconPos = (save.data.healthIconPos != null) ? save.data.healthIconPos : 1;
         save.data.timebarPosition = (save.data.timebarPosition != null) ? save.data.timebarPosition : 1;
@@ -52,7 +52,7 @@ class BadHUDOptions extends Module {
                 updatetypetext();
 
                 preferences.createPrefItemCheckbox("Middlescroll", "", value -> save.data.middlescroll = value, save.data.middlescroll);
-                preferences.createPrefItemCheckbox("Hide Opponent Notes", "", value -> save.data.oppNotes = value, save.data.oppNotes);
+                preferences.createPrefItemPercentage("Opponent Notes Opacity", "Changes the opacity of the opponent notes", value -> save.data.oppNotesOpacity = value, save.data.oppNotesOpacity);
 
                 // Bars
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Bars :", "bold", function() {});
