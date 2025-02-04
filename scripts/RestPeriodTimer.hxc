@@ -65,7 +65,7 @@ class RestPeriodTimer extends Module {
         restBar.y = restBarBG.y;
 
         restText = new FlxText(0, 0, 400, "", 32);
-        restText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        restText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         restText.borderSize = 1.75;
         restText.scrollFactor.set();
         restText.zIndex = 802;

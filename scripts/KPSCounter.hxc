@@ -45,7 +45,7 @@ class KPSCounter extends Module {
             var kpsTextYPos = FlxG.height * 0.6;
 
             kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
-            kpsText.setFormat(Paths.font(badHUDOptions.font), save.data.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+            kpsText.setFormat(Paths.font(badHUDOptions.font), save.data.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
             kpsText.scrollFactor.set();
             kpsText.borderSize = 1.25;
             kpsText.zIndex = 851;

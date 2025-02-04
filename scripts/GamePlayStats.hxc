@@ -114,7 +114,7 @@ class GamePlayStats extends Module {
         }
 
         scoreText = new FlxText(scoreTextXPos, scoreTextYPos, FlxG.width, "", 20);
-        scoreText.setFormat(Paths.font(badHUDOptions.font), textSize, 0xFFFFFFFF, scorePosition, FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        scoreText.setFormat(Paths.font(badHUDOptions.font), textSize, 0xFFFFFFFF, scorePosition, FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         scoreText.scrollFactor.set();
         scoreText.borderSize = 1.25;
         scoreText.zIndex = 851;
@@ -136,7 +136,7 @@ class GamePlayStats extends Module {
 
     function initJudgements(textSize:Int) {
         judgementsText = new FlxText(10, FlxG.height * 0.45, FlxG.width, 'Sicks: 0' + '\nGoods: 0' + '\nBads: 0' + '\nShits: 0', 20);
-        judgementsText.setFormat(Paths.font(badHUDOptions.font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        judgementsText.setFormat(Paths.font(badHUDOptions.font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         judgementsText.scrollFactor.set();
         judgementsText.borderSize = 1.25;
         judgementsText.zIndex = 851;

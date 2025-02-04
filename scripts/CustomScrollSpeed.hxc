@@ -40,7 +40,7 @@ class CustomScrollSpeed extends Module {
 
         // Create Scroll Speed Text Element
         speedText = new FlxText(20, FlxG.height * 0.94, FlxG.width - 40, "", 20);
-        speedText.setFormat(Paths.font(font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        speedText.setFormat(Paths.font(font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         speedText.scrollFactor.set(0, 0);
         speedText.alignment = "right";
         speedText.cameras = [state.camHUD];
