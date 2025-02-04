@@ -43,6 +43,8 @@ class BadHealthBar extends Module {
         iconP1 = state.iconP1;
         iconP2 = state.iconP2;
 
+        if (save.data.smoothBars) state.healthBar.numDivisions = Std.int(state.healthBarBG.width / 1.2);
+
         // Health Bar
         if (save.data.healthBarPosition != 0) {
             if (save.data.healthBarPosition == 2) {
