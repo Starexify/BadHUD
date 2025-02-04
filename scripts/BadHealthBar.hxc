@@ -2,10 +2,10 @@ import funkin.modding.module.Module;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 
-import flixel.math.FlxMath;
-import flixel.util.FlxSave;
 import flixel.FlxG;
 import flixel.FlxSprite;
+import flixel.math.FlxMath;
+import flixel.util.FlxSave;
 
 import Std;
 

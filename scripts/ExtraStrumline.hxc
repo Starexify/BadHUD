@@ -1,18 +1,18 @@
 import funkin.modding.module.Module;
+import funkin.Preferences;
 import funkin.graphics.FunkinSprite;
-import funkin.play.notes.notestyle.NoteStyle;
 import funkin.data.notestyle.NoteStyleRegistry;
 import funkin.play.notes.Strumline;
+import funkin.play.notes.notestyle.NoteStyle;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.util.Constants;
-import funkin.Preferences;
 
+import flixel.FlxG;
+import flixel.FlxSprite;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxSave;
-import flixel.FlxSprite;
-import flixel.FlxG;
 
 import openfl.display.BitmapData;
 

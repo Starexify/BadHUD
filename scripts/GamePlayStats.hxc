@@ -1,18 +1,18 @@
 import funkin.modding.module.Module;
-import funkin.play.PauseSubState;
-import funkin.play.PlayStatePlaylist;
-import funkin.play.PlayState;
 import funkin.Highscore;
 import funkin.Paths;
+import funkin.play.PauseSubState;
+import funkin.play.PlayState;
+import funkin.play.PlayStatePlaylist;
 
-import flixel.text.FlxTextBorderStyle;
-import flixel.text.FlxTextFormatMarkerPair;
+import flixel.FlxG;
 import flixel.text.FlxText;
+import flixel.text.FlxTextBorderStyle;
 import flixel.text.FlxTextFormat;
+import flixel.text.FlxTextFormatMarkerPair;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxSave;
 import flixel.util.FlxStringUtil;
-import flixel.FlxG;
 
 import Math;
 import Std;

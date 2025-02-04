@@ -1,13 +1,13 @@
 import funkin.modding.module.Module;
+import funkin.Paths;
+import funkin.Preferences;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
-import funkin.Preferences;
-import funkin.Paths;
 
+import flixel.FlxG;
 import flixel.text.FlxTextBorderStyle;
 import flixel.text.FlxText;
 import flixel.util.FlxSave;
-import flixel.FlxG;
 
 import Math;
 import Std;

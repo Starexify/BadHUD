@@ -1,9 +1,10 @@
 import funkin.modding.module.Module;
+import funkin.Paths;
 import funkin.graphics.FunkinSprite;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
-import funkin.Paths;
 
+import flixel.FlxG;
 import flixel.text.FlxTextBorderStyle;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
@@ -11,7 +12,6 @@ import flixel.tweens.FlxTween;
 import flixel.util.FlxSave;
 import flixel.util.FlxStringUtil;
 import flixel.ui.FlxBar;
-import flixel.FlxG;
 
 import Std;
 
@@ -136,24 +136,18 @@ class TimeBar extends Module {
         if (timeBar != null && timeBar.visible) {
             timeBar.value = (state.conductorInUse.songPosition / state.currentSongLengthMs) * 100;
             timeBar.updateBar();
-            var time;
             switch (save.data.timebarType) {
                 case 0: // Off
                 case 1: // Time Left
-                    time = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
-                    timeText.text = time;
+                    timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
                 case 2: // Time Left / Total
-                    time = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
-                    timeText.text = time;
+                    timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
                 case 3: // Elapsed
-                    time = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false);
-                    timeText.text = time;
+                    timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false);
                 case 4: // Elapsed / Total
-                    time = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
-                    timeText.text = time;
+                    timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
                 case 5: // Elapsed / Total
-                    time = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
-                    timeText.text = time;
+                    timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
                 case 6: // Song Name
                     timeText.text = state.currentChart.songName;
             }
@@ -170,15 +164,11 @@ class TimeBar extends Module {
     }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
-            cleanup();
-        }
+        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup();
     }
 
     override function onSubStateCloseBegin(event:SubStateScriptEvent) {
-        if (Std.isOfType(event.targetState, PlayState)) {
-            cleanup();
-        }
+        if (Std.isOfType(event.targetState, PlayState)) cleanup();
     }
 
     override function onSongEnd(event:ScriptEvent) { cleanup(); }
@@ -189,9 +179,7 @@ class TimeBar extends Module {
         var timeBarObjects = [timeBarBG, timeBar, timeText];
 
         for (obj in timeBarObjects) {
-            if (obj != null) {
-                FlxTween.tween(obj, {alpha: 0}, 0.5, {ease: FlxEase.circOut});
-            }
+            if (obj != null) FlxTween.tween(obj, {alpha: 0}, 0.5, {ease: FlxEase.circOut});
         }
 
         timeBarBG = null;
