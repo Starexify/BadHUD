@@ -130,7 +130,7 @@ class BadHUDOptions extends Module {
                 // Extras
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold", function() {});
 
-                preferences.createPrefItemEnum("Accuracy Type", "Change the accuracy/score system (visually)", [
+                preferences.createPrefItemEnum("Accuracy System", "Change the accuracy/score system (visually)", [
                     "vanilla" => "Vanilla",
                     "psych" => "Psych Engine",
                     "osu" => "osu!Mania"
