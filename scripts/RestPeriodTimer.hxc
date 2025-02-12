@@ -26,8 +26,9 @@ class RestPeriodTimer extends Module {
 
     var restText:FlxText;
 
-    var restTime:Float = 0.0 ;
+    var restTime:Float;
     var lastHitNoteTime:Int = 0 ;
+    var restBarSprites:Array<FlxSprite> = [restBarBG, restBar, restText] ;
 
     function new() {
         super("RestPeriodTimer");
@@ -39,6 +40,7 @@ class RestPeriodTimer extends Module {
         if (PlayState.instance == null || save.data.restBar == 0) return;
         state = PlayState.instance;
         loaded = true;
+        initRestBar();
     }
 
     function initRestBar() {
@@ -75,6 +77,8 @@ class RestPeriodTimer extends Module {
         restText.y = restBarBG.y + restText.height + 3;
         if (Preferences.downscroll) restText.y = state.playerStrumline.y - restBarBG.height / 2 - restText.height / 2 + 3;
 
+        restBarSprites = [restBarBG, restBar, restText];
+
         state.add(restBarBG);
         state.add(restBar);
         state.add(restText);
@@ -86,36 +90,22 @@ class RestPeriodTimer extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (PlayState.instance == null || !loaded || save.data.restBar == 0) return;
+        if (PlayState.instance == null || !loaded || save.data.restBar == 0 || restText == null) return;
 
-        // Get current song time
-        var currentTime = state.conductorInUse.songPosition;
-        var nextNoteData = getNextNoteAndTime(currentTime);
+        var currentTimestamp = state.conductorInUse.songPosition;
+        var nextNoteData = getNextNoteAndTime(currentTimestamp);
+        var nextNoteTime = nextNoteData != null ? nextNoteData.time : 0;
+        restTime = nextNoteTime - currentTimestamp;
+        var lastHitNoteTime2 = nextNoteTime - lastHitNoteTime;
         var delayTillNextNote = 5000;
         var delayTillNextNoteTime = 1000;
+        if (restTime > delayTillNextNoteTime && lastHitNoteTime2 > delayTillNextNote) {
+            restText.text = Std.string(Math.round((restTime - delayTillNextNoteTime) / 1000));
+            drawCurvedBar(restTime - delayTillNextNoteTime, lastHitNoteTime2 - delayTillNextNoteTime);
 
-        if (nextNoteData != null) {
-            restTime = nextNoteData.time - currentTime;
-            var lastHitNoteTime2 = nextNoteData.time - lastHitNoteTime;
-            if (restTime > delayTillNextNoteTime && lastHitNoteTime2 > delayTillNextNote) {
-                if (restBar == null) initRestBar();
-                if (restText != null) {
-                    restText.text = Std.string(Math.round((restTime - delayTillNextNoteTime) / 1000));
-                    drawCurvedBar(restTime - delayTillNextNoteTime, lastHitNoteTime2 - delayTillNextNoteTime);
-
-                    // Fade out the rest bar when time is less than 1500 milliseconds
-                    var restBarObjects = [restBarBG, restBar, restText];
-                    for (obj in restBarObjects) {
-                        if (restTime <= 1500) {
-                            FlxTween.tween(obj, {alpha: 0}, 0.5, {ease: FlxEase.expoOut});
-                        }
-                    }
-                }
-            } else {
-                if (restText != null) cleanupBar();
-            }
-        } else {
-            restTime = 0.0;
+            // Fade out the rest bar when time is less than 1500 milliseconds (1.5s)
+            for (sprite in restBarSprites) if (!sprite.visible) sprite.visible = true;
+            if (restTime <= 1500) for (sprites in restBarSprites) FlxTween.tween(sprites, { alpha: 0 }, 0.5, { ease: FlxEase.expoOut, onComplete: tween -> { sprites.visible = false; sprites.alpha = save.data.hudOpacity / 100;} });
         }
     }
 
@@ -197,17 +187,9 @@ class RestPeriodTimer extends Module {
     }
 
     // Cleanup stuff
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
-            cleanup();
-        }
-    }
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
 
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
-        if (Std.isOfType(event.targetState, PlayState)) {
-            cleanup();
-        }
-    }
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) cleanup(); }
 
     override function onSongRetry(event:ScriptEvent) { cleanup(); }
 
@@ -216,19 +198,12 @@ class RestPeriodTimer extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        cleanupBar();
-        loaded = false;
-    }
-
-    function cleanupBar() {
-        var stuffToRemove = [restBarBG, restBar, restText];
-
-        for (thing in stuffToRemove) {
-            if (thing != null) thing.destroy();
-        }
+        for (sprites in restBarSprites) if (sprites != null) sprites.destroy();
 
         restBarBG = null;
         restBar = null;
         restText = null;
+
+        loaded = false;
     }
 }
