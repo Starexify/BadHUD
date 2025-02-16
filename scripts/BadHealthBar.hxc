@@ -1,6 +1,8 @@
 import funkin.modding.module.Module;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.play.components.HealthIcon;
+import funkin.util.Constants;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
@@ -13,13 +15,8 @@ class BadHealthBar extends Module {
     var save:FlxSave;
     var state:PlayState;
     var loaded:Bool = false ;
-    var iconP1:FlxSprite;
-    var iconP2:FlxSprite;
-
-    var LOSING_THRESHOLD:Float = 0.4 ;
-    var WINNING_THRESHOLD:Float = 1.6 ;
-    var MAXIMUM_HEALTH:Float = 2 ;
-    var POSITION_OFFSET:Int = 26 ;
+    var iconP1:HealthIcon;
+    var iconP2:HealthIcon;
 
     var excludedSongs = ["Silly Billy",
     "Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME", "Destruction Dance", "Portal Power",
@@ -44,6 +41,7 @@ class BadHealthBar extends Module {
         iconP2 = state.iconP2;
 
         if (save.data.smoothBars) state.healthBar.numDivisions = Std.int(state.healthBarBG.width / 1.2);
+
 
         // Health Bar
         if (save.data.healthBarPosition != 0) {
@@ -78,14 +76,14 @@ class BadHealthBar extends Module {
         // Health Icon Positions
         if (!state.isMinimalMode) {
             switch (save.data.healthIconPos) {
-                case 0: // Off
+                case "off":
                     if (iconP1 != null) iconP1.visible = false;
                     if (iconP2 != null) iconP2.visible = false;
-                case 1: // Default
-                case 2: // Flipped
+                case "vanilla":
+                case "flipped":
                     if (iconP1 != null) iconP1.flipX = false;
                     if (iconP2 != null) iconP2.flipX = true;
-                case 3: // Ends
+                case "ends":
                     var healthBarX:Float = state.healthBar.x;
                     var healthBarY:Float = state.healthBar.y;
                     var healthBarWidth:Float = state.healthBar.width;
@@ -105,11 +103,19 @@ class BadHealthBar extends Module {
                     }
             }
         }
+
+        // Icon Colored Health Bar
+        if (save.data.iconColors) {
+            var bfHealthColor = getDominantColor(iconP1);
+            var opponentHealthColor = getDominantColor(iconP2);
+            state.healthBar.createFilledBar(opponentHealthColor, bfHealthColor);
+            state.healthBar.updateBar();
+        }
     }
 
-    function updatePosition() {
+    function updateIconsPosition() {
         // Vertical Health Icons (WORKING SOMEHOW)
-        if (save.data.healthBarPosition == 2 && (save.data.healthIconPos == 1 || save.data.healthIconPos == 2)) {
+        if (save.data.healthBarPosition == 2 && (save.data.healthIconPos == "vanilla" || save.data.healthIconPos == "flipped")) {
             var healthBarX:Float = state.healthBar.x;
             var healthBarY:Float = state.healthBar.y;
             var healthBarWidth:Float = state.healthBar.width;
@@ -119,58 +125,76 @@ class BadHealthBar extends Module {
             // Move icons horizontally relative to health bar
             iconP1.y = healthBarY
             + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering
-            - POSITION_OFFSET);
+            - HealthIcon.POSITION_OFFSET);
             iconP2.y = healthBarY
             + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering + gapReduction)
-            - (iconP2.height - POSITION_OFFSET);
+            - (iconP2.height - HealthIcon.POSITION_OFFSET);
 
             // Center icons vertically relative to the health bar
             iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
             iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2);
-
-            updateHealthIcon(iconP1, state.health);
-            updateHealthIcon(iconP2, MAXIMUM_HEALTH - state.health);
         }
-        if (save.data.healthIconPos == 3) {
+        if (save.data.healthIconPos == "vanilla" || save.data.healthIconPos == "flipped") {
             updateHealthIcon(iconP1, state.health);
-            updateHealthIcon(iconP2, MAXIMUM_HEALTH - state.health);
+            updateHealthIcon(iconP2, Constants.HEALTH_MAX - state.health);
         }
     }
 
     function updateHealthIcon(icon:FlxSprite, health:Float):Void {
-        if (icon == null) return;
-        if (health < LOSING_THRESHOLD) {
-            icon.playAnimation("losing");
-        } else if (health > WINNING_THRESHOLD) {
-            icon.playAnimation("winning");
-        } else {
-            icon.playAnimation("idle");
-        }
+        if (icon != null) icon.playAnimation(health < HealthIcon.LOSING_THRESHOLD ? "losing" : health > HealthIcon.WINNING_THRESHOLD ? "winning" : "idle");
     }
 
     // bop for icons, I think onBeatHit is better than onUpdate and fixes it ?
-    override function onBeatHit(event:SongTimeScriptEvent) {
-        if (PlayState.instance == null && !loaded) return;
-        if (iconP1 != null && !state.isMinimalMode) updatePosition();
-    }
+    override function onBeatHit(event:SongTimeScriptEvent) { if (loaded && iconP1 != null && !state.isMinimalMode) updateIconsPosition(); }
 
-    override function onUpdate(event:UpdateScriptEvent) {
-        if (PlayState.instance == null || !loaded) return;
-        if (event.healthChange != 0 && iconP1 != null && !state.isMinimalMode) updatePosition();
+    override function onUpdate(event:UpdateScriptEvent) { if (loaded && iconP1 != null && !state.isMinimalMode && event.healthChange != 0) updateIconsPosition(); }
+
+    // Helper Methods
+    function getDominantColor(sprite:FlxSprite) {
+        if (sprite == null || sprite.pixels == null) return;
+
+        var colorData = [];
+        var maxCount = 0;
+        var dominantColor = 0xFFFFFFFF;
+
+        for (y in 0...sprite.frameHeight) {
+            for (x in 0...sprite.frameWidth) {
+                var color = sprite.pixels.getPixel32(x, y);
+                if (color == 0) continue;
+                if (color.alphaFloat <= 0.05) continue;
+
+                var found = false;
+                for (data in colorData) {
+                    if (data.color == color) {
+                        data.count++;
+                        found = true;
+                        break;
+                    }
+                }
+
+                // Add new color if not found
+                if (!found) {
+                    colorData.push({ color: color, count: 1 });
+                }
+            }
+        }
+
+        for (data in colorData) {
+            if (data.color == 0xFFF000000 || data.color == 0x00FFFFFF) continue;
+
+            if (data.count > maxCount) {
+                maxCount = data.count;
+                dominantColor = data.color;
+            }
+        }
+        colorData = [];
+        return dominantColor;
     }
 
     // Cleanup stuff
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
-            loaded = false;
-        }
-    }
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) loaded = false; }
 
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
-        if (Std.isOfType(event.targetState, PlayState)) {
-            loaded = false;
-        }
-    }
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) loaded = false; }
 
     override function onSongEnd(event:ScriptEvent) { loaded = false; }
 

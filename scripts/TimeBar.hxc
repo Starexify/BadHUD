@@ -157,19 +157,12 @@ class TimeBar extends Module {
     // Cleanup stuff
     override function onSongRetry(event:ScriptEvent) {
         var stuffToHide = [timeBarBG, timeBar, timeText];
-
-        for (thing in stuffToHide) {
-            if (thing != null) thing.visible = false;
-        }
+        for (thing in stuffToHide) if (thing != null) thing.visible = false;
     }
 
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup();
-    }
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
 
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
-        if (Std.isOfType(event.targetState, PlayState)) cleanup();
-    }
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) cleanup(); }
 
     override function onSongEnd(event:ScriptEvent) { cleanup(); }
 

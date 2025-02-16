@@ -178,13 +178,9 @@ class RestPeriodTimer extends Module {
         return;
     }
 
-    override function onNoteHit(event:HitNoteScriptEvent) {
-        if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time);
-    }
+    override function onNoteHit(event:HitNoteScriptEvent) { if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time); }
 
-    override function onNoteMiss(event:NoteScriptEvent) {
-        if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time);
-    }
+    override function onNoteMiss(event:NoteScriptEvent) { if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time); }
 
     // Cleanup stuff
     override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
