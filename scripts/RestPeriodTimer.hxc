@@ -12,6 +12,7 @@ import flixel.util.FlxSave;
 import flixel.util.FlxSpriteUtil;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
+import flixel.util.FlxDestroyUtil;
 
 class RestPeriodTimer extends Module {
     var save:FlxSave;
@@ -21,7 +22,7 @@ class RestPeriodTimer extends Module {
     var restBarBG:FunkinSprite;
 
     var restBar:FlxSprite;
-    var restBarThickness:Float = 13 ;
+    var restBarThickness:Int = 13 ;
     var restBarRadius:Float;
 
     var restText:FlxText;
@@ -79,17 +80,17 @@ class RestPeriodTimer extends Module {
 
         restBarSprites = [restBarBG, restBar, restText];
 
-        state.add(restBarBG);
-        state.add(restBar);
-        state.add(restText);
-
-        // Move the rest bar to the HUD camera.
-        restBarBG.cameras = [state.camHUD];
-        restBar.cameras = [state.camHUD];
-        restText.cameras = [state.camHUD];
+        for (sprites in restBarSprites) if (sprites != null) {
+            state.add(sprites);
+            // Move the rest bar to the HUD camera.
+            sprites.cameras = [state.camHUD];
+            sprites.visible = false;
+        }
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
+        trace(restBar);
+        trace(restBarBG);
         if (PlayState.instance == null || !loaded || save.data.restBar == 0 || restText == null) return;
 
         var currentTimestamp = state.conductorInUse.songPosition;
@@ -169,13 +170,7 @@ class RestPeriodTimer extends Module {
 
     function getNextNoteAndTime(currentTime:Float):Null<{note:SongNoteData, time:Float}> {
         if (state.currentChart == null || state.currentChart.notes == null) return;
-
-        for (note in state.currentChart.notes) {
-            if (note.getMustHitNote() && note.time > currentTime) {
-                return { note: note, time: note.time };
-            }
-        }
-        return;
+        for (note in state.currentChart.notes) if (note.getMustHitNote() && note.time > currentTime) return { note: note, time: note.time };
     }
 
     override function onNoteHit(event:HitNoteScriptEvent) { if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time); }
@@ -194,12 +189,12 @@ class RestPeriodTimer extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        for (sprites in restBarSprites) if (sprites != null) sprites.destroy();
+        //for (sprite in restBarSprites) if (sprite != null) sprite = FlxDestroyUtil.destroy(sprite);
 
-        restBarBG = null;
-        restBar = null;
-        restText = null;
+        for (sprite in restBarSprites) if (sprite != null) FlxDestroyUtil.destroy(sprite);
+        restBarSprites.resize(0);
 
+        lastHitNoteTime = 0;
         loaded = false;
     }
 }
