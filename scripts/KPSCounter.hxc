@@ -6,8 +6,8 @@ import funkin.play.PlayState;
 
 import flixel.FlxG;
 import flixel.text.FlxTextBorderStyle;
-import flixel.text.FlxText;
 import flixel.util.FlxSave;
+import flixel.text.FlxText;
 
 import Math;
 import Std;
@@ -15,7 +15,6 @@ import Std;
 class KPSCounter extends Module {
     var save:FlxSave;
     var state:PlayState;
-    var loaded:Bool = false ;
 
     var kpsText:FlxText;
     var kps:Int = 0 ;
@@ -35,7 +34,6 @@ class KPSCounter extends Module {
         if (save.data.kpsCounter) {
             if (PlayState.instance == null) return;
             state = PlayState.instance;
-            loaded = true;
 
             // Binding with BadHUDOptions
             var badHUDOptions = new BadHUDOptions();
@@ -51,31 +49,23 @@ class KPSCounter extends Module {
             kpsText.zIndex = 851;
             kpsText.text = 'KPS: 0' + '\nMax KPS: 0';
 
-            state.add(kpsText);
             kpsText.cameras = [state.camHUD];
+            state.add(kpsText);
         }
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (PlayState.instance == null || !loaded || !save.data.kpsCounter) return;
+        if (state == null || !save.data.kpsCounter) return;
 
         var currentTime = FlxG.game.ticks / 1000;
 
         // Check for key presses
-        var keyDownPressed = state.controls.NOTE_DOWN_P;
-        var keyUpPressed = state.controls.NOTE_UP_P;
-        var keyLeftPressed = state.controls.NOTE_LEFT_P;
-        var keyRightPressed = state.controls.NOTE_RIGHT_P;
+        var pressedKeys = [state.controls.NOTE_DOWN_P, state.controls.NOTE_UP_P, state.controls.NOTE_LEFT_P, state.controls.NOTE_RIGHT_P];
 
-        if (keyDownPressed) lastSecondKeyPresses.push(currentTime);
-        if (keyUpPressed) lastSecondKeyPresses.push(currentTime);
-        if (keyLeftPressed) lastSecondKeyPresses.push(currentTime);
-        if (keyRightPressed) lastSecondKeyPresses.push(currentTime);
+        for (pressedKey in pressedKeys) if (pressedKey) lastSecondKeyPresses.push(currentTime);
 
         // Remove key presses older than 1 second
-        while (lastSecondKeyPresses.length > 0 && currentTime - lastSecondKeyPresses[0] > 1) {
-            lastSecondKeyPresses.shift();
-        }
+        while (lastSecondKeyPresses.length > 0 && currentTime - lastSecondKeyPresses[0] > 1) lastSecondKeyPresses.shift();
 
         // Calculate KPS
         kps = lastSecondKeyPresses.length;
@@ -89,23 +79,13 @@ class KPSCounter extends Module {
     }
 
     function updateKPS() {
-        if (kpsText != null) {
-            kpsText.text = 'KPS: ' + Math.round(kps * 10) / 10 + '\nMax KPS: ' + Math.round(kpsMax * 10) / 10;
-        }
+        if (kpsText != null) kpsText.text = 'KPS: ' + Math.round(kps * 10) / 10 + '\nMax KPS: ' + Math.round(kpsMax * 10) / 10;
     }
 
     // Cleanup stuff
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
-            cleanup();
-        }
-    }
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
 
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
-        if (Std.isOfType(event.targetState, PlayState)) {
-            cleanup();
-        }
-    }
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) cleanup(); }
 
     override function onSongEnd(event:ScriptEvent) { cleanup(); }
 
@@ -115,6 +95,7 @@ class KPSCounter extends Module {
 
     function cleanup() {
         if (kpsText != null) kpsText.destroy();
+        state = null;
         kpsText = null;
         kps = 0;
         kpsMax = 0;

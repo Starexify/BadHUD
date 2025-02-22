@@ -8,13 +8,12 @@ import funkin.ui.options.OptionsState;
 import flixel.FlxG;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
-import flixel.util.FlxTimer;
 
 class PauseOptions extends Module {
     var wasPaused:Bool = false ;
     var isChartingState:Bool = false ;
     var stateParams:PlayStateParams;
-    var pauseState:ChartEditorParams;
+    var pauseState:PauseSubState;
     var currentSongId:String;
 
     function new() {
@@ -29,12 +28,7 @@ class PauseOptions extends Module {
     }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
-        if (Std.isOfType(event.targetState, OptionsState) && wasPaused && pauseState != null) {
-            pauseState.startPauseMusic();
-        }
-        if (Std.isOfType(event.targetState, ChartEditorState)) {
-            trace("ChartingState Params: " + event.targetState.params);
-        }
+        if (Std.isOfType(event.targetState, OptionsState) && wasPaused && pauseState != null) pauseState.startPauseMusic();
     }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
@@ -60,7 +54,7 @@ class PauseOptions extends Module {
             var menuEntries = pauseState.currentMenuEntries;
             menuEntries.insert(menuEntries.length - 1, {
                 text: "Options",
-                callback: optionsCallback
+                callback: openOptionsCallback
             });
 
             pauseState.clearAndAddMenuEntries();
@@ -68,21 +62,17 @@ class PauseOptions extends Module {
         }
     }
 
-    function optionsCallback() {
+    function openOptionsCallback() {
         wasPaused = true;
         if (pauseState == null) return;
         // Fade out animation
         var duration = 0.4;
         for (entry in pauseState.currentMenuEntries.copy()) {
             if (entry.sprite != null) {
-                if (entry.text == "Options") {
-                    FlxTween.tween(entry.sprite, {alpha: 0}, duration, {ease: FlxEase.quadOut});
-                } else {
-                    entry.sprite.visible = false;
-                }
+                if (entry.text == "Options") FlxTween.tween(entry.sprite, { alpha: 0 }, duration, { ease: FlxEase.quadOut });
+                else entry.sprite.visible = false;
             }
         }
-
-        new FlxTimer().start(duration, timer -> FlxG.switchState(() -> new OptionsState()));
+        FlxG.camera.fade(0xFF000000, duration, false, () -> FlxG.switchState(() -> new OptionsState()));
     }
 }

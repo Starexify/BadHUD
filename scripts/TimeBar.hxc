@@ -5,6 +5,7 @@ import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 
 import flixel.FlxG;
+import flixel.FlxSprite;
 import flixel.text.FlxTextBorderStyle;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
@@ -23,11 +24,12 @@ OG Psych Engine HUD by Shadow Mario and his team
 class TimeBar extends Module {
     var save:FlxSave;
     var state:PlayState;
-    var loaded:Bool = false ;
 
     var timeBarBG:FunkinSprite;
     var timeBar:FlxBar;
     var timeText:FlxText;
+
+    var timeBarSprites:Array<FlxSprite>;
 
     function new() {
         super("TimeBar");
@@ -36,13 +38,9 @@ class TimeBar extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (save.data.timebarPosition != 0) {
-            if (PlayState.instance == null) return;
-            state = PlayState.instance;
-
-            if (!loaded) initTimeBar();
-            loaded = true;
-        }
+        if (PlayState.instance == null || save.data.timebarPosition == 0) return;
+        state = PlayState.instance;
+        initTimeBar();
     }
 
     function initTimeBar() {
@@ -96,42 +94,26 @@ class TimeBar extends Module {
         timeBar.x = timeBarBG.x + 3;
         timeBar.y = timeBarBG.y + (save.data.timeBarType == 0 ? 3 : 2);
 
-        if (!save.data.timebarPosition == 3) { // Vertical Time Bar
-            timeText.screenCenter(0x01);
-            timeBarBG.screenCenter(0x01);
-            timeBar.screenCenter(0x01);
+        timeBarSprites = [timeBarBG, timeBar, timeText];
+
+        for (sprite in timeBarSprites) if (sprite != null) {
+            if (!save.data.timebarPosition == 3) sprite.screenCenter(0x01); // Vertical Time Bar
+            state.add(sprite);
+
+            // Move the time bar to the HUD camera.
+            sprite.cameras = [state.camHUD];
+            sprite.alpha = 0;
         }
-
-        state.add(timeBarBG);
-        state.add(timeBar);
-        state.add(timeText);
-
-        // Move the time bar to the HUD camera.
-        timeBarBG.cameras = [state.camHUD];
-        timeBar.cameras = [state.camHUD];
-        timeText.cameras = [state.camHUD];
-
-        // Time bar is Invisible at first
-        timeBarBG.visible = false;
-        timeBar.visible = false;
-        timeText.visible = false;
     }
 
     override function onSongStart(event:ScriptEvent) {
-        var timeBarObjects = [timeBarBG, timeBar, timeText];
-
-        for (obj in timeBarObjects) {
-            if (obj != null && (obj.alpha != (save.data.hudOpacity / 100) || !obj.visible)) {
-                obj.alpha = 0;
-
-                FlxTween.tween(obj, {alpha: save.data.hudOpacity / 100}, 0.5, {ease: FlxEase.circOut});
-                obj.visible = true;
-            }
-        }
+        for (sprite in timeBarSprites)
+            if (sprite != null && sprite.alpha != (save.data.hudOpacity / 100))
+                FlxTween.tween(sprite, {alpha: save.data.hudOpacity / 100}, 0.5, { ease: FlxEase.circOut });
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (PlayState.instance == null || !loaded || save.data.timebarPosition == 0) return;
+        if (PlayState.instance == null || save.data.timebarPosition == 0) return;
 
         if (timeBar != null && timeBar.visible) {
             timeBar.value = (state.conductorInUse.songPosition / state.currentSongLengthMs) * 100;
@@ -169,15 +151,10 @@ class TimeBar extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        var timeBarObjects = [timeBarBG, timeBar, timeText];
-
-        for (obj in timeBarObjects) {
-            if (obj != null) FlxTween.tween(obj, {alpha: 0}, 0.5, {ease: FlxEase.circOut});
-        }
+        if (timeBarSprites != null) for (sprite in timeBarSprites) if (sprite != null) FlxTween.tween(sprite, { alpha: 0 }, 0.5, {ease: FlxEase.circOut});
 
         timeBarBG = null;
         timeBar = null;
         timeText = null;
-        loaded = false;
     }
 }

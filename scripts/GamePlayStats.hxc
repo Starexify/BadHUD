@@ -24,10 +24,8 @@ OG Psych Engine HUD by Shadow Mario and his team
 */
 class GamePlayStats extends Module {
     var save:FlxSave;
-    var loaded:Bool = false ;
     var state:PlayState;
 
-    var scoreZoom = true ;
     var scoreText:FlxText;
     var scoreTextTween;
 
@@ -79,7 +77,6 @@ class GamePlayStats extends Module {
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (PlayState.instance == null) return;
         state = PlayState.instance;
-        loaded = true;
         if (excludedSongs.indexOf(state.currentChart.songName) != -1) return;
 
         tallies = Highscore.tallies;
@@ -145,7 +142,7 @@ class GamePlayStats extends Module {
         judgementsText.cameras = [state.camHUD];
     }
 
-    function updateScore(miss:Bool = false) {
+    function updateScore(bopScoreOnMiss:Bool = false) {
         calculateRating();
 
         // Change the scoring system based on accuracyType (funy)
@@ -203,18 +200,15 @@ class GamePlayStats extends Module {
             }
         }
 
-        if (!miss) doScoreBop();
+        if (bopScoreOnMiss) scoreBopOnMiss();
     }
 
-    function doScoreBop() {
-        if (!scoreZoom || scoreText == null || !loaded) return;
-        if (save.data.leftPos != 2 || save.data.leftPos != 3) return;
+    function scoreBopOnMiss() {
+        if (save.data.leftPos == 2 || save.data.leftPos == 3) return;
 
         if (scoreTextTween != null) scoreTextTween.cancel();
         scoreText.scale.set(1.075, 1.075);
-        scoreTextTween = FlxTween.tween(scoreText.scale, {x: 1, y: 1}, 0.2, {
-            onComplete: tween -> scoreTextTween = null
-        });
+        scoreTextTween = FlxTween.tween(scoreText.scale, {x: 1, y: 1}, 0.2, { onComplete: tween -> scoreTextTween = null });
     }
 
     function calculateRating() {
@@ -295,7 +289,7 @@ class GamePlayStats extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (save.data.accuracyType != "osu" && loaded && scoreText != null) updateScore(true);
+        if (state != null && scoreText != null) updateScore();
     }
 
     override function onNoteHit(event:HitNoteScriptEvent) {
@@ -316,17 +310,17 @@ class GamePlayStats extends Module {
 
         totalNotesPlayed = (PlayStatePlaylist.isStoryMode ? talliesLevel.totalNotesHit + tallies.totalNotesHit : tallies.totalNotesHit) + 1;
 
-        updateScore(true);
+       updateScore(save.data.accuracyType != "osu");
     }
 
     override function onNoteMiss(event:NoteScriptEvent) {
         combo = 0;
         if (missed >= 0) missed = PlayStatePlaylist.isStoryMode ? talliesLevel.missed + tallies.missed + 1 : tallies.missed + 1;
-        updateScore(false);
+        updateScore();
     }
 
     override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) {
-        updateScore(false);
+        updateScore();
     }
 
     // Cleanup stuff
@@ -349,10 +343,9 @@ class GamePlayStats extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        var stuffToRemove = [scoreText, judgementsText, scoreTextTween];
-
-        for (thing in stuffToRemove) {
-            if (thing != null) thing.destroy();
+        state = null;
+        for (text in [scoreText, judgementsText]) {
+            if (text != null) text.destroy();
         }
 
         if (!PlayStatePlaylist.isStoryMode) {
@@ -360,13 +353,12 @@ class GamePlayStats extends Module {
             ratingName = "?";
             ratingFC = "";
         }
+
         totalNotesPlayed = 0;
         songScore = 0;
 
         scoreText = null;
         judgementsText = null;
         scoreTextTween = null;
-
-        loaded = false;
     }
 }

@@ -14,7 +14,7 @@ import Std;
 class BadHealthBar extends Module {
     var save:FlxSave;
     var state:PlayState;
-    var loaded:Bool = false ;
+
     var iconP1:HealthIcon;
     var iconP2:HealthIcon;
 
@@ -36,12 +36,10 @@ class BadHealthBar extends Module {
         if (PlayState.instance == null) return;
         state = PlayState.instance;
         if (excludedSongs.indexOf(state.currentChart.songName) != -1) return;
-        loaded = true;
         iconP1 = state.iconP1;
         iconP2 = state.iconP2;
 
         if (save.data.smoothBars) state.healthBar.numDivisions = Std.int(state.healthBarBG.width / 1.2);
-
 
         // Health Bar
         if (save.data.healthBarPosition != 0) {
@@ -145,9 +143,9 @@ class BadHealthBar extends Module {
     }
 
     // bop for icons, I think onBeatHit is better than onUpdate and fixes it ?
-    override function onBeatHit(event:SongTimeScriptEvent) { if (loaded && iconP1 != null && !state.isMinimalMode) updateIconsPosition(); }
+    override function onBeatHit(event:SongTimeScriptEvent) { if (state != null && iconP1 != null && !state.isMinimalMode) updateIconsPosition(); }
 
-    override function onUpdate(event:UpdateScriptEvent) { if (loaded && iconP1 != null && !state.isMinimalMode && event.healthChange != 0) updateIconsPosition(); }
+    override function onUpdate(event:UpdateScriptEvent) { if (state != null && iconP1 != null && !state.isMinimalMode && event.healthChange != 0) updateIconsPosition(); }
 
     // Helper Methods
     function getDominantColor(sprite:FlxSprite) {
@@ -192,11 +190,11 @@ class BadHealthBar extends Module {
     }
 
     // Cleanup stuff
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) loaded = false; }
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) state = null; }
 
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) loaded = false; }
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) state = null; }
 
-    override function onSongEnd(event:ScriptEvent) { loaded = false; }
+    override function onSongEnd(event:ScriptEvent) { state = null; }
 
-    override function onDestroy(event:ScriptEvent) { loaded = false; }
+    override function onDestroy(event:ScriptEvent) { state = null; }
 }

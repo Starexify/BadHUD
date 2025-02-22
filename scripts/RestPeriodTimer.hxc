@@ -12,12 +12,10 @@ import flixel.util.FlxSave;
 import flixel.util.FlxSpriteUtil;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
-import flixel.util.FlxDestroyUtil;
 
 class RestPeriodTimer extends Module {
     var save:FlxSave;
     var state:PlayState;
-    var loaded:Bool = false ;
 
     var restBarBG:FunkinSprite;
 
@@ -29,7 +27,10 @@ class RestPeriodTimer extends Module {
 
     var restTime:Float;
     var lastHitNoteTime:Int = 0 ;
-    var restBarSprites:Array<FlxSprite> = [restBarBG, restBar, restText] ;
+    var restBarSprites:Array<FlxSprite>;
+
+    var REST_BAR_FADE_OUT = 1000 ; // 1s
+    var REST_BAR_MINIMUM = 5000 ; // 5s
 
     function new() {
         super("RestPeriodTimer");
@@ -40,7 +41,6 @@ class RestPeriodTimer extends Module {
     override function onSongStart(event:ScriptEvent) {
         if (PlayState.instance == null || save.data.restBar == 0) return;
         state = PlayState.instance;
-        loaded = true;
         initRestBar();
     }
 
@@ -51,15 +51,12 @@ class RestPeriodTimer extends Module {
         restBar = new FlxSprite();
         restBar.scrollFactor.set(0, 0);
         restBar.zIndex = 801;
-        restBar.alpha = save.data.hudOpacity / 100;
 
         restBarBG = FunkinSprite.create(0, 0, "restBackground");
         restBarBG.scrollFactor.set(0, 0);
         restBarBG.zIndex = 800;
-        restBarBG.alpha = save.data.hudOpacity / 100;
         restBarBG.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restBarBG.width / 2;
-        restBarBG.y = state.playerStrumline.y + restBarBG.height * 1.75;
-        if (Preferences.downscroll) restBarBG.y = state.playerStrumline.y - restBarBG.height;
+        restBarBG.y = Preferences.downscroll ? state.playerStrumline.y - restBarBG.height : state.playerStrumline.y + restBarBG.height * 1.75;
 
         restBarRadius = restBarBG.width / 2.5;
         var restBarWidth = Std.int((restBarRadius + restBarThickness) * 2);
@@ -72,40 +69,34 @@ class RestPeriodTimer extends Module {
         restText.borderSize = 1.75;
         restText.scrollFactor.set();
         restText.zIndex = 802;
-        restText.alpha = save.data.hudOpacity / 100;
 
         restText.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restText.width / 2;
-        restText.y = restBarBG.y + restText.height + 3;
-        if (Preferences.downscroll) restText.y = state.playerStrumline.y - restBarBG.height / 2 - restText.height / 2 + 3;
+        restText.y = Preferences.downscroll ? state.playerStrumline.y - restBarBG.height / 2 - restText.height / 2 + 3 : restBarBG.y + restText.height + 3;
 
         restBarSprites = [restBarBG, restBar, restText];
 
-        for (sprites in restBarSprites) if (sprites != null) {
-            state.add(sprites);
-            // Move the rest bar to the HUD camera.
-            sprites.cameras = [state.camHUD];
-            sprites.visible = false;
+        for (sprite in restBarSprites) if (sprite != null) {
+            sprite.cameras = [state.camHUD];
+            sprite.visible = false;
+            sprite.alpha = save.data.hudOpacity / 100;
+            state.add(sprite);
         }
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        trace(restBar);
-        trace(restBarBG);
-        if (PlayState.instance == null || !loaded || save.data.restBar == 0 || restText == null) return;
+        if (PlayState.instance == null || save.data.restBar == 0 || restText == null) return;
 
         var currentTimestamp = state.conductorInUse.songPosition;
         var nextNoteData = getNextNoteAndTime(currentTimestamp);
         var nextNoteTime = nextNoteData != null ? nextNoteData.time : 0;
         restTime = nextNoteTime - currentTimestamp;
         var lastHitNoteTime2 = nextNoteTime - lastHitNoteTime;
-        var delayTillNextNote = 5000;
-        var delayTillNextNoteTime = 1000;
-        if (restTime > delayTillNextNoteTime && lastHitNoteTime2 > delayTillNextNote) {
-            restText.text = Std.string(Math.round((restTime - delayTillNextNoteTime) / 1000));
-            drawCurvedBar(restTime - delayTillNextNoteTime, lastHitNoteTime2 - delayTillNextNoteTime);
-
-            // Fade out the rest bar when time is less than 1500 milliseconds (1.5s)
+        if (restTime > REST_BAR_FADE_OUT && lastHitNoteTime2 > REST_BAR_MINIMUM) {
+            restText.text = Std.string(Math.round((restTime - REST_BAR_FADE_OUT) / 1000));
+            drawCurvedBar(restTime - REST_BAR_FADE_OUT, lastHitNoteTime2 - REST_BAR_FADE_OUT);
             for (sprite in restBarSprites) if (!sprite.visible) sprite.visible = true;
+
+            // Fade out the rest bar when time is less than 1.5s
             if (restTime <= 1500) for (sprites in restBarSprites) FlxTween.tween(sprites, { alpha: 0 }, 0.5, { ease: FlxEase.expoOut, onComplete: tween -> { sprites.visible = false; sprites.alpha = save.data.hudOpacity / 100;} });
         }
     }
@@ -189,12 +180,10 @@ class RestPeriodTimer extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        //for (sprite in restBarSprites) if (sprite != null) sprite = FlxDestroyUtil.destroy(sprite);
-
-        for (sprite in restBarSprites) if (sprite != null) FlxDestroyUtil.destroy(sprite);
-        restBarSprites.resize(0);
+        restBar = null;
+        restBarBG = null;
+        restText = null;
 
         lastHitNoteTime = 0;
-        loaded = false;
     }
 }

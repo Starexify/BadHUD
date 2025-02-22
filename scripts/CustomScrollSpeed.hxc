@@ -52,10 +52,5 @@ class CustomScrollSpeed extends Module {
 
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
-    function cleanup() {
-        if (speedText != null) {
-            speedText.destroy();
-            speedText = null;
-        }
-    }
+    function cleanup() { speedText = null; }
 }

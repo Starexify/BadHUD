@@ -21,7 +21,6 @@ import Std;
 class ExtraStrumline extends Module {
     var save:FlxSave;
     var state:PlayState;
-    var loaded:Bool;
 
     var laneUnderlay:FlxSprite;
     var leftGradient:FlxSprite;
@@ -29,6 +28,8 @@ class ExtraStrumline extends Module {
 
     var judgementSprite:FunkinSprite;
     var noteStyle:NoteStyle;
+
+    var underlaySprites:Array<FlxSprite>;
 
     var excludedSongs = ["Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2"] ;
 
@@ -41,7 +42,6 @@ class ExtraStrumline extends Module {
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (PlayState.instance == null) return;
         state = PlayState.instance;
-        loaded = true;
         var noteStyleId:String = state.currentChart.noteStyle;
         noteStyle = NoteStyleRegistry.instance.fetchEntry(noteStyleId);
         if (noteStyle == null) noteStyle = NoteStyleRegistry.instance.fetchDefault();
@@ -63,9 +63,7 @@ class ExtraStrumline extends Module {
             }
         }
 
-        if (save.data.oppNotesOpacity > 0) {
-            state.opponentStrumline.alpha = save.data.oppNotesOpacity / 100;
-        }
+        if (save.data.oppNotesOpacity > 0) state.opponentStrumline.alpha = save.data.oppNotesOpacity / 100;
 
         // Create the note underlay with gradient
         if (save.data.underlayOpacity > 0) {
@@ -73,37 +71,31 @@ class ExtraStrumline extends Module {
             laneUnderlay.x = state.playerStrumline.x;
             laneUnderlay.color = 0x000000;
             laneUnderlay.alpha = save.data.underlayOpacity / 100;
-            laneUnderlay.scrollFactor.set();
-            laneUnderlay.zIndex = -1;
-            laneUnderlay.cameras = [state.camHUD];
-            state.add(laneUnderlay);
 
             var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
 
-            leftGradient = createLeftGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity / 100);
+            leftGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity / 100, true);
             leftGradient.x = state.playerStrumline.x - fadeRegionWidth;
-            leftGradient.scrollFactor.set();
-            leftGradient.zIndex = -1;
-            leftGradient.cameras = [state.camHUD];
-            state.add(leftGradient);
 
-            rightGradient = createRightGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity / 100);
+            rightGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity / 100, false  );
             rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
-            rightGradient.scrollFactor.set();
-            rightGradient.zIndex = -1;
-            rightGradient.cameras = [state.camHUD];
-            state.add(rightGradient);
+
+            underlaySprites = [laneUnderlay, leftGradient, rightGradient];
+            for (sprite in underlaySprites) {
+                sprite.scrollFactor.set();
+                sprite.zIndex = -1;
+                sprite.cameras = [state.camHUD];
+                state.add(sprite);
+            }
         }
 
         // Remove comboPopUps
         if (save.data.popUpType == 0 || save.data.popUpType > 1) state.comboPopUps.visible = false;
     }
 
-    function updateNotes() {
+    function updateOpponentNotes() {
         // Transparent Opponent Strumline
-        for (staticNote in state.opponentStrumline.strumlineNotes.members) {
-            staticNote.alpha = save.data.oppNotesOpacity / 100;
-        }
+        for (staticNote in state.opponentStrumline.strumlineNotes.members) staticNote.alpha = save.data.oppNotesOpacity / 100;
 
         // Incoming Notes
         for (note in state.opponentStrumline.notes.members) {
@@ -128,8 +120,7 @@ class ExtraStrumline extends Module {
     }
 
     function updatePosition() {
-        if (laneUnderlay == null) return;
-        if (laneUnderlay.x == state.playerStrumline.x) return;
+        if (laneUnderlay == null || laneUnderlay.x == state.playerStrumline.x) return;
         trace("[BadHud] Updating Note Underlay Position");
         var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
 
@@ -139,28 +130,19 @@ class ExtraStrumline extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (PlayState.instance == null || !loaded) return;
+        if (state == null) return;
         if (save.data.underlayOpacity > 0) updatePosition();
         if (save.data.middlescroll && !save.data.oppNotes) {
-            if (state.currentStage != null && excludedSongs.indexOf(state.currentChart.songName) == -1) {
-                updateNotes();
-            } else if (state.isMinimalMode) {
-                updateNotes();
-            }
+            if (state.currentStage != null && excludedSongs.indexOf(state.currentChart.songName) == -1) updateOpponentNotes();
+            else if (state.isMinimalMode) updateOpponentNotes();
         }
     }
 
-    override function onNoteHit(event:HitNoteScriptEvent) {
-        if (event.note.noteData.getMustHitNote() && save.data.popUpType == 2 && loaded) displayRating(event.judgement);
-    }
+    override function onNoteHit(event:HitNoteScriptEvent) { if (event.note.noteData.getMustHitNote() && save.data.popUpType == 2 && state != null) displayRating(event.judgement); }
 
-    override function onNoteMiss(event:NoteScriptEvent) {
-        event.playSound = !save.data.muteMiss;
-    }
+    override function onNoteMiss(event:NoteScriptEvent) { event.playSound = !save.data.muteMiss; }
 
-    override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) {
-        event.playSound = !save.data.muteMiss;
-    }
+    override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) { event.playSound = !save.data.muteMiss; }
 
     function displayRating(daRating:Null<String>) {
         if (daRating == null) return;
@@ -221,17 +203,9 @@ class ExtraStrumline extends Module {
     }
 
     // Cleanup Stuff
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) {
-            cleanup();
-        }
-    }
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
 
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) {
-        if (Std.isOfType(event.targetState, PlayState)) {
-            cleanup();
-        }
-    }
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) cleanup(); }
 
     override function onSongRetry(event:ScriptEvent) { cleanup(); }
 
@@ -240,50 +214,25 @@ class ExtraStrumline extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        if (laneUnderlay != null) {
-            laneUnderlay.destroy();
-            leftGradient.destroy();
-            rightGradient.destroy();
-            laneUnderlay = null;
-            leftGradient = null;
-            rightGradient = null;
-        }
-        if (judgementSprite != null) {
-            judgementSprite.destroy();
-            judgementSprite = null;
-        }
-        lodaded = false;
+        state = null;
+        laneUnderlay = null;
+        leftGradient = null;
+        rightGradient = null;
+        judgementSprite = null;
     }
 
     // Gradient Underlay Stuff
-    function createLeftGradient(width:Int, height:Int, alphaStart:Float, alphaEnd:Float):FlxSprite {
+    function createGradient(width:Int, height:Int, alphaStart:Float, alphaEnd:Float, isLeftToRight:Bool = true):FlxSprite {
         var gradientSprite = new FlxSprite();
         var bitmap = new BitmapData(width, height, true, 0x0);
 
-        // Left gradient: from fully opaque to transparent on the left side.
         for (x in 0...width) {
-            var alpha:Float = alphaStart + (alphaEnd - alphaStart) * (x / width); // Fades from right to left
+            // If isLeftToRight is true, fades left to right. If false, fades right to left
+            var progress = isLeftToRight ? (x / width) : (1.0 - (x / width));
+            var alpha = alphaStart + (alphaEnd - alphaStart) * progress;
             alpha = Math.max(0, Math.min(alpha, 1));
             var color = (Std.int(alpha * 255) << 24) | 0x000000;
-            for (y in 0...height) {
-                bitmap.setPixel32(x, y, color);
-            }
-        }
 
-        gradientSprite.pixels = bitmap;
-        gradientSprite.dirty = true;
-        return gradientSprite;
-    }
-
-    function createRightGradient(width:Int, height:Int, alphaStart:Float, alphaEnd:Float):FlxSprite {
-        var gradientSprite = new FlxSprite();
-        var bitmap = new BitmapData(width, height, true, 0x0);
-
-        // Right gradient: from fully opaque to transparent on the right side.
-        for (x in 0...width) {
-            var alpha:Float = alphaStart + (alphaEnd - alphaStart) * (1.0 - (x / width)); // Fades from left to right
-            alpha = Math.max(0, Math.min(alpha, 1));
-            var color = (Std.int(alpha * 255) << 24) | 0x000000;
             for (y in 0...height) {
                 bitmap.setPixel32(x, y, color);
             }
