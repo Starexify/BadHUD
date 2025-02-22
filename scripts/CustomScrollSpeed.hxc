@@ -53,6 +53,7 @@ class CustomScrollSpeed extends Module {
 
     function cleanup() {
         state == null;
+        if (speedText != null) speedText.destroy();
         speedText = null;
     }
 }

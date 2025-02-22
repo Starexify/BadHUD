@@ -215,6 +215,9 @@ class ExtraStrumline extends Module {
 
     function cleanup() {
         state = null;
+        if (laneUnderlay != null) laneUnderlay.destroy();
+        if (leftGradient != null) leftGradient.destroy();
+        if (rightGradient != null) rightGradient.destroy();
         laneUnderlay = null;
         leftGradient = null;
         rightGradient = null;
