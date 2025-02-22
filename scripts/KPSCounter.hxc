@@ -31,27 +31,25 @@ class KPSCounter extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (save.data.kpsCounter) {
-            if (PlayState.instance == null) return;
-            state = PlayState.instance;
+        if (PlayState.instance == null || !save.data.kpsCounter) return;
+        state = PlayState.instance;
 
-            // Binding with BadHUDOptions
-            var badHUDOptions = new BadHUDOptions();
+        // Binding with BadHUDOptions
+        var badHUDOptions = new BadHUDOptions();
 
-            // Create KPS Text Element
-            var kpsTextXPos = 10;
-            var kpsTextYPos = FlxG.height * 0.6;
+        // Create KPS Text Element
+        var kpsTextXPos = 10;
+        var kpsTextYPos = FlxG.height * 0.6;
 
-            kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
-            kpsText.setFormat(Paths.font(badHUDOptions.font), save.data.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
-            kpsText.scrollFactor.set();
-            kpsText.borderSize = 1.25;
-            kpsText.zIndex = 851;
-            kpsText.text = 'KPS: 0' + '\nMax KPS: 0';
+        kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
+        kpsText.setFormat(Paths.font(badHUDOptions.font), save.data.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        kpsText.scrollFactor.set();
+        kpsText.borderSize = 1.25;
+        kpsText.zIndex = 851;
+        kpsText.text = 'KPS: 0' + '\nMax KPS: 0';
 
-            kpsText.cameras = [state.camHUD];
-            state.add(kpsText);
-        }
+        kpsText.cameras = [state.camHUD];
+        state.add(kpsText);
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
@@ -94,8 +92,8 @@ class KPSCounter extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        if (kpsText != null) kpsText.destroy();
         state = null;
+        if (kpsText != null) kpsText.destroy();
         kpsText = null;
         kps = 0;
         kpsMax = 0;

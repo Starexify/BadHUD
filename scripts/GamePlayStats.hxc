@@ -344,9 +344,7 @@ class GamePlayStats extends Module {
 
     function cleanup() {
         state = null;
-        for (text in [scoreText, judgementsText]) {
-            if (text != null) text.destroy();
-        }
+        for (text in [scoreText, judgementsText]) if (text != null) text.destroy();
 
         if (!PlayStatePlaylist.isStoryMode) {
             ratingPercent = 0;

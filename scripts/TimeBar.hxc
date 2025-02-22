@@ -113,7 +113,7 @@ class TimeBar extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (PlayState.instance == null || save.data.timebarPosition == 0) return;
+        if (state == null || save.data.timebarPosition == 0) return;
 
         if (timeBar != null && timeBar.visible) {
             timeBar.value = (state.conductorInUse.songPosition / state.currentSongLengthMs) * 100;
@@ -152,7 +152,7 @@ class TimeBar extends Module {
 
     function cleanup() {
         if (timeBarSprites != null) for (sprite in timeBarSprites) if (sprite != null) FlxTween.tween(sprite, { alpha: 0 }, 0.5, {ease: FlxEase.circOut});
-
+        state = null;
         timeBarBG = null;
         timeBar = null;
         timeText = null;

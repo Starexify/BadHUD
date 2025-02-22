@@ -23,7 +23,6 @@ class CustomScrollSpeed extends Module {
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (PlayState.instance == null || !save.data.customScrollSpeed) return;
-
         state = PlayState.instance;
 
         var scrollSpeed:Float = save.data.scrollSpeedFactor / 10;
@@ -52,5 +51,8 @@ class CustomScrollSpeed extends Module {
 
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
-    function cleanup() { speedText = null; }
+    function cleanup() {
+        state == null;
+        speedText = null;
+    }
 }

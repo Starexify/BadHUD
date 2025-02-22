@@ -84,7 +84,7 @@ class RestPeriodTimer extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (PlayState.instance == null || save.data.restBar == 0 || restText == null) return;
+        if (state == null || save.data.restBar == 0 || restText == null) return;
 
         var currentTimestamp = state.conductorInUse.songPosition;
         var nextNoteData = getNextNoteAndTime(currentTimestamp);
@@ -180,10 +180,10 @@ class RestPeriodTimer extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
+        state = null;
         restBar = null;
         restBarBG = null;
         restText = null;
-
         lastHitNoteTime = 0;
     }
 }
