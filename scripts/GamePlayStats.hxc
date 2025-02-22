@@ -35,8 +35,6 @@ class GamePlayStats extends Module {
     var ratingName:String = "?" ;
     var ratingFC:String;
 
-    var textSize:Int;
-
     var songScore:Int;
 
     var tallies:Tallies;
@@ -84,7 +82,7 @@ class GamePlayStats extends Module {
 
         // Binding with BadHUDOptions for fonts
         badHUDOptions = new BadHUDOptions();
-        textSize = save.data.hudFontSize;
+        var textSize = save.data.hudFontSize;
 
         // Create HUD elements
         var scoreTextXPos = 0;
@@ -103,7 +101,6 @@ class GamePlayStats extends Module {
                 scorePosition = "left";
             case 3: // Judgements and Score
                 initJudgements(textSize);
-
                 scoreTextXPos = 10;
                 scoreTextYPos = judgementsText.y - judgementsText.height - 10;
                 scoringText = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: ?";
@@ -115,9 +112,8 @@ class GamePlayStats extends Module {
         scoreText.scrollFactor.set();
         scoreText.borderSize = 1.25;
         scoreText.zIndex = 851;
-
-        state.add(scoreText);
         scoreText.cameras = [state.camHUD];
+        state.add(scoreText);
 
         if (PlayStatePlaylist.isStoryMode) talliesLevel = Highscore.talliesLevel;
     }
@@ -182,7 +178,6 @@ class GamePlayStats extends Module {
                 tempJudgements = "Sicks: " + sicks + "\nGoods: " + goods + "\nBads: " + bads + "\nShits: " + shits;
                 tempScore = "Score: " + songScore + "\nCombo Breaks: " + missed + "\nRating: " + ratingString + "\nCombo: " + combo;
         }
-
 
         if (judgementsText != null) judgementsText.text = tempJudgements;
         if (scoreText != null) {
@@ -310,7 +305,7 @@ class GamePlayStats extends Module {
 
         totalNotesPlayed = (PlayStatePlaylist.isStoryMode ? talliesLevel.totalNotesHit + tallies.totalNotesHit : tallies.totalNotesHit) + 1;
 
-       updateScore(save.data.accuracyType != "osu");
+        updateScore(save.data.accuracyType != "osu");
     }
 
     override function onNoteMiss(event:NoteScriptEvent) {

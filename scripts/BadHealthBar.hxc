@@ -138,7 +138,7 @@ class BadHealthBar extends Module {
         }
     }
 
-    function updateHealthIcon(icon:FlxSprite, health:Float):Void {
+    function updateHealthIcon(icon:HealthIcon, health:Float) {
         if (icon != null) icon.playAnimation(health < HealthIcon.LOSING_THRESHOLD ? "losing" : health > HealthIcon.WINNING_THRESHOLD ? "winning" : "idle");
     }
 
@@ -171,9 +171,7 @@ class BadHealthBar extends Module {
                 }
 
                 // Add new color if not found
-                if (!found) {
-                    colorData.push({ color: color, count: 1 });
-                }
+                if (!found) colorData.push({ color: color, count: 1 });
             }
         }
 

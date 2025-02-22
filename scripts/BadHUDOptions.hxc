@@ -7,7 +7,7 @@ import flixel.util.FlxSave;
 import Std;
 
 class BadHUDOptions extends Module {
-    var save:FlxSave = new FlxSave() ;
+    var save:FlxSave;
 
     // Hooks or smth like that for other classes
     var font;

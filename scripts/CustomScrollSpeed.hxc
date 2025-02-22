@@ -24,10 +24,8 @@ class CustomScrollSpeed extends Module {
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (PlayState.instance == null || !save.data.customScrollSpeed) return;
         state = PlayState.instance;
-
-        var scrollSpeed:Float = save.data.scrollSpeedFactor / 10;
-        state.playerStrumline.scrollSpeed = scrollSpeed;
-        state.opponentStrumline.scrollSpeed = scrollSpeed;
+        state.playerStrumline.scrollSpeed = save.data.scrollSpeedFactor / 10;
+        state.opponentStrumline.scrollSpeed = save.data.scrollSpeedFactor / 10;
     }
 
     override function onPause(event:PauseScriptEvent) {

@@ -77,7 +77,7 @@ class ExtraStrumline extends Module {
             leftGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity / 100, true);
             leftGradient.x = state.playerStrumline.x - fadeRegionWidth;
 
-            rightGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity / 100, false  );
+            rightGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, save.data.underlayOpacity / 100, false);
             rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
 
             underlaySprites = [laneUnderlay, leftGradient, rightGradient];
