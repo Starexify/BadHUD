@@ -89,7 +89,7 @@ class GamePlayStats extends Module {
         // Create HUD elements
         var scoreTextXPos = 0;
         var scoreTextYPos:Float = save.data.verticalHPBar ? 40 : state.healthBarBG.y + 45;
-        var scoringText = 'Score: 0' + ' | Combo Breaks: 0' + ' | Rating: ?\n';
+        var scoringText = "Score: 0" + " | Combo Breaks: 0" + " | Rating: ?\n";
         var scorePosition = "center";
 
         switch (save.data.leftPos) {
@@ -99,14 +99,14 @@ class GamePlayStats extends Module {
             case 2: // Score
                 scoreTextXPos = 10;
                 scoreTextYPos = (FlxG.height * 0.45) - 84 - 10;
-                scoringText = 'Score: 0' + '\nCombo Breaks: 0' + '\nRating: ?';
+                scoringText = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: ?";
                 scorePosition = "left";
             case 3: // Judgements and Score
                 initJudgements(textSize);
 
                 scoreTextXPos = 10;
                 scoreTextYPos = judgementsText.y - judgementsText.height - 10;
-                scoringText = 'Score: 0' + '\nCombo Breaks: 0' + '\nRating: ?';
+                scoringText = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: ?";
                 scorePosition = "left";
         }
 
@@ -132,7 +132,7 @@ class GamePlayStats extends Module {
     }
 
     function initJudgements(textSize:Int) {
-        judgementsText = new FlxText(10, FlxG.height * 0.45, FlxG.width, 'Sicks: 0' + '\nGoods: 0' + '\nBads: 0' + '\nShits: 0', 20);
+        judgementsText = new FlxText(10, FlxG.height * 0.45, FlxG.width, "Sicks: 0" + "\nGoods: 0" + "\nBads: 0" + "\nShits: 0", 20);
         judgementsText.setFormat(Paths.font(badHUDOptions.font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         judgementsText.scrollFactor.set();
         judgementsText.borderSize = 1.25;
@@ -167,7 +167,7 @@ class GamePlayStats extends Module {
         if (save.data.commaSeparatedScore) songScore = FlxStringUtil.formatMoney(songScore, false, true);
 
         // Judgements Screen and Score Bar for update
-        var ratingString:String = totalNotesPlayed != 0 ? save.data.accuracyType == "psych" ? ratingName + ' (' + ratingPercent + '%) - ' + ratingFC : ratingPercent + '% - ' + ratingFC : ratingName;
+        var ratingString:String = totalNotesPlayed != 0 ? save.data.accuracyType == "psych" ? ratingName + " (" + ratingPercent + "%) - " + ratingFC : ratingPercent + "% - " + ratingFC : ratingName;
         var tempScore:String = "Score: " + songScore + " | Combo Breaks: " + missed + " | Rating: " + ratingString;
         var tempJudgements:String = "";
         switch (save.data.leftPos) {

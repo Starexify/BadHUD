@@ -155,7 +155,7 @@ class RestPeriodTimer extends Module {
             restBar.dirty = true;
             FlxSpriteUtil.endDraw(restBar);
         } catch (e:Dynamic) {
-            trace('[BadHUD] Error in drawCurvedBar: ' + e);
+            trace("[BadHUD] Error in drawCurvedBar: " + e);
         }
     }
 

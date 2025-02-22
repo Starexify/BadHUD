@@ -46,7 +46,7 @@ class KPSCounter extends Module {
         kpsText.scrollFactor.set();
         kpsText.borderSize = 1.25;
         kpsText.zIndex = 851;
-        kpsText.text = 'KPS: 0' + '\nMax KPS: 0';
+        kpsText.text = "KPS: 0" + "\nMax KPS: 0";
 
         kpsText.cameras = [state.camHUD];
         state.add(kpsText);
@@ -77,7 +77,7 @@ class KPSCounter extends Module {
     }
 
     function updateKPS() {
-        if (kpsText != null) kpsText.text = 'KPS: ' + Math.round(kps * 10) / 10 + '\nMax KPS: ' + Math.round(kpsMax * 10) / 10;
+        if (kpsText != null) kpsText.text = "KPS: " + Math.round(kps * 10) / 10 + "\nMax KPS: " + Math.round(kpsMax * 10) / 10;
     }
 
     // Cleanup stuff
