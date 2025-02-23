@@ -1,0 +1,38 @@
+import funkin.modding.module.Module;
+import funkin.play.PauseSubState;
+import funkin.play.PlayState;
+
+import flixel.util.FlxSave;
+
+class BadHooks extends Module {
+    var state:PlayState;
+    var save:FlxSave;
+
+    var excludedSongs:Array<String> = ["Silly Billy",
+    "Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME", "Destruction Dance", "Portal Power",
+    "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "Overload", "Eradication", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2",
+        // Indie Cross
+    "Snake-Eyes", "Technicolor-Tussle", "Knockout", "Whoopee", "Sansational", "Burning-In-Hell", "Imminent-Demise", "Terrible-Sin", "Last-Reel", "Nightmare-Run", "Satanic-Funkin", "Final-Stretch",
+        // Summer Break Special
+    "Tomo", "Knucklehead", "Spunk", "Ghoulish"] ;
+
+    function new() {
+        super("BadHooks", 2);
+        save = new FlxSave();
+        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
+    }
+
+    override function onSongLoaded(event:SongLoadScriptEvent) {
+        if (PlayState.instance == null) return;
+        state = PlayState.instance;
+    }
+
+    // Cleanup stuff
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) state = null; }
+
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) state = null; }
+
+    override function onSongEnd(event:ScriptEvent) { state = null; }
+
+    override function onDestroy(event:ScriptEvent) { state = null; }
+}

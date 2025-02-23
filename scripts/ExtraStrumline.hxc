@@ -53,7 +53,7 @@ class ExtraStrumline extends Module {
 
             // Opponent Strumline
             if (save.data.oppNotesOpacity != 0) {
-                var rightXOffset = save.data.verticalHPBar ? -Constants.STRUMLINE_X_OFFSET : -150;
+                var rightXOffset = save.data.healthBarPosition == 2 ? -Constants.STRUMLINE_X_OFFSET : -150;
 
                 // Place last 2 notes on right side
                 for (i in 2...4) {

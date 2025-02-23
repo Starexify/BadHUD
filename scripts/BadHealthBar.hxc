@@ -1,5 +1,4 @@
 import funkin.modding.module.Module;
-import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.play.components.HealthIcon;
 import funkin.util.Constants;
@@ -10,32 +9,24 @@ import flixel.math.FlxMath;
 import flixel.util.FlxSave;
 
 import Std;
+import funkin.modding.module.ModuleHandler;
 
 class BadHealthBar extends Module {
-    var save:FlxSave;
+    var save:FlxSave = new BadHUDOptions().save;
     var state:PlayState;
 
     var iconP1:HealthIcon;
     var iconP2:HealthIcon;
 
-    var excludedSongs = ["Silly Billy",
-    "Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME", "Destruction Dance", "Portal Power",
-    "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "Overload", "Eradication", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2",
-        // Indie Cross
-    "Snake-Eyes", "Technicolor-Tussle", "Knockout", "Whoopee", "Sansational", "Burning-In-Hell", "Imminent-Demise", "Terrible-Sin", "Last-Reel", "Nightmare-Run", "Satanic-Funkin", "Final-Stretch",
-        // Summer Break Special
-    "Tomo", "Knucklehead", "Spunk", "Ghoulish"] ;
-
     function new() {
         super("BadHealthBar");
-        save = new FlxSave();
-        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (PlayState.instance == null) return;
-        state = PlayState.instance;
-        if (excludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        var badHooks = ModuleHandler.getModule('BadHooks');
+        if (badHooks != null) state = badHooks.scriptGet('state');
+        if (state == null) return;
+        if (new BadHooks().excludedSongs.indexOf(state.currentChart.songName) != -1) return;
         iconP1 = state.iconP1;
         iconP2 = state.iconP2;
 
@@ -186,13 +177,4 @@ class BadHealthBar extends Module {
         colorData = [];
         return dominantColor;
     }
-
-    // Cleanup stuff
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) state = null; }
-
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) state = null; }
-
-    override function onSongEnd(event:ScriptEvent) { state = null; }
-
-    override function onDestroy(event:ScriptEvent) { state = null; }
 }
