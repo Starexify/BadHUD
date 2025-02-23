@@ -2,6 +2,7 @@ import funkin.modding.module.Module;
 import funkin.Paths;
 import funkin.Preferences;
 import funkin.graphics.FunkinSprite;
+import funkin.modding.module.ModuleHandler;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 
@@ -14,7 +15,7 @@ import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 
 class RestPeriodTimer extends Module {
-    var save:FlxSave;
+    var save:FlxSave = new BadHUDOptions().save ;
     var state:PlayState;
 
     var restBarBG:FunkinSprite;
@@ -29,18 +30,15 @@ class RestPeriodTimer extends Module {
     var lastHitNoteTime:Int = 0 ;
     var restBarSprites:Array<FlxSprite>;
 
-    var REST_BAR_FADE_OUT = 1000 ; // 1s
-    var REST_BAR_MINIMUM = 5000 ; // 5s
-
     function new() {
         super("RestPeriodTimer");
-        save = new FlxSave();
-        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
     }
 
     override function onSongStart(event:ScriptEvent) {
-        if (PlayState.instance == null || save.data.restBar == 0) return;
-        state = PlayState.instance;
+        if (save.data.restBar == 0) return;
+        var badHooks = ModuleHandler.getModule('BadHooks');
+        if (badHooks != null) state = badHooks.scriptGet('state');
+        if (state == null) return;
         initRestBar();
     }
 
@@ -85,15 +83,16 @@ class RestPeriodTimer extends Module {
 
     override function onUpdate(event:UpdateScriptEvent) {
         if (state == null || save.data.restBar == 0 || restText == null) return;
+        var restBarFadeOut = 1000 ; // 1s
+        var restBarMinimum = 5000 ; // 5s
+        var songPosition = state.conductorInUse.songPosition;
+        var incomingNoteTime = getNextNoteAndTime(songPosition) != null ? getNextNoteAndTime(songPosition).time : 0;
+        var noteTimeDelta = incomingNoteTime - lastHitNoteTime;
+        restTime = incomingNoteTime - songPosition;
 
-        var currentTimestamp = state.conductorInUse.songPosition;
-        var nextNoteData = getNextNoteAndTime(currentTimestamp);
-        var nextNoteTime = nextNoteData != null ? nextNoteData.time : 0;
-        restTime = nextNoteTime - currentTimestamp;
-        var lastHitNoteTime2 = nextNoteTime - lastHitNoteTime;
-        if (restTime > REST_BAR_FADE_OUT && lastHitNoteTime2 > REST_BAR_MINIMUM) {
-            restText.text = Std.string(Math.round((restTime - REST_BAR_FADE_OUT) / 1000));
-            drawCurvedBar(restTime - REST_BAR_FADE_OUT, lastHitNoteTime2 - REST_BAR_FADE_OUT);
+        if (restTime > restBarFadeOut && noteTimeDelta > restBarMinimum) {
+            restText.text = Std.string(Math.round((restTime - restBarFadeOut) / 1000));
+            drawCurvedBar(restTime - restBarFadeOut, noteTimeDelta - restBarFadeOut);
             for (sprite in restBarSprites) if (!sprite.visible) sprite.visible = true;
 
             // Fade out the rest bar when time is less than 1.5s
@@ -180,7 +179,6 @@ class RestPeriodTimer extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        state = null;
         restBar = null;
         restBarBG = null;
         restText = null;

@@ -18,6 +18,19 @@ class BadHooks extends Module {
     var gameplayExcludedSongs = ["Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME",
     "Destruction Dance", "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine"] ;
 
+    var ratings:Map<String, {name:String, min:Float, max:Float}> = [
+        "YOU_SUCK" => {name: "You Suck!", min: 0, max: 19},
+        "SHIT" => {name: "Shit", min: 20, max: 39},
+        "BAD" => {name: "Bad", min: 40, max: 49},
+        "BRUH" => {name: "Bruh", min: 50, max: 59},
+        "MEH" => {name: "Meh", min: 60, max: 68},
+        "NICE" => {name: "Nice", min: 69, max: 69},
+        "GOOD" => {name: "Good", min: 70, max: 79},
+        "GREAT" => {name: "Great", min: 80, max: 89},
+        "SICK" => {name: "Sick!", min: 90, max: 99},
+        "PERFECT" => {name: "Perfect!!", min: 100, max: 100}
+    ] ;
+
     function new() {
         super("BadHooks", 2);
     }
