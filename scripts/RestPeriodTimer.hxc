@@ -159,7 +159,7 @@ class RestPeriodTimer extends Module {
         }
     }
 
-    function getNextNoteAndTime(currentTime:Float):Null<{note:SongNoteData, time:Float}> {
+    function getNextNoteAndTime(currentTime:Float):{note:SongNoteData, time:Float} {
         if (state.currentChart == null || state.currentChart.notes == null) return;
         for (note in state.currentChart.notes) if (note.getMustHitNote() && note.time > currentTime) return { note: note, time: note.time };
     }

@@ -2,6 +2,7 @@ import funkin.modding.module.Module;
 import funkin.Preferences;
 import funkin.graphics.FunkinSprite;
 import funkin.data.notestyle.NoteStyleRegistry;
+import funkin.modding.module.ModuleHandler;
 import funkin.play.notes.Strumline;
 import funkin.play.notes.notestyle.NoteStyle;
 import funkin.play.PauseSubState;
@@ -19,7 +20,7 @@ import openfl.display.BitmapData;
 import Std;
 
 class ExtraStrumline extends Module {
-    var save:FlxSave;
+    var save:FlxSave = new BadHUDOptions().save;
     var state:PlayState;
 
     var laneUnderlay:FlxSprite;
@@ -31,23 +32,19 @@ class ExtraStrumline extends Module {
 
     var underlaySprites:Array<FlxSprite>;
 
-    var excludedSongs = ["Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2"] ;
-
     function new() {
-        super("ExtraStrumline", 1);
-        save = new FlxSave();
-        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
+        super("ExtraStrumline", 3);
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (PlayState.instance == null) return;
-        state = PlayState.instance;
-        var noteStyleId:String = state.currentChart.noteStyle;
-        noteStyle = NoteStyleRegistry.instance.fetchEntry(noteStyleId);
+        var badHooks = ModuleHandler.getModule('BadHooks');
+        if (badHooks != null) state = badHooks.scriptGet('state');
+        if (state == null) return;
+        noteStyle = NoteStyleRegistry.instance.fetchEntry(state.currentChart.noteStyle);
         if (noteStyle == null) noteStyle = NoteStyleRegistry.instance.fetchDefault();
 
         // Center player strumline
-        if (save.data.middlescroll && excludedSongs.indexOf(state.currentChart.songName) == -1) {
+        if (save.data.middlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) {
             if (save.data.popUpType == 1) state.comboPopUps.offsets = [450, -55];
             state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
 
@@ -133,7 +130,7 @@ class ExtraStrumline extends Module {
         if (state == null) return;
         if (save.data.underlayOpacity > 0) updatePosition();
         if (save.data.middlescroll && !save.data.oppNotes) {
-            if (state.currentStage != null && excludedSongs.indexOf(state.currentChart.songName) == -1) updateOpponentNotes();
+            if (state.currentStage != null && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) updateOpponentNotes();
             else if (state.isMinimalMode) updateOpponentNotes();
         }
     }
@@ -144,7 +141,7 @@ class ExtraStrumline extends Module {
 
     override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) { event.playSound = !save.data.muteMiss; }
 
-    function displayRating(daRating:Null<String>) {
+    function displayRating(daRating:String) {
         if (daRating == null) return;
 
         // Remove existing judgement sprite if it exists
@@ -155,7 +152,7 @@ class ExtraStrumline extends Module {
         }
 
         // Create new rating sprite
-        var rating:Null<FunkinSprite> = noteStyle.buildJudgementSprite(daRating);
+        var rating:FunkinSprite = noteStyle.buildJudgementSprite(daRating);
         if (rating == null) return;
 
         var originalScaleX = rating.scale.x;
@@ -214,7 +211,6 @@ class ExtraStrumline extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        state = null;
         if (laneUnderlay != null) laneUnderlay.destroy();
         if (leftGradient != null) leftGradient.destroy();
         if (rightGradient != null) rightGradient.destroy();

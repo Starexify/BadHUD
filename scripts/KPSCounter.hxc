@@ -13,7 +13,7 @@ import Math;
 import Std;
 
 class KPSCounter extends Module {
-    var save:FlxSave;
+    var save:FlxSave = new BadHUDOptions().save;
     var state:PlayState;
 
     var kpsText:FlxText;
@@ -26,8 +26,6 @@ class KPSCounter extends Module {
 
     function new() {
         super("KPSCounter");
-        save = new FlxSave();
-        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
@@ -92,7 +90,6 @@ class KPSCounter extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        state = null;
         if (kpsText != null) kpsText.destroy();
         kpsText = null;
         kps = 0;

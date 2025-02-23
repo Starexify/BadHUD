@@ -1,5 +1,6 @@
 import funkin.modding.module.Module;
 import funkin.Paths;
+import funkin.modding.module.ModuleHandler;
 import funkin.play.PlayState;
 
 import flixel.FlxG;
@@ -10,20 +11,20 @@ import flixel.util.FlxSave;
 import Math;
 
 class CustomScrollSpeed extends Module {
-    var save:FlxSave;
+    var save:FlxSave = new BadHUDOptions().save;
     var state:PlayState;
 
     var speedText:FlxText;
 
     function new() {
         super("CustomScrollSpeed");
-        save = new FlxSave();
-        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (PlayState.instance == null || !save.data.customScrollSpeed) return;
-        state = PlayState.instance;
+        if (!save.data.customScrollSpeed) return;
+        var badHooks = ModuleHandler.getModule('BadHooks');
+        if (badHooks != null) state = badHooks.scriptGet('state');
+        if (state == null) return;
         state.playerStrumline.scrollSpeed = save.data.scrollSpeedFactor / 10;
         state.opponentStrumline.scrollSpeed = save.data.scrollSpeedFactor / 10;
     }
@@ -50,7 +51,6 @@ class CustomScrollSpeed extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        state == null;
         if (speedText != null) speedText.destroy();
         speedText = null;
     }

@@ -23,7 +23,7 @@ Psych Engine HUD V-Slice by nubz4lif
 OG Psych Engine HUD by Shadow Mario and his team
 */
 class GamePlayStats extends Module {
-    var save:FlxSave;
+    var save:FlxSave = new BadHUDOptions().save ;
     var state:PlayState;
 
     var scoreText:FlxText;
@@ -48,8 +48,6 @@ class GamePlayStats extends Module {
     var totalNotes:Int = 0 ;
     var totalNotesPlayed:Int = 0 ;
 
-    var badHUDOptions;
-
     var ratings:Map<String, {name:String, min:Float, max:Float}> = [
         "YOU_SUCK" => {name: "You Suck!", min: 0, max: 19},
         "SHIT" => {name: "Shit", min: 20, max: 39},
@@ -63,44 +61,38 @@ class GamePlayStats extends Module {
         "PERFECT" => {name: "Perfect!!", min: 100, max: 100}
     ] ;
 
-    var excludedSongs = ["Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME",
-    "Destruction Dance", "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine"] ;
-
     function new() {
         super("GamePlayStats");
-        save = new FlxSave();
-        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (PlayState.instance == null) return;
         state = PlayState.instance;
-        if (excludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        if (new BadHooks().gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
 
         tallies = Highscore.tallies;
         state.scoreText.visible = false;
 
-        // Binding with BadHUDOptions for fonts
-        badHUDOptions = new BadHUDOptions();
+        var textFont = new BadHUDOptions().font;
         var textSize = save.data.hudFontSize;
 
         // Create HUD elements
-        var scoreTextXPos = 0;
-        var scoreTextYPos:Float = save.data.verticalHPBar ? 40 : state.healthBarBG.y + 45;
+        var scoreTextXPos;
+        var scoreTextYPos:Float = save.data.healthBarPosition == 1 ? state.healthBarBG.y + 45 : 40;
         var scoringText = "Score: 0" + " | Combo Breaks: 0" + " | Rating: ?\n";
         var scorePosition = "center";
 
         switch (save.data.leftPos) {
             case 0: // None
             case 1: // Judgements
-                initJudgements(textSize);
+                initJudgements(textSize, textFont);
             case 2: // Score
                 scoreTextXPos = 10;
                 scoreTextYPos = (FlxG.height * 0.45) - 84 - 10;
                 scoringText = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: ?";
                 scorePosition = "left";
             case 3: // Judgements and Score
-                initJudgements(textSize);
+                initJudgements(textSize, textFont);
                 scoreTextXPos = 10;
                 scoreTextYPos = judgementsText.y - judgementsText.height - 10;
                 scoringText = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: ?";
@@ -108,7 +100,7 @@ class GamePlayStats extends Module {
         }
 
         scoreText = new FlxText(scoreTextXPos, scoreTextYPos, FlxG.width, "", 20);
-        scoreText.setFormat(Paths.font(badHUDOptions.font), textSize, 0xFFFFFFFF, scorePosition, FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        scoreText.setFormat(Paths.font(textFont), textSize, 0xFFFFFFFF, scorePosition, FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         scoreText.scrollFactor.set();
         scoreText.borderSize = 1.25;
         scoreText.zIndex = 851;
@@ -127,15 +119,14 @@ class GamePlayStats extends Module {
         resetJudgements();
     }
 
-    function initJudgements(textSize:Int) {
+    function initJudgements(textSize:Int, textFont:String) {
         judgementsText = new FlxText(10, FlxG.height * 0.45, FlxG.width, "Sicks: 0" + "\nGoods: 0" + "\nBads: 0" + "\nShits: 0", 20);
-        judgementsText.setFormat(Paths.font(badHUDOptions.font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        judgementsText.setFormat(Paths.font(textFont), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         judgementsText.scrollFactor.set();
         judgementsText.borderSize = 1.25;
         judgementsText.zIndex = 851;
-
-        state.add(judgementsText);
         judgementsText.cameras = [state.camHUD];
+        state.add(judgementsText);
     }
 
     function updateScore(bopScoreOnMiss:Bool = false) {
@@ -283,9 +274,7 @@ class GamePlayStats extends Module {
         }
     }
 
-    override function onUpdate(event:UpdateScriptEvent) {
-        if (state != null && scoreText != null) updateScore();
-    }
+    override function onUpdate(event:UpdateScriptEvent) { if (state != null && scoreText != null) updateScore(); }
 
     override function onNoteHit(event:HitNoteScriptEvent) {
         if (!event.note.noteData.getMustHitNote()) return;
@@ -338,8 +327,14 @@ class GamePlayStats extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        state = null;
-        for (text in [scoreText, judgementsText]) if (text != null) text.destroy();
+        if (scoreText != null) {
+            scoreText.destroy();
+            scoreText = null;
+        }
+        if (judgementsText != null) {
+            judgementsText.destroy();
+            judgementsText = null;
+        }
 
         if (!PlayStatePlaylist.isStoryMode) {
             ratingPercent = 0;
@@ -350,8 +345,6 @@ class GamePlayStats extends Module {
         totalNotesPlayed = 0;
         songScore = 0;
 
-        scoreText = null;
-        judgementsText = null;
         scoreTextTween = null;
     }
 }

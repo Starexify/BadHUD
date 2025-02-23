@@ -2,13 +2,10 @@ import funkin.modding.module.Module;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 
-import flixel.util.FlxSave;
-
 class BadHooks extends Module {
     var state:PlayState;
-    var save:FlxSave;
 
-    var excludedSongs:Array<String> = ["Silly Billy",
+    var healthBarExcluded:Array<String> = ["Silly Billy",
     "Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME", "Destruction Dance", "Portal Power",
     "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "Overload", "Eradication", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2",
         // Indie Cross
@@ -16,10 +13,13 @@ class BadHooks extends Module {
         // Summer Break Special
     "Tomo", "Knucklehead", "Spunk", "Ghoulish"] ;
 
+    var strumlineExcluded = ["Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2"] ;
+
+    var gameplayExcludedSongs = ["Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME",
+    "Destruction Dance", "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine"] ;
+
     function new() {
         super("BadHooks", 2);
-        save = new FlxSave();
-        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {

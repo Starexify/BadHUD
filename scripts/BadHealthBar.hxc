@@ -1,4 +1,5 @@
 import funkin.modding.module.Module;
+import funkin.modding.module.ModuleHandler;
 import funkin.play.PlayState;
 import funkin.play.components.HealthIcon;
 import funkin.util.Constants;
@@ -9,7 +10,6 @@ import flixel.math.FlxMath;
 import flixel.util.FlxSave;
 
 import Std;
-import funkin.modding.module.ModuleHandler;
 
 class BadHealthBar extends Module {
     var save:FlxSave = new BadHUDOptions().save;
@@ -26,7 +26,7 @@ class BadHealthBar extends Module {
         var badHooks = ModuleHandler.getModule('BadHooks');
         if (badHooks != null) state = badHooks.scriptGet('state');
         if (state == null) return;
-        if (new BadHooks().excludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        if (new BadHooks().healthBarExcluded.indexOf(state.currentChart.songName) != -1) return;
         iconP1 = state.iconP1;
         iconP2 = state.iconP2;
 
