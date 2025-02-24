@@ -2,6 +2,7 @@ import funkin.modding.module.Module;
 import funkin.Paths;
 import funkin.Preferences;
 import funkin.play.PauseSubState;
+import funkin.modding.module.ModuleHandler;
 import funkin.play.PlayState;
 
 import flixel.FlxG;
