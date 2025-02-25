@@ -136,7 +136,7 @@ class BadHUDOptions extends Module {
                     "7" => "Karmatic Arcade"
                 ], value -> {
                     save.data.hudFont = Std.parseInt(value);
-                    switch (Std.parseInt(value)) {
+                    switch (save.data.hudFont) {
                         case 0: // px = 21;
                             font = "vcr.ttf";
                         case 1: // px = 16;
