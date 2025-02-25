@@ -1,10 +1,17 @@
 import funkin.modding.module.Module;
+import funkin.Preferences;
 import funkin.ui.options.OptionsState;
 import funkin.ui.options.items.NumberPreferenceItem;
 
 import flixel.util.FlxSave;
 
+import openfl.text.TextFormat;
+
 import Std;
+import Main;
+import funkin.Paths;
+import flixel.FlxG;
+import funkin.Assets;
 
 class BadHUDOptions extends Module {
     var save:FlxSave;
@@ -15,7 +22,7 @@ class BadHUDOptions extends Module {
     var timeTextSize;
 
     function new() {
-        super("BadHUD Options", 1);
+        super("BadHUDOptions", 1);
         save = new FlxSave();
         save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
 
@@ -44,6 +51,7 @@ class BadHUDOptions extends Module {
         save.data.scrollSpeedFactor = (save.data.scrollSpeedFactor != null) ? save.data.scrollSpeedFactor : 18;
 
         updatetypetext();
+        if (Preferences.debugDisplay) changeDebugDisplay(font);
         save.flush();
     }
 
@@ -126,7 +134,27 @@ class BadHUDOptions extends Module {
                     "5" => "Super Mario 64",
                     "6" => "New Super Mario Font U",
                     "7" => "Karmatic Arcade"
-                ], value -> save.data.hudFont = Std.parseInt(value), save.data.hudFont);
+                ], value -> {
+                    save.data.hudFont = Std.parseInt(value);
+                    switch (Std.parseInt(value)) {
+                        case 0: // px = 21;
+                            font = "vcr.ttf";
+                        case 1: // px = 16;
+                            font = "VCRosdNEUE.ttf";
+                        case 2: // px = 16;
+                            font = "Minecraft.ttf";
+                        case 3: // px = 11;
+                            font = "Retro Gaming.ttf";
+                        case 4: // px = ?;
+                            font = "RobloxFont-Regular.ttf";
+                        case 5: // px = ?;
+                            font = "Super Mario 64.ttf";
+                        case 6: // px = ?;
+                            font = "New Super Mario Font U.ttf";
+                        case 7: // px = ?;
+                            font = "ka1.ttf";
+                    }
+                    changeDebugDisplay(font); }, save.data.hudFont);
 
                 preferences.createPrefItemNumber("HUD Font Size", "Changes the size of the HUD text", value -> save.data.hudFontSize = Std.int(value), null, save.data.hudFontSize, 0, 999, 1, 0);
 
@@ -166,6 +194,13 @@ class BadHUDOptions extends Module {
                 value -> return save.data.scrollSpeedFactor / 10,
                 save.data.scrollSpeedFactor, 1, 9999, 1, 0);
             }
+        }
+    }
+
+    function changeDebugDisplay(font:String) {
+        if (Assets.exists(Paths.font(font))) {
+            Main.fpsCounter.set_defaultTextFormat(new TextFormat(Assets.getPath(Paths.font(font))));
+            Main.memoryCounter.set_defaultTextFormat(new TextFormat(Assets.getPath(Paths.font(font))));
         }
     }
 
