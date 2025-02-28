@@ -1,6 +1,7 @@
 import funkin.modding.module.Module;
 import funkin.Highscore;
 import funkin.Paths;
+import funkin.modding.module.ModuleHandler;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.play.PlayStatePlaylist;
