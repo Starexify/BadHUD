@@ -1,4 +1,5 @@
 import funkin.modding.module.Module;
+import funkin.api.discord.DiscordClient;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.ui.debug.charting.ChartEditorState;
@@ -28,7 +29,12 @@ class PauseOptions extends Module {
     }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
-        if (Std.isOfType(event.targetState, OptionsState) && wasPaused && pauseState != null) pauseState.startPauseMusic();
+        if (Std.isOfType(event.targetState, OptionsState)) {
+            DiscordClient.instance.setPresence({
+                state: "Setting up Options", details: null
+            });
+            if (wasPaused && pauseState != null) pauseState.startPauseMusic();
+        }
     }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
