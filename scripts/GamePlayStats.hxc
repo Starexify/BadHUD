@@ -100,6 +100,7 @@ class GamePlayStats extends Module {
     }
 
     override function onCountdownStart(event:CountdownScriptEvent) {
+        if (new BadHooks().gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
         totalNotes = tallies.totalNotes;
         if (PlayStatePlaylist.isStoryMode) {
             totalNotes += talliesLevel.totalNotes;
@@ -267,6 +268,7 @@ class GamePlayStats extends Module {
 
     override function onNoteHit(event:HitNoteScriptEvent) {
         if (!event.note.noteData.getMustHitNote()) return;
+        if (new BadHooks().gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
 
         if (combo >= 0) combo = tallies.combo + 1;
 
@@ -287,12 +289,14 @@ class GamePlayStats extends Module {
     }
 
     override function onNoteMiss(event:NoteScriptEvent) {
+        if (new BadHooks().gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
         combo = 0;
         if (missed >= 0) missed = PlayStatePlaylist.isStoryMode ? talliesLevel.missed + tallies.missed + 1 : tallies.missed + 1;
         updateScore();
     }
 
     override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) {
+        if (new BadHooks().gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
         updateScore();
     }
 
