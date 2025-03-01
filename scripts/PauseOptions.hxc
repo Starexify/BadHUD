@@ -30,9 +30,7 @@ class PauseOptions extends Module {
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
         if (Std.isOfType(event.targetState, OptionsState)) {
-            DiscordClient.instance.setPresence({
-                state: "Setting up Options", details: null
-            });
+            DiscordClient.instance.setPresence({ state: "Setting up Options", details: null });
             if (wasPaused && pauseState != null) pauseState.startPauseMusic();
         }
     }
