@@ -1,0 +1,183 @@
+package ui.options;
+
+import flixel.FlxG;
+import flixel.FlxSprite;
+import flixel.text.FlxText;
+import flixel.util.FlxSave;
+import funkin.audio.FunkinSound;
+import funkin.data.notestyle.NoteStyleRegistry;
+import funkin.input.Cursor;
+import funkin.modding.base.ScriptedMusicBeatSubState;
+import funkin.Paths;
+import funkin.play.notes.Strumline;
+import funkin.Preferences;
+import funkin.input.CursorMode;
+import funkin.ui.debug.charting.handlers.ChartEditorThemeHandler;
+import funkin.ui.options.OptionsState;
+import funkin.util.Constants;
+import funkin.graphics.FunkinSprite;
+
+class PositionsState extends ScriptedMusicBeatSubState {
+    var save:FlxSave = new BadHUDOptions().save ;
+
+    var welcomeMusic:FunkinSound = new FunkinSound() ;
+    var strumLine:Strumline;
+
+    var isSelected:Bool = false ;
+    var isDragging:Bool = false ;
+    var draggableSprites:Array<{
+        sprite:FunkinSprite,
+        isDragging:Bool,
+        isSelected:Bool,
+        dragOffsetX:Float,
+        dragOffsetY:Float
+    }> = [] ;
+
+    var targetCursorMode;
+
+    var comboOffsets:Array<Int> = [0, 0] ;
+    var judgementOffsets:Array<Int> = [0, 0] ;
+
+    override function create() {
+        super.create();
+
+        Cursor.show();
+        setupWelcomeMusic();
+
+        var menuBG = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
+        menuBG.setGraphicSize(Std.int(menuBG.width * 1.1));
+        menuBG.updateHitbox();
+        menuBG.screenCenter();
+        menuBG.scrollFactor.set(0, 0);
+        menuBG.color = ChartEditorThemeHandler.BACKGROUND_COLOR_DARK;
+        add(menuBG);
+
+        strumLine = new Strumline(NoteStyleRegistry.instance.fetchDefault(), true);
+        strumLine.x = FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET;
+        strumLine.y = Preferences.downscroll ? FlxG.height - strumLine.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
+        if (save.data.middlescroll) strumLine.screenCenter(0x01);
+        add(strumLine);
+
+        var helpText:FlxText = new FlxText(0, 0, 0, "Press BACK to return to main menu").setFormat(Paths.font("vcr.ttf"), 20);
+        helpText.x = FlxG.width - helpText.width;
+        helpText.y = FlxG.height - (helpText.height * 2) - 2;
+        add(helpText);
+
+        var noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE);
+        //var noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_PIXEL_NOTE_STYLE); // Pixel NoteStyle
+        var judgementSprite = noteStyle.buildJudgementSprite("sick");
+        judgementSprite.x = (FlxG.width * 0.474);
+        judgementSprite.x -= judgementSprite.width / 2;
+        judgementSprite.y = (FlxG.camera.height * 0.45 - 60);
+        judgementSprite.y -= judgementSprite.height / 2;
+        var judgementSpriteOffsets = noteStyle.getJudgementSpriteOffsets("sick");
+        judgementSprite.x += judgementSpriteOffsets[0];
+        judgementSprite.y += judgementSpriteOffsets[1];
+        addDraggableSprite(judgementSprite);
+        add(judgementSprite);
+
+        var comboSprite = noteStyle.buildComboNumSprite(0);
+        comboSprite.x = (FlxG.width * 0.507) - (36 * 3) - 65;
+        comboSprite.y = (FlxG.camera.height * 0.44);
+        var comboSpriteOffsets = noteStyle.getComboNumSpriteOffsets(0);
+        comboSprite.x += comboSpriteOffsets[0];
+        comboSprite.y += comboSpriteOffsets[1];
+        addDraggableSprite(comboSprite);
+        add(comboSprite);
+    }
+
+    override function update(elapsed:Float) {
+        var mouseX = FlxG.mouse.x;
+        var mouseY = FlxG.mouse.y;
+        var hoveredSprite = null;
+
+        for (i in 0...draggableSprites.length) {
+            var draggable = draggableSprites[i];
+            var sprite = draggable.sprite;
+
+            // Check if mouse is over this sprite
+            var isMouseOver:Bool = mouseX >= sprite.x &&
+            mouseX <= sprite.x + sprite.width &&
+            mouseY >= sprite.y &&
+            mouseY <= sprite.y + sprite.height;
+
+            if (isMouseOver) {
+                hoveredSprite = draggable;
+            }
+        }
+
+        if (FlxG.mouse.justPressed && hoveredSprite != null) {
+            hoveredSprite.isSelected = true;
+            hoveredSprite.isDragging = true;
+            hoveredSprite.dragOffsetX = mouseX - hoveredSprite.sprite.x;
+            hoveredSprite.dragOffsetY = mouseY - hoveredSprite.sprite.y;
+
+            // Move this sprite to the front (end of the array)
+            draggableSprites.remove(hoveredSprite);
+            draggableSprites.push(hoveredSprite);
+
+            for (i in 0...draggableSprites.length) {
+                var spr = draggableSprites[i].sprite;
+                remove(spr);
+                add(spr); // Re-add in proper order
+            }
+        }
+
+        for (draggable in draggableSprites) {
+            if (draggable.isDragging) {
+                if (FlxG.mouse.pressed) {
+                    // Update position based on mouse movement
+                    var newX = mouseX - draggable.dragOffsetX;
+                    var newY = mouseY - draggable.dragOffsetY;
+
+                    // Bounds checking
+                    newX = Math.max(0, Math.min(FlxG.width - draggable.sprite.width, newX));
+                    newY = Math.max(0, Math.min(FlxG.height - draggable.sprite.height, newY));
+
+                    // Move just this sprite
+                    draggable.sprite.x = newX;
+                    draggable.sprite.y = newY;
+                } else {
+                    // Mouse released, stop dragging but keep selected
+                    draggable.isDragging = false;
+                }
+            }
+        }
+
+        // Switch Cursor Sprite
+        if (hoveredSprite != null) Cursor.cursorMode = hoveredSprite.isDragging ? CursorMode.Grabbing : CursorMode.Pointer;
+        else Cursor.cursorMode = CursorMode.Default;
+        // Exit to OptionsState
+        if (controls.BACK) FlxG.switchState(() -> new OptionsState());
+
+        super.update(elapsed);
+    }
+
+    override function close() {
+        Cursor.hide();
+        super.close();
+    }
+
+    override function destroy() {
+        Cursor.hide();
+        if (welcomeMusic != null) welcomeMusic.destroy();
+        if (FlxG.sound.music != null) FlxG.sound.music.resume();
+        super.destroy();
+    }
+
+    function addDraggableSprite(sprite:FunkinSprite) {
+        draggableSprites.push({
+            sprite: sprite,
+            isDragging: false,
+            isSelected: false,
+            dragOffsetX: 0,
+            dragOffsetY: 0
+        });
+    }
+
+    function setupWelcomeMusic() {
+        if (FlxG.sound.music != null) FlxG.sound.music.pause();
+        this.welcomeMusic = FunkinSound.load(Paths.music('chartEditorLoop/chartEditorLoop'), true, true);
+        this.welcomeMusic.play(false, FlxG.random.int(0, Std.int(welcomeMusic.length / 2)));
+    }
+}

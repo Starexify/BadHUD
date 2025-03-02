@@ -1,7 +1,9 @@
 import funkin.modding.module.Module;
+import funkin.PlayerSettings;
 import funkin.Preferences;
-import funkin.graphics.FunkinSprite;
 import funkin.data.notestyle.NoteStyleRegistry;
+import funkin.graphics.FunkinSprite;
+import funkin.input.PreciseInputManager;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.notes.Strumline;
 import funkin.play.notes.notestyle.NoteStyle;
@@ -11,6 +13,7 @@ import funkin.util.Constants;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
+import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxSave;
@@ -20,7 +23,7 @@ import openfl.display.BitmapData;
 import Std;
 
 class ExtraStrumline extends Module {
-    var save:FlxSave = new BadHUDOptions().save;
+    var save:FlxSave = new BadHUDOptions().save ;
     var state:PlayState;
 
     var laneUnderlay:FlxSprite;
@@ -45,7 +48,6 @@ class ExtraStrumline extends Module {
 
         // Center player strumline
         if (save.data.middlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) {
-            if (save.data.popUpType == 1) state.comboPopUps.offsets = [450, -55];
             state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
 
             // Opponent Strumline
@@ -86,44 +88,19 @@ class ExtraStrumline extends Module {
             }
         }
 
-        // Remove comboPopUps
+        // Hide comboPopUps
+        //if (save.data.popUpType == 1) state.comboPopUps.offsets = new PositionsState().judgementOffsets;
         if (save.data.popUpType == 0 || save.data.popUpType > 1) state.comboPopUps.visible = false;
-    }
 
-    function updateOpponentNotes() {
-        // Transparent Opponent Strumline
-        for (staticNote in state.opponentStrumline.strumlineNotes.members) staticNote.alpha = save.data.oppNotesOpacity / 100;
-
-        // Incoming Notes
-        for (note in state.opponentStrumline.notes.members) {
-            if (note == null || !note.alive) continue;
-            note.x = state.opponentStrumline.strumlineNotes.members[note.direction].x + (state.opponentStrumline.strumlineNotes.members[note.direction].width - note.width) * 0.5;
-            note.alpha = save.data.oppNotesOpacity / 100;
+        // Remind Keybinds
+        for (staticNote in state.playerStrumline.strumlineNotes.members) {
+            var keyArray = PreciseInputManager.getKeysForDirection(PlayerSettings.player1.controls, staticNote.direction);
+            var keyID = keyArray[0];
+            var keybindText = new FlxText(staticNote.x, staticNote.y - 40, staticNote.width, keyID);
+            keybindText.x = staticNote.x;
+            keybindText.cameras = [state.camHUD];
+            state.add(keybindText);
         }
-
-        // Hold Notes
-        for (note in state.opponentStrumline.holdNotes.members) {
-            if (note == null || !note.alive) continue;
-            note.x = state.opponentStrumline.strumlineNotes.members[note.noteDirection].x + (state.opponentStrumline.strumlineNotes.members[note.noteDirection].width - note.width) * 0.5;
-            note.alpha = save.data.oppNotesOpacity / 100;
-        }
-
-        // Hold Covers / Hold Splashes
-        for (note in state.opponentStrumline.noteHoldCovers.members) {
-            if (note == null || !note.alive) continue;
-            note.x = state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].x + (state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].width - note.width) * 0.5;
-            note.alpha = save.data.oppNotesOpacity / 100;
-        }
-    }
-
-    function updatePosition() {
-        if (laneUnderlay == null || laneUnderlay.x == state.playerStrumline.x) return;
-        trace("[BadHud] Updating Note Underlay Position");
-        var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
-
-        laneUnderlay.x = state.playerStrumline.x;
-        leftGradient.x = state.playerStrumline.x - fadeRegionWidth;
-        rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
@@ -199,28 +176,7 @@ class ExtraStrumline extends Module {
         });
     }
 
-    // Cleanup Stuff
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
-
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) cleanup(); }
-
-    override function onSongRetry(event:ScriptEvent) { cleanup(); }
-
-    override function onSongEnd(event:ScriptEvent) { cleanup(); }
-
-    override function onDestroy(event:ScriptEvent) { cleanup(); }
-
-    function cleanup() {
-        if (laneUnderlay != null) laneUnderlay.destroy();
-        if (leftGradient != null) leftGradient.destroy();
-        if (rightGradient != null) rightGradient.destroy();
-        laneUnderlay = null;
-        leftGradient = null;
-        rightGradient = null;
-        judgementSprite = null;
-    }
-
-    // Gradient Underlay Stuff
+    // Gradient Underlay
     function createGradient(width:Int, height:Int, alphaStart:Float, alphaEnd:Float, isLeftToRight:Bool = true):FlxSprite {
         var gradientSprite = new FlxSprite();
         var bitmap = new BitmapData(width, height, true, 0x0);
@@ -240,5 +196,63 @@ class ExtraStrumline extends Module {
         gradientSprite.pixels = bitmap;
         gradientSprite.dirty = true;
         return gradientSprite;
+    }
+
+    // Strumline Helper Methods
+    function updateOpponentNotes() {
+        // Transparent Opponent Strumline
+        for (staticNote in state.opponentStrumline.strumlineNotes.members) staticNote.alpha = save.data.oppNotesOpacity / 100;
+
+        // Incoming Notes
+        for (note in state.opponentStrumline.notes.members) {
+            if (note == null || !note.alive) continue;
+            note.x = state.opponentStrumline.strumlineNotes.members[note.direction].x + (state.opponentStrumline.strumlineNotes.members[note.direction].width - note.width) * 0.5;
+            note.alpha = save.data.oppNotesOpacity / 100;
+        }
+
+        // Hold Notes
+        for (note in state.opponentStrumline.holdNotes.members) {
+            if (note == null || !note.alive) continue;
+            note.x = state.opponentStrumline.strumlineNotes.members[note.noteDirection].x + (state.opponentStrumline.strumlineNotes.members[note.noteDirection].width - note.width) * 0.5;
+            note.alpha = save.data.oppNotesOpacity / 100;
+        }
+
+        // Hold Covers / Hold Splashes
+        for (note in state.opponentStrumline.noteHoldCovers.members) {
+            if (note == null || !note.alive) continue;
+            note.x = state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].x + (state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].width - note.width) * 0.5;
+            note.alpha = save.data.oppNotesOpacity / 100;
+        }
+    }
+
+    function updatePosition() {
+        if (laneUnderlay == null || laneUnderlay.x == state.playerStrumline.x) return;
+        trace("[BadHud] Updating Note Underlay Position");
+        var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
+
+        laneUnderlay.x = state.playerStrumline.x;
+        leftGradient.x = state.playerStrumline.x - fadeRegionWidth;
+        rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
+    }
+
+    // Cleanup Stuff
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
+
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) cleanup(); }
+
+    override function onSongRetry(event:ScriptEvent) { cleanup(); }
+
+    override function onSongEnd(event:ScriptEvent) { cleanup(); }
+
+    override function onDestroy(event:ScriptEvent) { cleanup(); }
+
+    function cleanup() {
+        if (laneUnderlay != null) laneUnderlay.destroy();
+        if (leftGradient != null) leftGradient.destroy();
+        if (rightGradient != null) rightGradient.destroy();
+        laneUnderlay = null;
+        leftGradient = null;
+        rightGradient = null;
+        judgementSprite = null;
     }
 }

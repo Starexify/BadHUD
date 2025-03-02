@@ -1,16 +1,13 @@
-import funkin.modding.module.Module;
+import flixel.util.FlxSave;
 import funkin.Assets;
+import funkin.modding.module.Module;
 import funkin.Paths;
 import funkin.Preferences;
-import funkin.ui.options.OptionsState;
 import funkin.ui.options.items.NumberPreferenceItem;
-
-import flixel.util.FlxSave;
-
-import openfl.text.TextFormat;
-
-import Std;
+import funkin.ui.options.OptionsState;
 import Main;
+import openfl.text.TextFormat;
+import Std;
 
 class BadHUDOptions extends Module {
     var save:FlxSave;

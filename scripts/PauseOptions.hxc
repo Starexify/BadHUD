@@ -1,16 +1,16 @@
-import funkin.modding.module.Module;
+import flixel.FlxG;
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
 import funkin.api.discord.DiscordClient;
+import funkin.modding.base.ScriptedMusicBeatSubState;
+import funkin.modding.module.ScriptedModule;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.debug.latency.LatencyState;
 import funkin.ui.options.OptionsState;
 
-import flixel.FlxG;
-import flixel.tweens.FlxEase;
-import flixel.tweens.FlxTween;
-
-class PauseOptions extends Module {
+class PauseOptions extends ScriptedModule {
     var wasPaused:Bool = false ;
     var isChartingState:Bool = false ;
     var stateParams:PlayStateParams;
@@ -36,10 +36,10 @@ class PauseOptions extends Module {
             var options:OptionsMenu = state.get_currentPage();
             var exit = options.items.members[options.items.length - 1];
             exit.y += 200;
-/*            options.items.remove(exit);
-            var positionOffsets = options.items.createItem(0, options.items.length * 100, "POSITION OFFSETS", "bold", () -> FlxG.state.openSubState(new PositionsState()));
+            options.items.remove(exit);
+            var positionOffsets = options.items.createItem(0, options.items.length * 100, "POSITION OFFSETS", "bold", () -> FlxG.state.openSubState(ScriptedMusicBeatSubState.init("ui.options.PositionsState")));
             positionOffsets.x = (FlxG.width - positionOffsets.width) / 2;
-            options.items.add(exit);*/
+            options.items.add(exit);
 
             if (wasPaused && pauseState != null) pauseState.startPauseMusic();
         }
@@ -47,7 +47,7 @@ class PauseOptions extends Module {
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         if (isChartingState) {
-            if (event.targetState != PlayState.instance && !Std.isOfType(event.targetState, LatencyState) && wasPaused) {
+            if (event.targetState != PlayState.instance && !Std.isOfType(event.targetState, LatencyState) && !Std.isOfType(event.targetState, "ui.options.PositionsState") && wasPaused) {
                 FlxG.switchState(() -> new ChartEditorState({
                     targetSongId: currentSongId
                 }));
@@ -55,7 +55,7 @@ class PauseOptions extends Module {
                 isChartingState = false;
             }
         } else {
-            if (event.targetState != PlayState.instance && !Std.isOfType(event.targetState, LatencyState) && wasPaused) {
+            if (event.targetState != PlayState.instance && !Std.isOfType(event.targetState, LatencyState) && !Std.isOfType(event.targetState, "ui.options.PositionsState") && wasPaused) {
                 FlxG.switchState(() -> new PlayState(stateParams));
                 wasPaused = false;
             }
