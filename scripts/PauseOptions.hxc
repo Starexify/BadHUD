@@ -9,6 +9,8 @@ import funkin.play.PlayState;
 import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.debug.latency.LatencyState;
 import funkin.ui.options.OptionsState;
+import funkin.util.ReflectUtil;
+import polymod.hscript._internal.PolymodScriptClass;
 
 class PauseOptions extends ScriptedModule {
     var wasPaused:Bool = false ;
@@ -46,16 +48,15 @@ class PauseOptions extends ScriptedModule {
     }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        if (isChartingState) {
-            if (event.targetState != PlayState.instance && !Std.isOfType(event.targetState, LatencyState) && !Std.isOfType(event.targetState, "ui.options.PositionsState") && wasPaused) {
+        var state:PolymodScriptClass = event.targetState._asc;
+        if (event.targetState != PlayState.instance && !Std.isOfType(event.targetState, LatencyState) && wasPaused && (state != null && ReflectUtil.getAnonymousField(ReflectUtil.getAnonymousField(state, "_c"), "name") != "PositionsState")) {
+            if (isChartingState) {
                 FlxG.switchState(() -> new ChartEditorState({
                     targetSongId: currentSongId
                 }));
                 wasPaused = false;
                 isChartingState = false;
-            }
-        } else {
-            if (event.targetState != PlayState.instance && !Std.isOfType(event.targetState, LatencyState) && !Std.isOfType(event.targetState, "ui.options.PositionsState") && wasPaused) {
+            } else {
                 FlxG.switchState(() -> new PlayState(stateParams));
                 wasPaused = false;
             }

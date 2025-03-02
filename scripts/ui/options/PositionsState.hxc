@@ -35,8 +35,8 @@ class PositionsState extends ScriptedMusicBeatSubState {
 
     var targetCursorMode;
 
-    var comboOffsets:Array<Int>;
-    var judgementOffsets:Array<Int>;
+    var judgementOffsets:Array<Int> = [] ;
+    var comboOffsets:Array<Int> = [] ;
 
     override function create() {
         super.create();
@@ -126,20 +126,20 @@ class PositionsState extends ScriptedMusicBeatSubState {
         for (draggable in draggableSprites) {
             if (draggable.isDragging) {
                 if (FlxG.mouse.pressed) {
-                    // Update position based on mouse movement
                     var newX = mouseX - draggable.dragOffsetX;
                     var newY = mouseY - draggable.dragOffsetY;
 
-                    // Bounds checking
                     newX = Math.max(0, Math.min(FlxG.width - draggable.sprite.width, newX));
                     newY = Math.max(0, Math.min(FlxG.height - draggable.sprite.height, newY));
 
-                    // Move just this sprite
                     draggable.sprite.x = newX;
                     draggable.sprite.y = newY;
                 } else {
-                    // Mouse released, stop dragging but keep selected
+                    // Mouse released
                     draggable.isDragging = false;
+                    judgementOffsets = [Std.int(draggable.sprite.x), Std.int(draggable.sprite.y)];
+                    //comboOffsets = [Std.int(draggable.sprite.x), Std.int(draggable.sprite.y)];
+                    trace("Judgements Offset: " + judgementOffsets);
                 }
             }
         }
