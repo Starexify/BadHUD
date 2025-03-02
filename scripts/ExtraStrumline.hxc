@@ -68,7 +68,7 @@ class ExtraStrumline extends Module {
 
         if (save.data.oppNotesOpacity > 0) state.opponentStrumline.alpha = save.data.oppNotesOpacity / 100;
 
-        // Create the note underlay with gradient
+        // Note Underlay
         if (save.data.underlayOpacity > 0) {
             laneUnderlay = new FlxSprite(0, 0).makeGraphic(Std.int(state.playerStrumline.get_width()), FlxG.height * 2);
             laneUnderlay.x = state.playerStrumline.x;
@@ -92,7 +92,7 @@ class ExtraStrumline extends Module {
             }
         }
 
-        // Hide comboPopUps
+        // Combo PopUps
         //if (save.data.popUpType == 1) state.comboPopUps.offsets = ui.options.PositionsState.judgementOffsets;
         if (save.data.popUpType == 0 || save.data.popUpType > 1) state.comboPopUps.visible = false;
 

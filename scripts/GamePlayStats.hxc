@@ -267,7 +267,7 @@ class GamePlayStats extends Module {
     override function onUpdate(event:UpdateScriptEvent) { if (state != null && scoreText != null) updateScore(); }
 
     override function onNoteHit(event:HitNoteScriptEvent) {
-        if (!event.note.noteData.getMustHitNote()) return;
+        if (!event.note.noteData.getMustHitNote() || state == null) return;
         if (new BadHooks().gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
 
         if (combo >= 0) combo = tallies.combo + 1;
