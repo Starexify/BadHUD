@@ -115,10 +115,14 @@ class ExtraStrumline extends Module {
 
     override function onUpdate(event:UpdateScriptEvent) {
         if (state == null) return;
-        if (save.data.underlayOpacity > 0) updatePosition();
-        if (save.data.middlescroll && !save.data.oppNotes) {
-            if (state.currentStage != null && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) updateOpponentNotes();
-            else if (state.isMinimalMode) updateOpponentNotes();
+        try {
+            if (save.data.underlayOpacity > 0) updatePosition();
+            if (save.data.middlescroll && !save.data.oppNotes) {
+                if (state.currentStage != null && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) updateOpponentNotes();
+                else if (state.isMinimalMode) updateOpponentNotes();
+            }
+        } catch (e:Exception) {
+            throw trace("[BadHUD] " + e);
         }
     }
 
