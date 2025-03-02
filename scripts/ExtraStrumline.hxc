@@ -1,4 +1,5 @@
 import funkin.modding.module.Module;
+import funkin.Paths;
 import funkin.PlayerSettings;
 import funkin.Preferences;
 import funkin.data.notestyle.NoteStyleRegistry;
@@ -10,10 +11,12 @@ import funkin.play.notes.notestyle.NoteStyle;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.util.Constants;
+import funkin.util.InputUtil;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.text.FlxText;
+import flixel.text.FlxTextBorderStyle;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxSave;
@@ -34,6 +37,7 @@ class ExtraStrumline extends Module {
     var noteStyle:NoteStyle;
 
     var underlaySprites:Array<FlxSprite>;
+    var keybindTexts:Array<FlxText> = [] ;
 
     function new() {
         super("ExtraStrumline", 3);
@@ -89,17 +93,23 @@ class ExtraStrumline extends Module {
         }
 
         // Hide comboPopUps
-        //if (save.data.popUpType == 1) state.comboPopUps.offsets = new PositionsState().judgementOffsets;
+        //if (save.data.popUpType == 1) state.comboPopUps.offsets = ui.options.PositionsState.judgementOffsets;
         if (save.data.popUpType == 0 || save.data.popUpType > 1) state.comboPopUps.visible = false;
 
         // Remind Keybinds
-        for (staticNote in state.playerStrumline.strumlineNotes.members) {
-            var keyArray = PreciseInputManager.getKeysForDirection(PlayerSettings.player1.controls, staticNote.direction);
-            var keyID = keyArray[0];
-            var keybindText = new FlxText(staticNote.x, staticNote.y - 40, staticNote.width, keyID);
-            keybindText.x = staticNote.x;
-            keybindText.cameras = [state.camHUD];
-            state.add(keybindText);
+        if (save.data.remindKeys) {
+            for (staticNote in state.playerStrumline.strumlineNotes.members) {
+                var keyArray = PreciseInputManager.getKeysForDirection(PlayerSettings.player1.controls, staticNote.direction);
+                var keyName = InputUtil.getKeyName(keyArray[0]) ;
+                var keybindText = new FlxText(staticNote.x, staticNote.y, staticNote.width, keyName);
+                keybindText.y = staticNote.y + (Preferences.downscroll ? keybindText.height * 2 : staticNote.height - keybindText.height * 2);
+                keybindText.setFormat(Paths.font(new BadHUDOptions().font), 32, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+                keybindText.alpha = 0;
+                keybindText.cameras = [state.camHUD];
+                state.add(keybindText);
+                keybindTexts.push(keybindText);
+            }
+            fadeInKeybinds();
         }
     }
 
@@ -233,6 +243,27 @@ class ExtraStrumline extends Module {
         laneUnderlay.x = state.playerStrumline.x;
         leftGradient.x = state.playerStrumline.x - fadeRegionWidth;
         rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
+    }
+
+    function fadeInKeybinds() {
+        var index = 0;
+        for (text in keybindTexts) {
+            var textYDirI = Preferences.downscroll ? text.y - text.height : text.y + text.height;
+            var textYDirII = Preferences.downscroll ? text.y + 20 : text.y - 20;
+            FlxTween.tween(text, {y: textYDirI, alpha: 1}, 1, {
+                ease: FlxEase.circOut,
+                startDelay: 0.5 + (0.2 * index),
+                onComplete: _ -> FlxTween.tween(text, {y: textYDirII, alpha: 0}, 0.8, {
+                    ease: FlxEase.circIn,
+                    onComplete: _ -> {
+                        text.destroy();
+                        state.remove(text);
+                        keybindTexts = [];
+                    }
+                })
+            });
+            index++;
+        }
     }
 
     // Cleanup Stuff

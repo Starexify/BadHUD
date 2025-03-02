@@ -35,8 +35,8 @@ class PositionsState extends ScriptedMusicBeatSubState {
 
     var targetCursorMode;
 
-    var comboOffsets:Array<Int> = [0, 0] ;
-    var judgementOffsets:Array<Int> = [0, 0] ;
+    var comboOffsets:Array<Int>;
+    var judgementOffsets:Array<Int>;
 
     override function create() {
         super.create();

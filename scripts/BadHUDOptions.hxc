@@ -45,6 +45,7 @@ class BadHUDOptions extends Module {
         save.data.kpsCounter = (save.data.kpsCounter != null) ? save.data.kpsCounter : false;
         save.data.customScrollSpeed = (save.data.customScrollSpeed != null) ? save.data.customScrollSpeed : false;
         save.data.scrollSpeedFactor = (save.data.scrollSpeedFactor != null) ? save.data.scrollSpeedFactor : 18;
+        save.data.remindKeys = (save.data.remindKeys != null) ? save.data.remindKeys : true;
 
         updatetypetext();
         if (Preferences.debugDisplay) changeDebugDisplay(font);
@@ -180,6 +181,8 @@ class BadHUDOptions extends Module {
                 );
                 preferences.items.addItem("Note Underlay Opacity", underlayOpacityItem);
                 preferences.preferenceItems.add(underlayOpacityItem.lefthandText);
+
+                preferences.createPrefItemCheckbox("Enable Keybind Reminder", "", value -> save.data.remindKeys = value, save.data.remindKeys);
 
                 preferences.createPrefItemCheckbox("Show KPS Counter", "", value -> save.data.kpsCounter = value, save.data.kpsCounter);
 
