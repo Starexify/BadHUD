@@ -30,8 +30,8 @@ class KPSCounter extends Module {
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (!Save.instance.modOptions.get("badOptions").kpsCounter) return;
-        var badHooks = ModuleHandler.getModule('BadHooks');
-        if (badHooks != null) state = badHooks.scriptGet('state');
+        var badHooks = ModuleHandler.getModule("BadHooks");
+        if (badHooks != null) state = badHooks.scriptGet("state");
         if (state == null) return;
 
         // Create KPS Text Element

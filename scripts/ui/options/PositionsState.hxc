@@ -3,7 +3,6 @@ package ui.options;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.text.FlxText;
-import flixel.util.FlxSave;
 import funkin.audio.FunkinSound;
 import funkin.data.notestyle.NoteStyleRegistry;
 import funkin.input.Cursor;
@@ -16,9 +15,12 @@ import funkin.ui.debug.charting.handlers.ChartEditorThemeHandler;
 import funkin.ui.options.OptionsState;
 import funkin.util.Constants;
 import funkin.graphics.FunkinSprite;
+import funkin.save.Save;
+import funkin.play.PauseSubState;
+import funkin.modding.module.ModuleHandler;
 
 class PositionsState extends ScriptedMusicBeatSubState {
-    var save:FlxSave = new BadHUDOptions().save;
+    var badOptions:Null<Dynamic> = Save.instance.modOptions.get("badOptions");
 
     var welcomeMusic:FunkinSound = new FunkinSound();
     var strumLine:Strumline;
@@ -55,7 +57,7 @@ class PositionsState extends ScriptedMusicBeatSubState {
         strumLine = new Strumline(NoteStyleRegistry.instance.fetchDefault(), true);
         strumLine.x = FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET;
         strumLine.y = Preferences.downscroll ? FlxG.height - strumLine.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
-        if (save.data.middlescroll) strumLine.screenCenter(0x01);
+        if (badOptions.middlescroll) strumLine.screenCenter(0x01);
         add(strumLine);
 
         var helpText:FlxText = new FlxText(0, 0, 0, "Press BACK to return to main menu").setFormat(Paths.font("vcr.ttf"), 20);
@@ -177,6 +179,8 @@ class PositionsState extends ScriptedMusicBeatSubState {
 
     function setupWelcomeMusic() {
         if (FlxG.sound.music != null) FlxG.sound.music.pause();
+        var pauseState:PauseSubState = ModuleHandler.getModule("PauseOptions").scriptGet("pauseState");
+        if (pauseState != null) pauseState.pauseMusic.pause();
         this.welcomeMusic = FunkinSound.load(Paths.music('chartEditorLoop/chartEditorLoop'), true, true);
         this.welcomeMusic.play(false, FlxG.random.int(0, Std.int(welcomeMusic.length / 2)));
     }

@@ -35,8 +35,8 @@ class RestPeriodTimer extends Module {
 
     override function onSongStart(event:ScriptEvent) {
         if (Save.instance.modOptions.get("badOptions").restBar == "off") return;
-        var badHooks = ModuleHandler.getModule('BadHooks');
-        if (badHooks != null) state = badHooks.scriptGet('state');
+        var badHooks = ModuleHandler.getModule("BadHooks");
+        if (badHooks != null) state = badHooks.scriptGet("state");
         if (state == null) return;
         initRestBar();
     }

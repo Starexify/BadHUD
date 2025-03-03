@@ -53,8 +53,8 @@ class GamePlayStats extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        var badHooks = ModuleHandler.getModule('BadHooks');
-        if (badHooks != null) state = badHooks.scriptGet('state');
+        var badHooks = ModuleHandler.getModule("BadHooks");
+        if (badHooks != null) state = badHooks.scriptGet("state");
         if (state == null) return;
         if (new BadHooks().gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
 

@@ -2,15 +2,16 @@ import funkin.Assets;
 import funkin.modding.module.Module;
 import funkin.Paths;
 import funkin.Preferences;
+import funkin.save.Save;
 import funkin.ui.options.items.NumberPreferenceItem;
 import funkin.ui.options.OptionsState;
 import Main;
 import openfl.text.TextFormat;
 import Std;
-import funkin.save.Save;
-import funkin.util.ReflectUtil;
 
 class BadHUDOptions extends Module {
+    var badOptions:Null<Dynamic> = Save.instance.modOptions.get("badOptions");
+
     // Hooks or smth like that for other classes
     var font;
     var timeBarBGStyle;
@@ -42,17 +43,15 @@ class BadHUDOptions extends Module {
     };
 
     function new() {
-        super("BadHUDOptions");
-
+        super("BadHUDOptions", 1);
         // Default Options (First Start)
         if (!Save.instance.modOptions.exists("badOptions")) {
             Save.instance.modOptions.set("badOptions", saveObject);
-            Save.instance.flush();
-        } else
-            var badOptions = Save.instance.modOptions.get("badOptions");
+        } else {
+            updatetypetext();
+        }
         Save.instance.flush();
 
-        updatetypetext();
         if (Preferences.debugDisplay) changeDebugDisplay(font);
     }
 
@@ -61,7 +60,7 @@ class BadHUDOptions extends Module {
             var preferences = event.targetState.pages.get("preferences");
             if (preferences != null) {
                 updatetypetext();
-                var badOptions = Save.instance.modOptions.get("badOptions");
+                Save.instance.flush();
 
                 preferences.createPrefItemCheckbox("Middlescroll", "If enabled, player notes will be centerd on the screen, while the opponent's notes will be split.", value -> badOptions.middlescroll = value, badOptions.middlescroll);
                 preferences.createPrefItemPercentage("Opponent Notes Opacity", "The opacity of the opponent notes.", value -> badOptions.opponentNoteOpacity = value, badOptions.opponentNoteOpacity);
@@ -86,7 +85,7 @@ class BadHUDOptions extends Module {
                     "down" => "Down",
                     "up" => "Up",
                     "vertical" => "Vertical"
-                ], value -> badOptions.timebarPosition = Std.parseInt(value), badOptions.timebarPosition);
+                ], value -> badOptions.timebarPosition = value, badOptions.timebarPosition);
 
                 preferences.createPrefItemEnum("Time Bar Display", "Changes the display of the Time Bar", [
                     "off" => "Off",
@@ -96,19 +95,19 @@ class BadHUDOptions extends Module {
                     "elapsed-total" => "Elapsed / Total",
                     "elapsed-left" => "Elapsed / Time Left",
                     "name" => "Song Name"
-                ], value -> badOptions.timebarType = Std.parseInt(value), badOptions.timebarType);
+                ], value -> badOptions.timebarType = value, badOptions.timebarType);
 
                 preferences.createPrefItemEnum("Time Bar Style", "Changes the style of the Time Bar", [
                     "psych" => "Psych Engine",
                     "minimal" => "Minimal",
                     "minimal-rounded" => "Minimal Rounded"
-                ], value -> badOptions.timebarStyle = Std.parseInt(value), badOptions.timebarStyle);
+                ], value -> badOptions.timebarStyle = value, badOptions.timebarStyle);
 
                 preferences.createPrefItemEnum("Rest Bar Display", "Changes the display of the Rest Bar", [
                     "off" => "Off",
                     "countdown" => "Countdown",
                     "countup" => "Countup"
-                ], value -> badOptions.restBar = Std.parseInt(value), badOptions.restBar);
+                ], value -> badOptions.restBar = value, badOptions.restBar);
 
                 preferences.createPrefItemCheckbox("Smooth Bars", "", value -> badOptions.smoothBars = value, badOptions.smoothBars);
 
@@ -122,7 +121,7 @@ class BadHUDOptions extends Module {
                     "judgements" => "Judgements",
                     "stats" => "Stats",
                     "judgements-stats" => "Judgements and Stats",
-                ], value -> badOptions.leftPos = Std.parseInt(value), badOptions.leftPos);
+                ], value -> badOptions.leftPos = value, badOptions.leftPos);
 
                 preferences.createPrefItemPercentage("HUD Opacity", "Changes the opacity of the HUD", value -> badOptions.hudOpacity = value, badOptions.hudOpacity);
 
@@ -154,8 +153,7 @@ class BadHUDOptions extends Module {
                             font = "New Super Mario Font U.ttf";
                         case 7: // px = ?;
                             font = "ka1.ttf";
-                    }
-                    changeDebugDisplay(font); }, badOptions.hudFont);
+                    } changeDebugDisplay(font); }, badOptions.hudFont);
 
                 preferences.createPrefItemNumber("HUD Font Size", "Changes the size of the HUD text", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
 
@@ -174,7 +172,7 @@ class BadHUDOptions extends Module {
                     "off" => "Off",
                     "vanilla" => "Vanilla",
                     "centered" => "Centered"
-                ], value -> badOptions.popUpType = Std.parseInt(value), badOptions.popUpType);
+                ], value -> badOptions.popUpType = value, badOptions.popUpType);
 
                 preferences.createPrefItemCheckbox("Mute Miss Sounds", "", value -> badOptions.muteMiss = value, badOptions.muteMiss);
 
@@ -208,7 +206,7 @@ class BadHUDOptions extends Module {
     }
 
     function updatetypetext() {
-        switch (Save.instance.modOptions.get("badOptions").timebarStyle) {
+        switch (badOptions.timebarStyle) {
             case "psych":
                 timeBarBGStyle = "timeBarPsychEngine";
                 timeTextSize = 26;
@@ -220,7 +218,7 @@ class BadHUDOptions extends Module {
                 timeTextSize = 24;
         }
 
-        switch (Save.instance.modOptions.get("badOptions").hudFont) {
+        switch (badOptions.hudFont) {
             case 0: // px = 21;
                 font = "vcr.ttf";
             case 1: // px = 16;
@@ -238,7 +236,5 @@ class BadHUDOptions extends Module {
             case 7: // px = ?;
                 font = "ka1.ttf";
         }
-
-        Save.instance.flush();
     }
 }

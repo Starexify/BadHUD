@@ -43,8 +43,8 @@ class ExtraStrumline extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        var badHooks = ModuleHandler.getModule('BadHooks');
-        if (badHooks != null) state = badHooks.scriptGet('state');
+        var badHooks = ModuleHandler.getModule("BadHooks");
+        if (badHooks != null) state = badHooks.scriptGet("state");
         if (state == null) return;
         noteStyle = NoteStyleRegistry.instance.fetchEntry(state.currentChart.noteStyle);
         if (noteStyle == null) noteStyle = NoteStyleRegistry.instance.fetchDefault();

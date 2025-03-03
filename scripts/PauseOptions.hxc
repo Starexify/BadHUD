@@ -34,8 +34,7 @@ class PauseOptions extends ScriptedModule {
         if (Std.isOfType(event.targetState, OptionsState)) {
             DiscordClient.instance.setPresence({ state: "Setting up Options", details: null });
             // Positions Offsets Entry
-            var state:OptionsState = event.targetState;
-            var options:OptionsMenu = state.get_currentPage();
+            var options:OptionsMenu = event.targetState.get_currentPage();
             var exit = options.items.members[options.items.length - 1];
             exit.y += 200;
             options.items.remove(exit);
@@ -49,7 +48,7 @@ class PauseOptions extends ScriptedModule {
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         var state:PolymodScriptClass = event.targetState._asc;
-        if (event.targetState != PlayState.instance && !Std.isOfType(event.targetState, LatencyState) && wasPaused && (state != null && ReflectUtil.getAnonymousField(ReflectUtil.getAnonymousField(state, "_c"), "name") != "PositionsState")) {
+        if (event.targetState != PlayState.instance && wasPaused && !Std.isOfType(event.targetState, LatencyState) && ReflectUtil.getAnonymousField(ReflectUtil.getAnonymousField(state, "_c"), "name") != "PositionsState") {
             if (isChartingState) {
                 FlxG.switchState(() -> new ChartEditorState({
                     targetSongId: currentSongId

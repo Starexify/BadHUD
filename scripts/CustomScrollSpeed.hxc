@@ -11,6 +11,7 @@ import flixel.text.FlxTextBorderStyle;
 import Math;
 
 class CustomScrollSpeed extends Module {
+    var badOptions:Null<Dynamic> = Save.instance.modOptions.get("badOptions");
     var state:PlayState;
 
     var speedText:FlxText;
@@ -20,18 +21,18 @@ class CustomScrollSpeed extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (!Save.instance.modOptions.get("badOptions").customScrollSpeed) return;
+        if (!badOptions.customScrollSpeed) return;
         var badHooks = ModuleHandler.getModule('BadHooks');
         if (badHooks != null) state = badHooks.scriptGet('state');
         if (state == null) return;
-        state.playerStrumline.scrollSpeed = Save.instance.modOptions.get("badOptions").scrollSpeedFactor / 10;
-        state.opponentStrumline.scrollSpeed = Save.instance.modOptions.get("badOptions").scrollSpeedFactor / 10;
+        state.playerStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
+        state.opponentStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
     }
 
     override function onPause(event:PauseScriptEvent) {
-        if (!Save.instance.modOptions.get("badOptions").customScrollSpeed) return;
+        if (!badOptions.customScrollSpeed) return;
         // Binding with BadHUDOptions for size
-        var textSize = Save.instance.modOptions.get("badOptions").hudFontSize;
+        var textSize = badOptions.hudFontSize;
 
         // Create Scroll Speed Text Element
         speedText = new FlxText(20, FlxG.height * 0.94, FlxG.width - 40, "", 20);
@@ -39,7 +40,7 @@ class CustomScrollSpeed extends Module {
         speedText.scrollFactor.set(0, 0);
         speedText.alignment = "right";
         speedText.cameras = [state.camHUD];
-        speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + Save.instance.modOptions.get("badOptions").scrollSpeedFactor / 10;
+        speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + badOptions.scrollSpeedFactor / 10;
         state.add(speedText);
     }
 
@@ -48,7 +49,9 @@ class CustomScrollSpeed extends Module {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
-        if (speedText != null) speedText.destroy();
-        speedText = null;
+        if (speedText != null) {
+            speedText.destroy();
+            speedText = null;
+        }
     }
 }

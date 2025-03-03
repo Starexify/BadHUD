@@ -23,6 +23,7 @@ Psych Engine HUD V-Slice by nubz4lif
 OG Psych Engine HUD by Shadow Mario and his team
 */
 class TimeBar extends Module {
+    var badOptions:Null<Dynamic> = Save.instance.modOptions.get("badOptions");
     var state:PlayState;
 
     var timeBarBG:FunkinSprite;
@@ -36,9 +37,9 @@ class TimeBar extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (Save.instance.modOptions.get("badOptions").timebarPosition == "off") return;
-        var badHooks = ModuleHandler.getModule('BadHooks');
-        if (badHooks != null) state = badHooks.scriptGet('state');
+        if (badOptions.timebarPosition == "off") return;
+        var badHooks = ModuleHandler.getModule("BadHooks");
+        if (badHooks != null) state = badHooks.scriptGet("state");
         if (state == null) return;
         initTimeBar();
     }
@@ -54,13 +55,13 @@ class TimeBar extends Module {
         timeBarBG.scrollFactor.set(0, 0);
         timeBarBG.zIndex = 800;
 
-        var timeBarHeight = timeBarBG.height - (Save.instance.modOptions.get("badOptions").timeBarType == "off" ? 6 : 4);
+        var timeBarHeight = timeBarBG.height - (badOptions.timeBarType == "off" ? 6 : 4);
         timeBar = new FlxBar(0, 0, null, timeBarBG.width - 5, timeBarHeight);
         timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
         timeBar.scrollFactor.set();
-        timeBar.zIndex = Save.instance.modOptions.get("badOptions").timebarStyle == "minimal-rounded" ? 799 : 801;
+        timeBar.zIndex = badOptions.timebarStyle == "minimal-rounded" ? 799 : 801;
 
-        if (Save.instance.modOptions.get("badOptions").smoothBars) timeBar.numDivisions = Std.int(timeBarBG.width);
+        if (badOptions.smoothBars) timeBar.numDivisions = Std.int(timeBarBG.width);
 
         timeText = new FlxText(0, 0, 400, "", 32);
         timeText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
@@ -68,18 +69,18 @@ class TimeBar extends Module {
         timeText.scrollFactor.set();
         timeText.zIndex = 802;
 
-        switch (Save.instance.modOptions.get("badOptions").timebarPosition) {
+        switch (badOptions.timebarPosition) {
             case "off":
             case "down":
                 timeText.y = FlxG.height - 34;
                 timeBarBG.y = FlxG.height - 34 + 2;
-                if (Save.instance.modOptions.get("badOptions").hudFont == 0) {
+                if (badOptions.hudFont == 0) {
                     timeBarBG.y = timeText.y + 5;
                 }
             case "up":
                 timeText.y = 16;
                 timeBarBG.y = timeText.y + 2;
-                if (Save.instance.modOptions.get("badOptions").hudFont == 0) {
+                if (badOptions.hudFont == 0) {
                     timeBarBG.y = timeText.y + 5;
                 }
             case "vertical": // (Right Side)
@@ -92,12 +93,12 @@ class TimeBar extends Module {
         }
 
         timeBar.x = timeBarBG.x + 3;
-        timeBar.y = timeBarBG.y + (Save.instance.modOptions.get("badOptions").timeBarType == "off" ? 3 : 2);
+        timeBar.y = timeBarBG.y + (badOptions.timeBarType == "off" ? 3 : 2);
 
         timeBarSprites = [timeBarBG, timeBar, timeText];
 
         for (sprite in timeBarSprites) if (sprite != null) {
-            if (!Save.instance.modOptions.get("badOptions").timebarPosition == "vertical") sprite.screenCenter(0x01); // Vertical Time Bar
+            if (!badOptions.timebarPosition == "vertical") sprite.screenCenter(0x01);
             state.add(sprite);
 
             // Move the time bar to the HUD camera.
@@ -108,16 +109,16 @@ class TimeBar extends Module {
 
     override function onSongStart(event:ScriptEvent) {
         for (sprite in timeBarSprites)
-            if (sprite != null && sprite.alpha != (Save.instance.modOptions.get("badOptions").hudOpacity / 100))
-                FlxTween.tween(sprite, {alpha: Save.instance.modOptions.get("badOptions").hudOpacity / 100}, 0.5, { ease: FlxEase.circOut });
+            if (sprite != null && sprite.alpha != (badOptions.hudOpacity / 100))
+                FlxTween.tween(sprite, {alpha: badOptions.hudOpacity / 100}, 0.5, { ease: FlxEase.circOut });
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null || Save.instance.modOptions.get("badOptions").timebarPosition == "off") return;
+        if (state == null || badOptions.timebarPosition == "off") return;
         if (timeBar != null && timeBar.visible) {
             timeBar.value = (state.conductorInUse.songPosition / state.currentSongLengthMs) * 100;
             timeBar.updateBar();
-            switch (Save.instance.modOptions.get("badOptions").timebarType) {
+            switch (badOptions.timebarType) {
                 case "off":
                 case "left":
                     timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
