@@ -8,9 +8,11 @@ import funkin.ui.options.OptionsState;
 import Main;
 import openfl.text.TextFormat;
 import Std;
+import funkin.save.Save;
 
 class BadHUDOptions extends Module {
     var save:FlxSave;
+    var saveTest:Save;
 
     // Hooks or smth like that for other classes
     var font;
@@ -21,6 +23,8 @@ class BadHUDOptions extends Module {
         super("BadHUDOptions", 1);
         save = new FlxSave();
         save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
+        saveTest = Save.instance;
+        saveTest.modOptions.set("middlescroll", false);
 
         // Default Options (First Start)
         save.data.middlescroll = (save.data.middlescroll != null) ? save.data.middlescroll : false;
@@ -49,7 +53,7 @@ class BadHUDOptions extends Module {
 
         updatetypetext();
         if (Preferences.debugDisplay) changeDebugDisplay(font);
-        save.flush();
+        Save.flush();
     }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {

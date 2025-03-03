@@ -9,12 +9,12 @@ class BadHooks extends Module {
     "Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME", "Destruction Dance", "Portal Power", "Bullet Time",
     "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "Overload", "Eradication", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus",
     "REAGANOMICS 2", "Snake-Eyes", "Technicolor-Tussle", "Knockout", "Whoopee", "Sansational", "Burning-In-Hell", "Imminent-Demise", "Terrible-Sin", "Last-Reel", "Nightmare-Run",
-    "Satanic-Funkin", "Final-Stretch", "Tomo", "Knucklehead", "Spunk", "Ghoulish", "TAKETHISLOLLIPOP", "pementi"] ;
+    "Satanic-Funkin", "Final-Stretch", "Tomo", "Knucklehead", "Spunk", "Ghoulish", "TAKETHISLOLLIPOP", "pementi"];
 
-    var strumlineExcluded = ["Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2", "TAKETHISLOLLIPOP"] ;
+    var strumlineExcluded = ["Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2", "TAKETHISLOLLIPOP"];
 
     var gameplayExcludedSongs = ["Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME",
-    "Destruction Dance", "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "TAKETHISLOLLIPOP"] ;
+    "Destruction Dance", "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "TAKETHISLOLLIPOP"];
 
     var ratings:Map<String, {name:String, min:Float, max:Float}> = [
         "YOU_SUCK" => {name: "You Suck!", min: 0, max: 19},
@@ -27,7 +27,7 @@ class BadHooks extends Module {
         "GREAT" => {name: "Great", min: 80, max: 89},
         "SICK" => {name: "Sick!", min: 90, max: 99},
         "PERFECT" => {name: "Perfect!!", min: 100, max: 100}
-    ] ;
+    ];
 
     function new() {
         super("BadHooks", 2);

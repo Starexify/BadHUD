@@ -18,25 +18,25 @@ import funkin.util.Constants;
 import funkin.graphics.FunkinSprite;
 
 class PositionsState extends ScriptedMusicBeatSubState {
-    var save:FlxSave = new BadHUDOptions().save ;
+    var save:FlxSave = new BadHUDOptions().save;
 
-    var welcomeMusic:FunkinSound = new FunkinSound() ;
+    var welcomeMusic:FunkinSound = new FunkinSound();
     var strumLine:Strumline;
 
-    var isSelected:Bool = false ;
-    var isDragging:Bool = false ;
+    var isSelected:Bool = false;
+    var isDragging:Bool = false;
     var draggableSprites:Array<{
         sprite:FunkinSprite,
         isDragging:Bool,
         isSelected:Bool,
         dragOffsetX:Float,
         dragOffsetY:Float
-    }> = [] ;
+    }> = [];
 
     var targetCursorMode;
 
-    var judgementOffsets:Array<Int> = [] ;
-    var comboOffsets:Array<Int> = [] ;
+    var judgementOffsets:Array<Int> = [];
+    var comboOffsets:Array<Int> = [];
 
     override function create() {
         super.create();

@@ -33,21 +33,21 @@ class GamePlayStats extends Module {
     var judgementsText:FlxText;
 
     var ratingPercent:Float;
-    var ratingName:String = "?" ;
+    var ratingName:String = "?";
     var ratingFC:String;
 
     var songScore:Int;
 
     var tallies:Tallies;
     var talliesLevel:Tallies;
-    var sicks:Int = 0 ;
-    var goods:Int = 0 ;
-    var bads:Int = 0 ;
-    var shits:Int = 0 ;
-    var missed:Int = 0 ;
-    var combo:Int = 0 ;
-    var totalNotes:Int = 0 ;
-    var totalNotesPlayed:Int = 0 ;
+    var sicks:Int = 0;
+    var goods:Int = 0;
+    var bads:Int = 0;
+    var shits:Int = 0;
+    var missed:Int = 0;
+    var combo:Int = 0;
+    var totalNotes:Int = 0;
+    var totalNotesPlayed:Int = 0;
 
     function new() {
         super("GamePlayStats");

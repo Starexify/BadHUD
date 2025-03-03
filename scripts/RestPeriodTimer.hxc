@@ -15,19 +15,19 @@ import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 
 class RestPeriodTimer extends Module {
-    var save:FlxSave = new BadHUDOptions().save ;
+    var save:FlxSave = new BadHUDOptions().save;
     var state:PlayState;
 
     var restBarBG:FunkinSprite;
 
     var restBar:FlxSprite;
-    var restBarThickness:Int = 13 ;
+    var restBarThickness:Int = 13;
     var restBarRadius:Float;
 
     var restText:FlxText;
 
     var restTime:Float;
-    var lastHitNoteTime:Int = 0 ;
+    var lastHitNoteTime:Int = 0;
     var restBarSprites:Array<FlxSprite>;
 
     function new() {

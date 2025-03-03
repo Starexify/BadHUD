@@ -23,7 +23,7 @@ Psych Engine HUD V-Slice by nubz4lif
 OG Psych Engine HUD by Shadow Mario and his team
 */
 class TimeBar extends Module {
-    var save:FlxSave = new BadHUDOptions().save ;
+    var save:FlxSave = new BadHUDOptions().save;
     var state:PlayState;
 
     var timeBarBG:FunkinSprite;

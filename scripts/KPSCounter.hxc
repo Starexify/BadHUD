@@ -14,16 +14,16 @@ import Math;
 import Std;
 
 class KPSCounter extends Module {
-    var save:FlxSave = new BadHUDOptions().save ;
+    var save:FlxSave = new BadHUDOptions().save;
     var state:PlayState;
 
     var kpsText:FlxText;
-    var kps:Int = 0 ;
-    var kpsMax:Int = 0 ;
+    var kps:Int = 0;
+    var kpsMax:Int = 0;
 
-    var lastSecondKeyPresses:Array<Float> = [] ;
-    var updateInterval:Float = 1 / Preferences.framerate ;
-    var lastUpdateTime:Float = 0 ;
+    var lastSecondKeyPresses:Array<Float> = [];
+    var updateInterval:Float = 1 / Preferences.framerate;
+    var lastUpdateTime:Float = 0;
 
     function new() {
         super("KPSCounter");

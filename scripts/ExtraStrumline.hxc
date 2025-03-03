@@ -26,7 +26,7 @@ import openfl.display.BitmapData;
 import Std;
 
 class ExtraStrumline extends Module {
-    var save:FlxSave = new BadHUDOptions().save ;
+    var save:FlxSave = new BadHUDOptions().save;
     var state:PlayState;
 
     var laneUnderlay:FlxSprite;
@@ -37,7 +37,7 @@ class ExtraStrumline extends Module {
     var noteStyle:NoteStyle;
 
     var underlaySprites:Array<FlxSprite>;
-    var keybindTexts:Array<FlxText> = [] ;
+    var keybindTexts:Array<FlxText> = [];
 
     function new() {
         super("ExtraStrumline", 3);
@@ -93,8 +93,9 @@ class ExtraStrumline extends Module {
         }
 
         // Combo PopUps
-        //if (save.data.popUpType == 1) state.comboPopUps.offsets = ui.options.PositionsState.judgementOffsets;
-        if (save.data.popUpType == 0 || save.data.popUpType > 1) state.comboPopUps.visible = false;
+        state.remove(state.comboPopUps);
+        //if (save.data.popUpType == 1) state.comboPopUps.offsets = new PositionsState().judgementOffsets;
+        //if (save.data.popUpType == 0 || save.data.popUpType > 1) state.comboPopUps.visible = false;
 
         // Remind Keybinds
         if (save.data.remindKeys) {
@@ -126,7 +127,10 @@ class ExtraStrumline extends Module {
         }
     }
 
-    override function onNoteHit(event:HitNoteScriptEvent) { if (event.note.noteData.getMustHitNote() && save.data.popUpType == 2 && state != null) displayRating(event.judgement); }
+    override function onNoteHit(event:HitNoteScriptEvent) {
+        if (state == null) return;
+        //if (event.note.noteData.getMustHitNote()) displayRating(event.judgement);
+    }
 
     override function onNoteMiss(event:NoteScriptEvent) { event.playSound = !save.data.muteMiss; }
 
