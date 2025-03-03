@@ -93,8 +93,6 @@ class ExtraStrumline extends Module {
 
         // Combo PopUps
         state.remove(state.comboPopUps);
-        //if (Save.instance.modOptions.get("badOptions").popUpType == 1) state.comboPopUps.offsets = new PositionsState().judgementOffsets;
-        //if (Save.instance.modOptions.get("badOptions").popUpType == 0 || Save.instance.modOptions.get("badOptions").popUpType > 1) state.comboPopUps.visible = false;
 
         // Remind Keybinds
         if (Save.instance.modOptions.get("badOptions").remindKeys) {
@@ -128,7 +126,7 @@ class ExtraStrumline extends Module {
 
     override function onNoteHit(event:HitNoteScriptEvent) {
         if (state == null) return;
-        //if (event.note.noteData.getMustHitNote()) displayRating(event.judgement);
+        if (event.note.noteData.getMustHitNote()) displayRating(event.judgement);
     }
 
     override function onNoteMiss(event:NoteScriptEvent) { event.playSound = !Save.instance.modOptions.get("badOptions").muteMiss; }
@@ -159,6 +157,11 @@ class ExtraStrumline extends Module {
 
         // Apply note style offsets
         var styleOffsets = noteStyle.getJudgementSpriteOffsets(daRating);
+        var badHooks = ModuleHandler.getModule("BadHooks");
+        if (badHooks != null) {
+            var judgementOffsets = badHooks.scriptGet("judgementOffsets");
+            trace(judgementOffsets);
+        }
         rating.x += styleOffsets[0];
         rating.y += styleOffsets[1];
 
