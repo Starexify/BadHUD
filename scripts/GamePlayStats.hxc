@@ -5,6 +5,7 @@ import funkin.modding.module.ModuleHandler;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.play.PlayStatePlaylist;
+import funkin.save.Save;
 
 import flixel.FlxG;
 import flixel.text.FlxText;
@@ -12,7 +13,6 @@ import flixel.text.FlxTextBorderStyle;
 import flixel.text.FlxTextFormat;
 import flixel.text.FlxTextFormatMarkerPair;
 import flixel.tweens.FlxTween;
-import flixel.util.FlxSave;
 import flixel.util.FlxStringUtil;
 
 import Math;
@@ -24,7 +24,6 @@ Psych Engine HUD V-Slice by nubz4lif
 OG Psych Engine HUD by Shadow Mario and his team
 */
 class GamePlayStats extends Module {
-    var save:FlxSave = new BadHUDOptions().save ;
     var state:PlayState;
 
     var scoreText:FlxText;
@@ -63,24 +62,24 @@ class GamePlayStats extends Module {
         state.scoreText.visible = false;
 
         var textFont = new BadHUDOptions().font;
-        var textSize = save.data.hudFontSize;
+        var textSize = Save.instance.modOptions.get("badOptions").hudFontSize;
 
         // Create HUD elements
         var scoreTextXPos;
-        var scoreTextYPos:Float = save.data.healthBarPosition == 1 ? state.healthBarBG.y + 45 : 40;
+        var scoreTextYPos:Float = Save.instance.modOptions.get("badOptions").healthBarPosition == "vanilla" ? state.healthBarBG.y + 45 : 40;
         var scoringText = "Score: 0" + " | Combo Breaks: 0" + " | Rating: ?\n";
         var scorePosition = "center";
 
-        switch (save.data.leftPos) {
-            case 0: // None
-            case 1: // Judgements
+        switch (Save.instance.modOptions.get("badOptions").leftPos) {
+            case "none":
+            case "judgements":
                 initJudgements(textSize, textFont);
-            case 2: // Score
+            case "stats":
                 scoreTextXPos = 10;
                 scoreTextYPos = (FlxG.height * 0.45) - 84 - 10;
                 scoringText = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: ?";
                 scorePosition = "left";
-            case 3: // Judgements and Score
+            case "judgements-stats":
                 initJudgements(textSize, textFont);
                 scoreTextXPos = 10;
                 scoreTextYPos = judgementsText.y - judgementsText.height - 10;
@@ -123,7 +122,7 @@ class GamePlayStats extends Module {
         calculateRating();
 
         // Change the scoring system based on accuracyType (funy)
-        if (save.data.accuracyType == "osu") {
+        if (Save.instance.modOptions.get("badOptions").accuracyType == "osu") {
             var maxScore = 1000000;
 
             var hitValue = sicks * 300 + goods * 200 + bads * 100 + shits * 50;
@@ -141,20 +140,20 @@ class GamePlayStats extends Module {
             songScore = state.songScore;
         }
 
-        if (save.data.commaSeparatedScore) songScore = FlxStringUtil.formatMoney(songScore, false, true);
+        if (Save.instance.modOptions.get("badOptions").commaSeparatedScore) songScore = FlxStringUtil.formatMoney(songScore, false, true);
 
         // Judgements Screen and Score Bar for update
-        var ratingString:String = totalNotesPlayed != 0 ? save.data.accuracyType == "psych" ? ratingName + " (" + ratingPercent + "%) - " + ratingFC : ratingPercent + "% - " + ratingFC : ratingName;
+        var ratingString:String = totalNotesPlayed != 0 ? Save.instance.modOptions.get("badOptions").accuracyType == "psych" ? ratingName + " (" + ratingPercent + "%) - " + ratingFC : ratingPercent + "% - " + ratingFC : ratingName;
         var tempScore:String = "Score: " + songScore + " | Combo Breaks: " + missed + " | Rating: " + ratingString;
         var tempJudgements:String = "";
-        switch (save.data.leftPos) {
-            case 0: // None
-            case 1: // Judgements
+        switch (Save.instance.modOptions.get("badOptions").leftPos) {
+            case "none": // None
+            case "judgements": // Judgements
                 tempJudgements = "Sicks: " + sicks + "\nGoods: " + goods + "\nBads: " + bads + "\nShits: " + shits;
-            case 2: // Score
+            case "stats": // Score
                 ratingString = totalNotesPlayed != 0 ? ratingPercent + "% - " + ratingFC : ratingName;
                 tempScore = "Score: " + songScore + "\nCombo Breaks: " + missed + "\nRating: " + ratingString + "\nCombo: " + combo;
-            case 3: // Judgements and Score
+            case "judgements-stats": // Judgements and Score
                 ratingString = totalNotesPlayed != 0 ? ratingPercent + "% - " + ratingFC : ratingName;
                 tempJudgements = "Sicks: " + sicks + "\nGoods: " + goods + "\nBads: " + bads + "\nShits: " + shits;
                 tempScore = "Score: " + songScore + "\nCombo Breaks: " + missed + "\nRating: " + ratingString + "\nCombo: " + combo;
@@ -163,7 +162,7 @@ class GamePlayStats extends Module {
         if (judgementsText != null) judgementsText.text = tempJudgements;
         if (scoreText != null) {
             scoreText.text = tempScore;
-            if (save.data.accuracyType == "vanilla") {
+            if (Save.instance.modOptions.get("badOptions").accuracyType == "vanilla") {
                 var formatPairs = [
                     new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFF25C), "<$>"), // P+
                     new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFA9FF), "<p>"), // P
@@ -180,7 +179,7 @@ class GamePlayStats extends Module {
     }
 
     function scoreBopOnMiss() {
-        if (save.data.leftPos == 2 || save.data.leftPos == 3) return;
+        if (Save.instance.modOptions.get("badOptions").leftPos == "stats" || Save.instance.modOptions.get("badOptions").leftPos == "judgements-stats") return;
 
         if (scoreTextTween != null) scoreTextTween.cancel();
         scoreText.scale.set(1.075, 1.075);
@@ -190,7 +189,7 @@ class GamePlayStats extends Module {
     function calculateRating() {
         if (totalNotesPlayed != 0) {
             //ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalNotesPlayed)); // Old rating percent
-            switch (save.data.accuracyType) {
+            switch (Save.instance.modOptions.get("badOptions").accuracyType) {
                 case "vanilla":
                     ratingPercent = Std.int(Math.min(100, Math.max(0, 100 - (shits + bads + missed) / totalNotes * 100)));
                 case "psych":
@@ -211,7 +210,7 @@ class GamePlayStats extends Module {
         ratingFC = "";
 
         // Rating grades based on AccuracyType
-        switch (save.data.accuracyType) {
+        switch (Save.instance.modOptions.get("badOptions").accuracyType) {
             case "vanilla": ratingFC = vanillaRatingNames();
             case "psych": ratingFC = psychRatingNames();
             case "osu": ratingFC = osuGrades();
@@ -285,7 +284,7 @@ class GamePlayStats extends Module {
 
         totalNotesPlayed = (PlayStatePlaylist.isStoryMode ? talliesLevel.totalNotesHit + tallies.totalNotesHit : tallies.totalNotesHit) + 1;
 
-        updateScore(save.data.accuracyType != "osu");
+        updateScore(Save.instance.modOptions.get("badOptions").accuracyType != "osu");
     }
 
     override function onNoteMiss(event:NoteScriptEvent) {

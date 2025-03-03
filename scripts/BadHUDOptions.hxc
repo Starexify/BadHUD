@@ -1,4 +1,3 @@
-import flixel.util.FlxSave;
 import funkin.Assets;
 import funkin.modding.module.Module;
 import funkin.Paths;
@@ -9,51 +8,52 @@ import Main;
 import openfl.text.TextFormat;
 import Std;
 import funkin.save.Save;
+import funkin.util.ReflectUtil;
 
 class BadHUDOptions extends Module {
-    var save:FlxSave;
-    var saveTest:Save;
-
     // Hooks or smth like that for other classes
     var font;
     var timeBarBGStyle;
     var timeTextSize;
 
+    var saveObject:Dynamic = {
+        middlescroll: false,
+        opponentNoteOpacity: 100,
+        healthBarPosition: "vanilla",
+        healthIconPosition: "vanilla",
+        timebarPosition: "down",
+        timebarType: "left",
+        timebarStyle: "psych",
+        restBar: "off",
+        smoothBars: true,
+        iconColors: true,
+        leftPos: "judgements",
+        hudOpacity: 100,
+        hudFont: 0,
+        hudFontSize: 21,
+        accuracyType: "vanilla",
+        commaSeparatedScore: false,
+        popUpType: "vanilla",
+        underlayOpacity: 0,
+        kpsCounter: false,
+        customScrollSpeed: false,
+        scrollSpeedFactor: 18,
+        remindKeys: true
+    };
+
     function new() {
-        super("BadHUDOptions", 1);
-        save = new FlxSave();
-        save.bind("BadHUDOptions", "FunkinCrew/BadHUD");
-        saveTest = Save.instance;
-        saveTest.modOptions.set("middlescroll", false);
+        super("BadHUDOptions");
 
         // Default Options (First Start)
-        save.data.middlescroll = (save.data.middlescroll != null) ? save.data.middlescroll : false;
-        save.data.oppNotesOpacity = (save.data.oppNotesOpacity != null) ? save.data.oppNotesOpacity : 100;
-        save.data.healthBarPosition = (save.data.healthBarPosition != null) ? save.data.healthBarPosition : "vanilla";
-        save.data.healthIconPos = (save.data.healthIconPos != null) ? save.data.healthIconPos : 1;
-        save.data.timebarPosition = (save.data.timebarPosition != null) ? save.data.timebarPosition : 1;
-        save.data.timebarType = (save.data.timebarType != null) ? save.data.timebarType : 1;
-        save.data.timebarStyle = (save.data.timebarStyle != null) ? save.data.timebarStyle : 0;
-        save.data.restBar = (save.data.restBar != null) ? save.data.restBar : 0;
-        save.data.smoothBars = (save.data.smoothBars != null) ? save.data.smoothBars : true;
-        save.data.iconColors = (save.data.iconColors != null) ? save.data.iconColors : true;
-        save.data.leftPos = (save.data.leftPos != null) ? save.data.leftPos : 1;
-        save.data.hudOpacity = (save.data.hudOpacity != null) ? save.data.hudOpacity : 100;
-        save.data.hudFont = (save.data.hudFont != null) ? save.data.hudFont : 0;
-        save.data.hudFontSize = (save.data.hudFontSize != null) ? save.data.hudFontSize : 21;
-        save.data.accuracyType = (save.data.accuracyType != null) ? save.data.accuracyType : "vanilla";
-        save.data.commaSeparatedScore = (save.data.commaSeparatedScore != null) ? save.data.commaSeparatedScore : false;
-        save.data.popUpType = (save.data.popUpType != null) ? save.data.popUpType : 1;
-        save.data.muteMiss = (save.data.muteMiss != null) ? save.data.muteMiss : false;
-        save.data.underlayOpacity = (save.data.underlayOpacity != null) ? save.data.underlayOpacity : 0;
-        save.data.kpsCounter = (save.data.kpsCounter != null) ? save.data.kpsCounter : false;
-        save.data.customScrollSpeed = (save.data.customScrollSpeed != null) ? save.data.customScrollSpeed : false;
-        save.data.scrollSpeedFactor = (save.data.scrollSpeedFactor != null) ? save.data.scrollSpeedFactor : 18;
-        save.data.remindKeys = (save.data.remindKeys != null) ? save.data.remindKeys : true;
+        if (!Save.instance.modOptions.exists("badOptions")) {
+            Save.instance.modOptions.set("badOptions", saveObject);
+            Save.instance.flush();
+        } else
+            var badOptions = Save.instance.modOptions.get("badOptions");
+        Save.instance.flush();
 
         updatetypetext();
         if (Preferences.debugDisplay) changeDebugDisplay(font);
-        Save.flush();
     }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
@@ -61,70 +61,70 @@ class BadHUDOptions extends Module {
             var preferences = event.targetState.pages.get("preferences");
             if (preferences != null) {
                 updatetypetext();
+                var badOptions = Save.instance.modOptions.get("badOptions");
 
-                preferences.createPrefItemCheckbox("Middlescroll", "", value -> save.data.middlescroll = value, save.data.middlescroll);
-                preferences.createPrefItemPercentage("Opponent Notes Opacity", "Changes the opacity of the opponent notes", value -> save.data.oppNotesOpacity = value, save.data.oppNotesOpacity);
+                preferences.createPrefItemCheckbox("Middlescroll", "If enabled, player notes will be centerd on the screen, while the opponent's notes will be split.", value -> badOptions.middlescroll = value, badOptions.middlescroll);
+                preferences.createPrefItemPercentage("Opponent Notes Opacity", "The opacity of the opponent notes.", value -> badOptions.opponentNoteOpacity = value, badOptions.opponentNoteOpacity);
 
                 // Bars
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Bars :", "bold", function() {});
-
-                preferences.createPrefItemEnum("Health Bar Position", "Changes position of the Health Bar", [
-                    "0" => "Off",
-                    "1" => "Vanilla",
-                    "2" => "Vertical"
-                ], value -> save.data.healthBarPosition = Std.parseInt(value), save.data.healthBarPosition);
+                preferences.createPrefItemEnum("Health Bar Position", "The position of the Health Bar.", [
+                    "off" => "Off",
+                    "vanilla" => "Vanilla",
+                    "vertical" => "Vertical"
+                ], value -> badOptions.healthBarPosition = value, badOptions.healthBarPosition);
 
                 preferences.createPrefItemEnum("Health Icons Position", "Option to change the position of the Health Icons", [
                     "off" => "Off",
                     "vanilla" => "Vanilla",
                     "flipped" => "Flipped",
                     "ends" => "Ends"
-                ], value -> save.data.healthIconPos = value, save.data.healthIconPos);
+                ], value -> badOptions.healthIconPosition = value, badOptions.healthIconPosition);
 
                 preferences.createPrefItemEnum("Time Bar Position", "Changes position of the Time Bar", [
-                    "0" => "Off",
-                    "1" => "Down",
-                    "2" => "Up",
-                    "3" => "Vertical"
-                ], value -> save.data.timebarPosition = Std.parseInt(value), save.data.timebarPosition);
+                    "off" => "Off",
+                    "down" => "Down",
+                    "up" => "Up",
+                    "vertical" => "Vertical"
+                ], value -> badOptions.timebarPosition = Std.parseInt(value), badOptions.timebarPosition);
 
                 preferences.createPrefItemEnum("Time Bar Display", "Changes the display of the Time Bar", [
-                    "0" => "Off",
-                    "1" => "Time Left",
-                    "2" => "Time Left / Total",
-                    "3" => "Elapsed",
-                    "4" => "Elapsed / Total",
-                    "5" => "Elapsed / Time Left",
-                    "6" => "Song Name"
-                ], value -> save.data.timebarType = Std.parseInt(value), save.data.timebarType);
+                    "off" => "Off",
+                    "left" => "Time Left",
+                    "left-total" => "Time Left / Total",
+                    "elapsed" => "Elapsed",
+                    "elapsed-total" => "Elapsed / Total",
+                    "elapsed-left" => "Elapsed / Time Left",
+                    "name" => "Song Name"
+                ], value -> badOptions.timebarType = Std.parseInt(value), badOptions.timebarType);
 
                 preferences.createPrefItemEnum("Time Bar Style", "Changes the style of the Time Bar", [
-                    "0" => "Psych Engine",
-                    "1" => "Minimal",
-                    "2" => "Minimal Rounded"
-                ], value -> save.data.timebarStyle = Std.parseInt(value), save.data.timebarStyle);
+                    "psych" => "Psych Engine",
+                    "minimal" => "Minimal",
+                    "minimal-rounded" => "Minimal Rounded"
+                ], value -> badOptions.timebarStyle = Std.parseInt(value), badOptions.timebarStyle);
 
                 preferences.createPrefItemEnum("Rest Bar Display", "Changes the display of the Rest Bar", [
-                    "0" => "Off",
-                    "1" => "Countdown",
-                    "2" => "Countup"
-                ], value -> save.data.restBar = Std.parseInt(value), save.data.restBar);
+                    "off" => "Off",
+                    "countdown" => "Countdown",
+                    "countup" => "Countup"
+                ], value -> badOptions.restBar = Std.parseInt(value), badOptions.restBar);
 
-                preferences.createPrefItemCheckbox("Smooth Bars", "", value -> save.data.smoothBars = value, save.data.smoothBars);
+                preferences.createPrefItemCheckbox("Smooth Bars", "", value -> badOptions.smoothBars = value, badOptions.smoothBars);
 
-                preferences.createPrefItemCheckbox("Icon Colored Health Bar", "If enabled, the health bar will use the dominant icon color.", value -> save.data.iconColors = value, save.data.iconColors);
+                preferences.createPrefItemCheckbox("Icon Colored Health Bar", "If enabled, the health bar will use the dominant icon color.", value -> badOptions.iconColors = value, badOptions.iconColors);
 
                 // HUD Customization
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold", function() {});
 
                 preferences.createPrefItemEnum("on Left", "Left side elements", [
-                    "0" => "None",
-                    "1" => "Judgements",
-                    "2" => "Stats",
-                    "3" => "Judgements and Stats",
-                ], value -> save.data.leftPos = Std.parseInt(value), save.data.leftPos);
+                    "none" => "None",
+                    "judgements" => "Judgements",
+                    "stats" => "Stats",
+                    "judgements-stats" => "Judgements and Stats",
+                ], value -> badOptions.leftPos = Std.parseInt(value), badOptions.leftPos);
 
-                preferences.createPrefItemPercentage("HUD Opacity", "Changes the opacity of the HUD", value -> save.data.hudOpacity = value, save.data.hudOpacity);
+                preferences.createPrefItemPercentage("HUD Opacity", "Changes the opacity of the HUD", value -> badOptions.hudOpacity = value, badOptions.hudOpacity);
 
                 preferences.createPrefItemEnum("HUD Font", "Changes the font of the HUD", [
                     "0" => "VCR OSD Mono (Vanilla)",
@@ -136,8 +136,8 @@ class BadHUDOptions extends Module {
                     "6" => "New Super Mario Font U",
                     "7" => "Karmatic Arcade"
                 ], value -> {
-                    save.data.hudFont = Std.parseInt(value);
-                    switch (save.data.hudFont) {
+                    badOptions.hudFont = Std.parseInt(value);
+                    switch (badOptions.hudFont) {
                         case 0: // px = 21;
                             font = "vcr.ttf";
                         case 1: // px = 16;
@@ -155,9 +155,9 @@ class BadHUDOptions extends Module {
                         case 7: // px = ?;
                             font = "ka1.ttf";
                     }
-                    changeDebugDisplay(font); }, save.data.hudFont);
+                    changeDebugDisplay(font); }, badOptions.hudFont);
 
-                preferences.createPrefItemNumber("HUD Font Size", "Changes the size of the HUD text", value -> save.data.hudFontSize = Std.int(value), null, save.data.hudFontSize, 0, 999, 1, 0);
+                preferences.createPrefItemNumber("HUD Font Size", "Changes the size of the HUD text", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
 
                 // Extras
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold", function() {});
@@ -166,36 +166,36 @@ class BadHUDOptions extends Module {
                     "vanilla" => "Vanilla",
                     "psych" => "Psych Engine",
                     "osu" => "osu!Mania"
-                ], value -> save.data.accuracyType = value, save.data.accuracyType);
+                ], value -> badOptions.accuracyType = value, badOptions.accuracyType);
 
-                preferences.createPrefItemCheckbox("Comma Separated Score", "", value -> save.data.commaSeparatedScore = value, save.data.commaSeparatedScore);
+                preferences.createPrefItemCheckbox("Comma Separated Score", "", value -> badOptions.commaSeparatedScore = value, badOptions.commaSeparatedScore);
 
                 preferences.createPrefItemEnum("Combo Pop Ups", "Change the Combo Pop Ups", [
-                    "0" => "Off",
-                    "1" => "Vanilla",
-                    "2" => "Centered"
-                ], value -> save.data.popUpType = Std.parseInt(value), save.data.popUpType);
+                    "off" => "Off",
+                    "vanilla" => "Vanilla",
+                    "centered" => "Centered"
+                ], value -> badOptions.popUpType = Std.parseInt(value), badOptions.popUpType);
 
-                preferences.createPrefItemCheckbox("Mute Miss Sounds", "", value -> save.data.muteMiss = value, save.data.muteMiss);
+                preferences.createPrefItemCheckbox("Mute Miss Sounds", "", value -> badOptions.muteMiss = value, badOptions.muteMiss);
 
                 var underlayOpacityItem = new NumberPreferenceItem(0, (120 * preferences.items.length) + 30, "Note Underlay Opacity",
-                save.data.underlayOpacity, 0, 100, 5, 0,
-                value -> save.data.underlayOpacity = Std.int(value),
-                value -> return save.data.underlayOpacity + "%"
+                badOptions.underlayOpacity, 0, 100, 5, 0,
+                value -> badOptions.underlayOpacity = Std.int(value),
+                value -> return badOptions.underlayOpacity + "%"
                 );
                 preferences.items.addItem("Note Underlay Opacity", underlayOpacityItem);
                 preferences.preferenceItems.add(underlayOpacityItem.lefthandText);
 
-                preferences.createPrefItemCheckbox("Enable Keybind Reminder", "", value -> save.data.remindKeys = value, save.data.remindKeys);
+                preferences.createPrefItemCheckbox("Enable Keybind Reminder", "", value -> badOptions.remindKeys = value, badOptions.remindKeys);
 
-                preferences.createPrefItemCheckbox("Show KPS Counter", "", value -> save.data.kpsCounter = value, save.data.kpsCounter);
+                preferences.createPrefItemCheckbox("Show KPS Counter", "", value -> badOptions.kpsCounter = value, badOptions.kpsCounter);
 
-                preferences.createPrefItemCheckbox("Custom Scroll Speed", "", value -> save.data.customScrollSpeed = value, save.data.customScrollSpeed);
+                preferences.createPrefItemCheckbox("Custom Scroll Speed", "", value -> badOptions.customScrollSpeed = value, badOptions.customScrollSpeed);
 
                 preferences.createPrefItemNumber("Scroll Speed Factor", "Changes the speed of the notes",
-                value -> save.data.scrollSpeedFactor = value,
-                value -> return save.data.scrollSpeedFactor / 10,
-                save.data.scrollSpeedFactor, 1, 9999, 1, 0);
+                value -> badOptions.scrollSpeedFactor = value,
+                value -> return badOptions.scrollSpeedFactor / 10,
+                badOptions.scrollSpeedFactor, 1, 9999, 1, 0);
             }
         }
     }
@@ -208,19 +208,19 @@ class BadHUDOptions extends Module {
     }
 
     function updatetypetext() {
-        switch (save.data.timebarStyle) {
-            case 0:
+        switch (Save.instance.modOptions.get("badOptions").timebarStyle) {
+            case "psych":
                 timeBarBGStyle = "timeBarPsychEngine";
                 timeTextSize = 26;
-            case 1:
+            case "minimal":
                 timeBarBGStyle = "timeBarMinimal";
                 timeTextSize = 20;
-            case 2:
+            case "minimal-rounded":
                 timeBarBGStyle = "timeBarMinimalRounded";
                 timeTextSize = 24;
         }
 
-        switch (save.data.hudFont) {
+        switch (Save.instance.modOptions.get("badOptions").hudFont) {
             case 0: // px = 21;
                 font = "vcr.ttf";
             case 1: // px = 16;
@@ -239,6 +239,6 @@ class BadHUDOptions extends Module {
                 font = "ka1.ttf";
         }
 
-        save.flush();
+        Save.instance.flush();
     }
 }

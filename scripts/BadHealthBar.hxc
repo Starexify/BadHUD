@@ -3,16 +3,15 @@ import funkin.modding.module.ModuleHandler;
 import funkin.play.PlayState;
 import funkin.play.components.HealthIcon;
 import funkin.util.Constants;
+import funkin.save.Save;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.math.FlxMath;
-import flixel.util.FlxSave;
 
 import Std;
 
 class BadHealthBar extends Module {
-    var save:FlxSave = new BadHUDOptions().save;
     var state:PlayState;
 
     var iconP1:HealthIcon;
@@ -30,11 +29,11 @@ class BadHealthBar extends Module {
         iconP1 = state.iconP1;
         iconP2 = state.iconP2;
 
-        if (save.data.smoothBars) state.healthBar.numDivisions = Std.int(state.healthBarBG.width / 1.2);
+        if (Save.instance.modOptions.get("badOptions").smoothBars) state.healthBar.numDivisions = Std.int(state.healthBarBG.width / 1.2);
 
         // Health Bar
-        if (save.data.healthBarPosition != 0) {
-            if (save.data.healthBarPosition == 2) {
+        if (Save.instance.modOptions.get("badOptions").healthBarPosition != "off") {
+            if (Save.instance.modOptions.get("badOptions").healthBarPosition == "vertical") {
                 // Vertical HP Bar
                 state.healthBar.x = FlxG.width * 0.7;
                 state.healthBar.y = FlxG.height * 0.5;
@@ -48,11 +47,11 @@ class BadHealthBar extends Module {
             }
             state.healthBarBG.setPosition(state.healthBar.x - 4, state.healthBar.y - 4);
             if (!state.isMinimalMode) {
-                if (iconP1 != null) iconP1.alpha = save.data.hudOpacity / 100;
-                if (iconP2 != null) iconP2.alpha = save.data.hudOpacity / 100;
+                if (iconP1 != null) iconP1.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;
+                if (iconP2 != null) iconP2.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;
             }
-            state.healthBar.alpha = save.data.hudOpacity / 100;
-            state.healthBarBG.alpha = save.data.hudOpacity / 100;
+            state.healthBar.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;
+            state.healthBarBG.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;
         } else {
             state.healthBar.visible = false;
             state.healthBarBG.visible = false;
@@ -64,7 +63,7 @@ class BadHealthBar extends Module {
 
         // Health Icon Positions
         if (!state.isMinimalMode) {
-            switch (save.data.healthIconPos) {
+            switch (Save.instance.modOptions.get("badOptions").healthIconPosition) {
                 case "off":
                     if (iconP1 != null) iconP1.visible = false;
                     if (iconP2 != null) iconP2.visible = false;
@@ -78,7 +77,7 @@ class BadHealthBar extends Module {
                     var healthBarWidth:Float = state.healthBar.width;
                     if (iconP1 != null) iconP1.autoUpdate = false;
                     if (iconP2 != null) iconP2.autoUpdate = false;
-                    if (save.data.healthBarPosition == 2) {
+                    if (Save.instance.modOptions.get("badOptions").healthBarPosition == "vertical") {
                         if (iconP1 != null) iconP1.y = healthBarY + (healthBarWidth / 2) - (state.iconP1.width / 2);
                         if (iconP2 != null) iconP2.y = healthBarY - (healthBarWidth / 2) - (state.iconP2.width / 2);
                         if (iconP1 != null) iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
@@ -94,7 +93,7 @@ class BadHealthBar extends Module {
         }
 
         // Icon Colored Health Bar
-        if (save.data.iconColors) {
+        if (Save.instance.modOptions.get("badOptions").iconColors) {
             var bfHealthColor = getDominantColor(iconP1);
             var opponentHealthColor = getDominantColor(iconP2);
             state.healthBar.createFilledBar(opponentHealthColor, bfHealthColor);
@@ -104,7 +103,7 @@ class BadHealthBar extends Module {
 
     function updateIconsPosition() {
         // Vertical Health Icons (WORKING SOMEHOW)
-        if (save.data.healthBarPosition == 2 && (save.data.healthIconPos == "vanilla" || save.data.healthIconPos == "flipped")) {
+        if (Save.instance.modOptions.get("badOptions").healthBarPosition == "vertical" && (Save.instance.modOptions.get("badOptions").healthIconPosition == "vanilla" || Save.instance.modOptions.get("badOptions").healthIconPosition == "flipped")) {
             var healthBarX:Float = state.healthBar.x;
             var healthBarY:Float = state.healthBar.y;
             var healthBarWidth:Float = state.healthBar.width;
@@ -123,7 +122,7 @@ class BadHealthBar extends Module {
             iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
             iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2);
         }
-        if (save.data.healthIconPos == "vanilla" || save.data.healthIconPos == "flipped") {
+        if (Save.instance.modOptions.get("badOptions").healthIconPosition == "vanilla" || Save.instance.modOptions.get("badOptions").healthIconPosition == "flipped") {
             updateHealthIcon(iconP1, state.health);
             updateHealthIcon(iconP2, Constants.HEALTH_MAX - state.health);
         }

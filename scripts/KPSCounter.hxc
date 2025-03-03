@@ -4,17 +4,16 @@ import funkin.Preferences;
 import funkin.play.PauseSubState;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.PlayState;
+import funkin.save.Save;
 
 import flixel.FlxG;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
-import flixel.util.FlxSave;
 
 import Math;
 import Std;
 
 class KPSCounter extends Module {
-    var save:FlxSave = new BadHUDOptions().save;
     var state:PlayState;
 
     var kpsText:FlxText;
@@ -30,7 +29,7 @@ class KPSCounter extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (!save.data.kpsCounter) return;
+        if (!Save.instance.modOptions.get("badOptions").kpsCounter) return;
         var badHooks = ModuleHandler.getModule('BadHooks');
         if (badHooks != null) state = badHooks.scriptGet('state');
         if (state == null) return;
@@ -41,7 +40,7 @@ class KPSCounter extends Module {
         var kpsTextYPos = FlxG.height * 0.6;
 
         kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
-        kpsText.setFormat(Paths.font(kpsTextFont), save.data.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        kpsText.setFormat(Paths.font(kpsTextFont), Save.instance.modOptions.get("badOptions").hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         kpsText.scrollFactor.set();
         kpsText.borderSize = 1.25;
         kpsText.zIndex = 851;
@@ -52,7 +51,7 @@ class KPSCounter extends Module {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null || !save.data.kpsCounter) return;
+        if (state == null || !Save.instance.modOptions.get("badOptions").kpsCounter) return;
 
         var currentTime = FlxG.game.ticks / 1000;
 

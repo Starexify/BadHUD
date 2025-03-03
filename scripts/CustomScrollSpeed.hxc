@@ -2,16 +2,15 @@ import funkin.modding.module.Module;
 import funkin.Paths;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.PlayState;
+import funkin.save.Save;
 
 import flixel.FlxG;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
-import flixel.util.FlxSave;
 
 import Math;
 
 class CustomScrollSpeed extends Module {
-    var save:FlxSave = new BadHUDOptions().save;
     var state:PlayState;
 
     var speedText:FlxText;
@@ -21,28 +20,26 @@ class CustomScrollSpeed extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (!save.data.customScrollSpeed) return;
+        if (!Save.instance.modOptions.get("badOptions").customScrollSpeed) return;
         var badHooks = ModuleHandler.getModule('BadHooks');
         if (badHooks != null) state = badHooks.scriptGet('state');
         if (state == null) return;
-        state.playerStrumline.scrollSpeed = save.data.scrollSpeedFactor / 10;
-        state.opponentStrumline.scrollSpeed = save.data.scrollSpeedFactor / 10;
+        state.playerStrumline.scrollSpeed = Save.instance.modOptions.get("badOptions").scrollSpeedFactor / 10;
+        state.opponentStrumline.scrollSpeed = Save.instance.modOptions.get("badOptions").scrollSpeedFactor / 10;
     }
 
     override function onPause(event:PauseScriptEvent) {
-        if (!save.data.customScrollSpeed) return;
-        // Binding with BadHUDOptions for font and size
-        var badHUDOptions = new BadHUDOptions();
-        var font = badHUDOptions.font;
-        var textSize = save.data.hudFontSize;
+        if (!Save.instance.modOptions.get("badOptions").customScrollSpeed) return;
+        // Binding with BadHUDOptions for size
+        var textSize = Save.instance.modOptions.get("badOptions").hudFontSize;
 
         // Create Scroll Speed Text Element
         speedText = new FlxText(20, FlxG.height * 0.94, FlxG.width - 40, "", 20);
-        speedText.setFormat(Paths.font(font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        speedText.setFormat(Paths.font(new BadHUDOptions().font), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         speedText.scrollFactor.set(0, 0);
         speedText.alignment = "right";
         speedText.cameras = [state.camHUD];
-        speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + save.data.scrollSpeedFactor / 10;
+        speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + Save.instance.modOptions.get("badOptions").scrollSpeedFactor / 10;
         state.add(speedText);
     }
 

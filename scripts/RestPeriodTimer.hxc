@@ -5,17 +5,16 @@ import funkin.graphics.FunkinSprite;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.save.Save;
 
 import flixel.FlxSprite;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
-import flixel.util.FlxSave;
 import flixel.util.FlxSpriteUtil;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 
 class RestPeriodTimer extends Module {
-    var save:FlxSave = new BadHUDOptions().save;
     var state:PlayState;
 
     var restBarBG:FunkinSprite;
@@ -35,7 +34,7 @@ class RestPeriodTimer extends Module {
     }
 
     override function onSongStart(event:ScriptEvent) {
-        if (save.data.restBar == 0) return;
+        if (Save.instance.modOptions.get("badOptions").restBar == "off") return;
         var badHooks = ModuleHandler.getModule('BadHooks');
         if (badHooks != null) state = badHooks.scriptGet('state');
         if (state == null) return;
@@ -76,13 +75,13 @@ class RestPeriodTimer extends Module {
         for (sprite in restBarSprites) if (sprite != null) {
             sprite.cameras = [state.camHUD];
             sprite.visible = false;
-            sprite.alpha = save.data.hudOpacity / 100;
+            sprite.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;
             state.add(sprite);
         }
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null || save.data.restBar == 0 || restText == null) return;
+        if (state == null || Save.instance.modOptions.get("badOptions").restBar == "off" || restText == null) return;
         var restBarFadeOut = 1000 ; // 1s
         var restBarMinimum = 5000 ; // 5s
         var songPosition = state.conductorInUse.songPosition;
@@ -96,7 +95,7 @@ class RestPeriodTimer extends Module {
             for (sprite in restBarSprites) if (!sprite.visible) sprite.visible = true;
 
             // Fade out the rest bar when time is less than 1.5s
-            if (restTime <= 1500) for (sprites in restBarSprites) FlxTween.tween(sprites, { alpha: 0 }, 0.5, { ease: FlxEase.expoOut, onComplete: tween -> { sprites.visible = false; sprites.alpha = save.data.hudOpacity / 100;} });
+            if (restTime <= 1500) for (sprites in restBarSprites) FlxTween.tween(sprites, { alpha: 0 }, 0.5, { ease: FlxEase.expoOut, onComplete: tween -> { sprites.visible = false; sprites.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;} });
         }
     }
 
@@ -111,10 +110,10 @@ class RestPeriodTimer extends Module {
         // Clear previous drawing
         restBar.graphic.bitmap.fillRect(restBar.graphic.bitmap.rect, 0x00000000);
         var percentage;
-        switch (save.data.restBar) {
-            case 1: // Countdown
+        switch (Save.instance.modOptions.get("badOptions").restBar) {
+            case "countdown":
                 percentage = currentRestTime / totalRestTime;
-            case 2: // Countup
+            case "countup":
                 percentage = 1 - (currentRestTime / totalRestTime);
         }
 

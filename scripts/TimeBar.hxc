@@ -4,6 +4,7 @@ import funkin.graphics.FunkinSprite;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.save.Save;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
@@ -11,7 +12,6 @@ import flixel.text.FlxTextBorderStyle;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
-import flixel.util.FlxSave;
 import flixel.util.FlxStringUtil;
 import flixel.ui.FlxBar;
 
@@ -23,7 +23,6 @@ Psych Engine HUD V-Slice by nubz4lif
 OG Psych Engine HUD by Shadow Mario and his team
 */
 class TimeBar extends Module {
-    var save:FlxSave = new BadHUDOptions().save;
     var state:PlayState;
 
     var timeBarBG:FunkinSprite;
@@ -37,7 +36,7 @@ class TimeBar extends Module {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (save.data.timebarPosition == 0) return;
+        if (Save.instance.modOptions.get("badOptions").timebarPosition == "off") return;
         var badHooks = ModuleHandler.getModule('BadHooks');
         if (badHooks != null) state = badHooks.scriptGet('state');
         if (state == null) return;
@@ -55,13 +54,13 @@ class TimeBar extends Module {
         timeBarBG.scrollFactor.set(0, 0);
         timeBarBG.zIndex = 800;
 
-        var timeBarHeight = timeBarBG.height - (save.data.timeBarType == 0 ? 6 : 4);
+        var timeBarHeight = timeBarBG.height - (Save.instance.modOptions.get("badOptions").timeBarType == "off" ? 6 : 4);
         timeBar = new FlxBar(0, 0, null, timeBarBG.width - 5, timeBarHeight);
         timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
         timeBar.scrollFactor.set();
-        timeBar.zIndex = save.data.timebarStyle == 2 ? 799 : 801;
+        timeBar.zIndex = Save.instance.modOptions.get("badOptions").timebarStyle == "minimal-rounded" ? 799 : 801;
 
-        if (save.data.smoothBars) timeBar.numDivisions = Std.int(timeBarBG.width);
+        if (Save.instance.modOptions.get("badOptions").smoothBars) timeBar.numDivisions = Std.int(timeBarBG.width);
 
         timeText = new FlxText(0, 0, 400, "", 32);
         timeText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
@@ -69,21 +68,21 @@ class TimeBar extends Module {
         timeText.scrollFactor.set();
         timeText.zIndex = 802;
 
-        switch (save.data.timebarPosition) {
-            case 0: // Off
-            case 1: // Down
+        switch (Save.instance.modOptions.get("badOptions").timebarPosition) {
+            case "off":
+            case "down":
                 timeText.y = FlxG.height - 34;
                 timeBarBG.y = FlxG.height - 34 + 2;
-                if (save.data.hudFont == 0) {
+                if (Save.instance.modOptions.get("badOptions").hudFont == 0) {
                     timeBarBG.y = timeText.y + 5;
                 }
-            case 2: // Up
+            case "up":
                 timeText.y = 16;
                 timeBarBG.y = timeText.y + 2;
-                if (save.data.hudFont == 0) {
+                if (Save.instance.modOptions.get("badOptions").hudFont == 0) {
                     timeBarBG.y = timeText.y + 5;
                 }
-            case 3: // Vertical (Right Side)
+            case "vertical": // (Right Side)
                 timeText.x = timeBarXPosV;
                 timeText.y = timeBarYPosV;
                 timeBarBG.x = timeBarXPosV + (timeText.height / 5);
@@ -93,12 +92,12 @@ class TimeBar extends Module {
         }
 
         timeBar.x = timeBarBG.x + 3;
-        timeBar.y = timeBarBG.y + (save.data.timeBarType == 0 ? 3 : 2);
+        timeBar.y = timeBarBG.y + (Save.instance.modOptions.get("badOptions").timeBarType == "off" ? 3 : 2);
 
         timeBarSprites = [timeBarBG, timeBar, timeText];
 
         for (sprite in timeBarSprites) if (sprite != null) {
-            if (!save.data.timebarPosition == 3) sprite.screenCenter(0x01); // Vertical Time Bar
+            if (!Save.instance.modOptions.get("badOptions").timebarPosition == "vertical") sprite.screenCenter(0x01); // Vertical Time Bar
             state.add(sprite);
 
             // Move the time bar to the HUD camera.
@@ -109,29 +108,28 @@ class TimeBar extends Module {
 
     override function onSongStart(event:ScriptEvent) {
         for (sprite in timeBarSprites)
-            if (sprite != null && sprite.alpha != (save.data.hudOpacity / 100))
-                FlxTween.tween(sprite, {alpha: save.data.hudOpacity / 100}, 0.5, { ease: FlxEase.circOut });
+            if (sprite != null && sprite.alpha != (Save.instance.modOptions.get("badOptions").hudOpacity / 100))
+                FlxTween.tween(sprite, {alpha: Save.instance.modOptions.get("badOptions").hudOpacity / 100}, 0.5, { ease: FlxEase.circOut });
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null || save.data.timebarPosition == 0) return;
-
+        if (state == null || Save.instance.modOptions.get("badOptions").timebarPosition == "off") return;
         if (timeBar != null && timeBar.visible) {
             timeBar.value = (state.conductorInUse.songPosition / state.currentSongLengthMs) * 100;
             timeBar.updateBar();
-            switch (save.data.timebarType) {
-                case 0: // Off
-                case 1: // Time Left
+            switch (Save.instance.modOptions.get("badOptions").timebarType) {
+                case "off":
+                case "left":
                     timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
-                case 2: // Time Left / Total
+                case "left-total":
                     timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
-                case 3: // Elapsed
+                case "elapsed":
                     timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false);
-                case 4: // Elapsed / Total
+                case "elapsed-total":
                     timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
-                case 5: // Elapsed / Total
+                case "elapsed-left":
                     timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
-                case 6: // Song Name
+                case "name":
                     timeText.text = state.currentChart.songName;
             }
         }
