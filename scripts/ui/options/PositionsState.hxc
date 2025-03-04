@@ -24,20 +24,7 @@ class PositionsState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
 
     var welcomeMusic:FunkinSound = new FunkinSound();
-    var strumLine:Strumline;
-
-    var isSelected:Bool = false;
-    var isDragging:Bool = false;
-    var draggableSprites:Array<{
-        sprite:FunkinSprite,
-        isDragging:Bool,
-        isSelected:Bool,
-        dragOffsetX:Float,
-        dragOffsetY:Float,
-        spriteType:String
-    }> = [];
-
-    var targetCursorMode;
+    var draggableSprites:Array<DraggableSprite> = [];
 
     override function create() {
         super.create();
@@ -53,7 +40,10 @@ class PositionsState extends ScriptedMusicBeatSubState {
         menuBG.color = ChartEditorThemeHandler.BACKGROUND_COLOR_DARK;
         add(menuBG);
 
-        strumLine = new Strumline(NoteStyleRegistry.instance.fetchDefault(), true);
+        var noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE);
+        // noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_PIXEL_NOTE_STYLE); // Pixel NoteStyle
+
+        var strumLine = new Strumline(noteStyle, true);
         strumLine.x = FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET;
         strumLine.y = Preferences.downscroll ? FlxG.height - strumLine.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
         if (badOptions.middlescroll) strumLine.screenCenter(0x01);
@@ -64,13 +54,14 @@ class PositionsState extends ScriptedMusicBeatSubState {
         helpText.y = FlxG.height - (helpText.height * 2) - 2;
         add(helpText);
 
-        var noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE);
-        //var noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_PIXEL_NOTE_STYLE); // Pixel NoteStyle
         var judgementSprite = noteStyle.buildJudgementSprite("sick");
         // Set Offsets
         var judgementOffsets = Save.instance.modOptions.get("judgementOffsets");
-        if (judgementOffsets != null) judgementSprite.setPosition(judgementOffsets[0], judgementOffsets[1]);
-        else {
+        if (judgementOffsets != null) {
+            judgementSprite.setPosition(judgementOffsets[0], judgementOffsets[1]);
+            judgementSprite.scale.set(judgementOffsets[2], judgementOffsets[3]);
+            judgementSprite.updateHitbox();
+        } else {
             judgementSprite.x = (FlxG.width * 0.474);
             judgementSprite.x -= judgementSprite.width / 2;
             judgementSprite.y = (FlxG.camera.height * 0.45 - 60);
@@ -85,8 +76,11 @@ class PositionsState extends ScriptedMusicBeatSubState {
         var comboSprite = noteStyle.buildComboNumSprite(0);
         // Set Offsets
         var comboOffsets = Save.instance.modOptions.get("comboOffsets");
-        if (comboOffsets != null) comboSprite.setPosition(comboOffsets[0], comboOffsets[1]);
-        else {
+        if (comboOffsets != null) {
+            comboSprite.setPosition(comboOffsets[0], comboOffsets[1]);
+            comboSprite.scale.set(comboOffsets[2], comboOffsets[3]);
+            comboSprite.updateHitbox();
+        } else {
             comboSprite.x = (FlxG.width * 0.507) - (36 * 1) - 65;
             comboSprite.y = (FlxG.camera.height * 0.44);
             var comboSpriteOffsets = noteStyle.getComboNumSpriteOffsets(0);
@@ -103,10 +97,9 @@ class PositionsState extends ScriptedMusicBeatSubState {
         var hoveredSprite = null;
 
         for (i in 0...draggableSprites.length) {
-            var draggable = draggableSprites[i];
+            var draggable = draggableSprites[draggableSprites.length - 1 - i];
             var sprite = draggable.sprite;
 
-            // Check if mouse is over this sprite
             var isMouseOver:Bool = mouseX >= sprite.x &&
             mouseX <= sprite.x + sprite.width &&
             mouseY >= sprite.y &&
@@ -114,27 +107,16 @@ class PositionsState extends ScriptedMusicBeatSubState {
 
             if (isMouseOver) {
                 hoveredSprite = draggable;
+                break;
             }
         }
 
-        if (FlxG.mouse.justPressed && hoveredSprite != null) {
-            for (draggable in draggableSprites) draggable.isSelected = false;
+        if (hoveredSprite != null && FlxG.mouse.justPressed) {
+            for (draggable in draggableSprites) { draggable.isSelected = false; draggable.isDragging = false; }
             hoveredSprite.isSelected = true;
             hoveredSprite.isDragging = true;
             hoveredSprite.dragOffsetX = mouseX - hoveredSprite.sprite.x;
             hoveredSprite.dragOffsetY = mouseY - hoveredSprite.sprite.y;
-
-            // Move this sprite to the front (end of the array)
-            draggableSprites.remove(hoveredSprite);
-            draggableSprites.push(hoveredSprite);
-
-            for (i in 0...draggableSprites.length) {
-                var spr = draggableSprites[i].sprite;
-                remove(spr);
-                add(spr);
-            }
-        } else if (FlxG.mouse.justPressedRight) {
-
         }
 
         // Handling the sprite movement
@@ -154,27 +136,23 @@ class PositionsState extends ScriptedMusicBeatSubState {
                 }
             } else if (draggable.isSelected) {
                 var pressArray:Array<Bool> = [
-                    controls.NOTE_LEFT_P,
-                    controls.NOTE_DOWN_P,
-                    controls.NOTE_UP_P,
-                    controls.NOTE_RIGHT_P
+                    controls.UI_LEFT_P,
+                    controls.UI_DOWN_P,
+                    controls.UI_UP_P,
+                    controls.UI_RIGHT_P
                 ];
 
                 var holdArray:Array<Bool> = [
-                    controls.NOTE_LEFT,
-                    controls.NOTE_DOWN,
-                    controls.NOTE_UP,
-                    controls.NOTE_RIGHT
+                    controls.UI_LEFT,
+                    controls.UI_DOWN,
+                    controls.UI_UP,
+                    controls.UI_RIGHT
                 ];
 
                 var moveSpeed = 10;
+                if (FlxG.keys.pressed.CONTROL) moveSpeed /= 2;
+                else if (FlxG.keys.pressed.SHIFT) moveSpeed /= 4;
                 var holdSpeed = 2;
-
-                if (FlxG.keys.pressed.CONTROL) {
-                    moveSpeed /= 2;
-                } else if (FlxG.keys.pressed.SHIFT) {
-                    moveSpeed /= 4;
-                }
 
                 var newX = draggable.sprite.x;
                 var newY = draggable.sprite.y;
@@ -202,7 +180,26 @@ class PositionsState extends ScriptedMusicBeatSubState {
 
                 draggable.sprite.setPosition(newX, newY);
 
-                if (controls.NOTE_DOWN_R || controls.NOTE_UP_R || controls.NOTE_LEFT_R || controls.NOTE_RIGHT_R) saveOffsets(draggable);
+                if (controls.UI_DOWN_R || controls.UI_UP_R || controls.UI_LEFT_R || controls.UI_RIGHT_R) saveOffsets(draggable);
+
+                if (FlxG.mouse.wheel != 0) {
+                    var minScale:Float = 0.1; // Minimum scale to prevent complete disappearance
+                    var maxScaleX:Float = FlxG.width / draggable.sprite.frameWidth;
+                    var maxScaleY:Float = FlxG.height / draggable.sprite.frameHeight;
+
+                    if (FlxG.mouse.wheel != 0) {
+                        if (FlxG.keys.pressed.CONTROL)
+                            draggable.sprite.scale.x = Math.min(draggable.sprite.scale.x + (FlxG.mouse.wheel > 0 ? 0.1 : -0.1), maxScaleX);
+                        else if (FlxG.keys.pressed.SHIFT)
+                            draggable.sprite.scale.y = Math.min(draggable.sprite.scale.y + (FlxG.mouse.wheel > 0 ? 0.1 : -0.1), maxScaleY);
+                        else {
+                            draggable.sprite.scale.x = Math.min(draggable.sprite.scale.x + (FlxG.mouse.wheel > 0 ? 0.1 : -0.1), maxScaleX);
+                            draggable.sprite.scale.y = Math.min(draggable.sprite.scale.y + (FlxG.mouse.wheel > 0 ? 0.1 : -0.1), maxScaleY);
+                        }
+                    }
+                    draggable.sprite.updateHitbox();
+                    saveOffsets(draggable);
+                }
             }
         }
 
@@ -214,24 +211,12 @@ class PositionsState extends ScriptedMusicBeatSubState {
         super.update(elapsed);
     }
 
-    override function close() {
-        Cursor.hide();
-        super.close();
-    }
-
-    override function destroy() {
-        Cursor.hide();
-        if (welcomeMusic != null) welcomeMusic.destroy();
-        if (FlxG.sound.music != null) FlxG.sound.music.resume();
-        super.destroy();
-    }
-
     // Helper Methods
-    function saveOffsets(draggable) {
+    function saveOffsets(draggable:DraggableSprite) {
         var badHooks = ModuleHandler.getModule("BadHooks");
         if (badHooks != null) {
-            if (draggable.spriteType == "judgement") Save.instance.modOptions.set("judgementOffsets", [Std.int(draggable.sprite.x), Std.int(draggable.sprite.y)]);
-            else if (draggable.spriteType == "combo") Save.instance.modOptions.set("comboOffsets", [Std.int(draggable.sprite.x), Std.int(draggable.sprite.y)]);
+            if (draggable.spriteType == "judgement") Save.instance.modOptions.set("judgementOffsets", [Std.int(draggable.sprite.x), Std.int(draggable.sprite.y), draggable.sprite.scale.x, draggable.sprite.scale.y ]);
+            else if (draggable.spriteType == "combo") Save.instance.modOptions.set("comboOffsets", [Std.int(draggable.sprite.x), Std.int(draggable.sprite.y), draggable.sprite.scale.x, draggable.sprite.scale.y]);
         }
     }
 
@@ -249,6 +234,14 @@ class PositionsState extends ScriptedMusicBeatSubState {
         else Cursor.cursorMode = CursorMode.Default;
     }
 
+    function setupWelcomeMusic() {
+        if (FlxG.sound.music != null) FlxG.sound.music.pause();
+        var pauseState:PauseSubState = ModuleHandler.getModule("PauseOptions").scriptGet("pauseState");
+        if (pauseState != null) pauseState.pauseMusic.pause();
+        this.welcomeMusic = FunkinSound.load(Paths.music('chartEditorLoop/chartEditorLoop'), true, true);
+        this.welcomeMusic.play(false, FlxG.random.int(0, Std.int(welcomeMusic.length / 2)));
+    }
+
     function addDraggableSprite(sprite:FunkinSprite, type:String) {
         draggableSprites.push({
             sprite: sprite,
@@ -260,11 +253,29 @@ class PositionsState extends ScriptedMusicBeatSubState {
         });
     }
 
-    function setupWelcomeMusic() {
-        if (FlxG.sound.music != null) FlxG.sound.music.pause();
-        var pauseState:PauseSubState = ModuleHandler.getModule("PauseOptions").scriptGet("pauseState");
-        if (pauseState != null) pauseState.pauseMusic.pause();
-        this.welcomeMusic = FunkinSound.load(Paths.music('chartEditorLoop/chartEditorLoop'), true, true);
-        this.welcomeMusic.play(false, FlxG.random.int(0, Std.int(welcomeMusic.length / 2)));
+    // Cleanup
+    override function close() {
+        cleanup();
+        super.close();
     }
+
+    override function destroy() {
+        cleanup();
+        super.destroy();
+    }
+
+    function cleanup() {
+        Cursor.hide();
+        if (welcomeMusic != null) welcomeMusic.destroy();
+        if (FlxG.sound.music != null) FlxG.sound.music.resume();
+    }
+}
+
+typedef DraggableSprite = {
+    sprite:FunkinSprite,
+    isDragging:Bool,
+    isSelected:Bool,
+    dragOffsetX:Float,
+    dragOffsetY:Float,
+    spriteType:String
 }

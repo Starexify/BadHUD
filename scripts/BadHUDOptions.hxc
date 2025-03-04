@@ -5,6 +5,7 @@ import funkin.save.Save;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.Module;
 import funkin.ui.options.OptionsState;
+import funkin.ui.options.PreferencesMenu;
 import funkin.ui.options.items.NumberPreferenceItem;
 
 import openfl.text.TextFormat;
@@ -38,21 +39,19 @@ class BadHUDOptions extends Module {
         accuracyType: "vanilla",
         commaSeparatedScore: false,
         popUpType: "vanilla",
+        remindKeys: true,
+        muteMiss: true,
         underlayOpacity: 0,
         kpsCounter: false,
         customScrollSpeed: false,
-        scrollSpeedFactor: 18,
-        remindKeys: true
+        scrollSpeedFactor: 18
     };
 
     function new() {
         super("BadHUDOptions", 1);
         // Default Options (First Start)
-        if (!Save.instance.modOptions.exists("badOptions")) {
-            Save.instance.modOptions.set("badOptions", saveObject);
-        } else {
-            updatetypetext();
-        }
+        if (!Save.instance.modOptions.exists("badOptions")) Save.instance.modOptions.set("badOptions", saveObject);
+        else updatetypetext();
         Save.instance.flush();
 
         if (Preferences.debugDisplay) changeDebugDisplay(font);
@@ -60,7 +59,7 @@ class BadHUDOptions extends Module {
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
         if (Std.isOfType(event.targetState, OptionsState)) {
-            var preferences = event.targetState.pages.get("preferences");
+            var preferences:PreferencesMenu = event.targetState.pages.get("preferences");
             if (preferences != null) {
                 updatetypetext();
                 Save.instance.flush();
@@ -69,7 +68,7 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemPercentage("Opponent Notes Opacity", "The opacity of the opponent notes.", value -> badOptions.opponentNoteOpacity = value, badOptions.opponentNoteOpacity);
 
                 // Bars
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, "Bars :", "bold", function() {});
+                preferences.items.createItem(120, 120 * preferences.items.length + 30, "Bars :", "bold");
                 preferences.createPrefItemEnum("Health Bar Position", "The position of the Health Bar.", [
                     "off" => "Off",
                     "vanilla" => "Vanilla",
@@ -117,7 +116,7 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemCheckbox("Icon Colored Health Bar", "If enabled, the health bar will use the dominant icon color.", value -> badOptions.iconColors = value, badOptions.iconColors);
 
                 // HUD Customization
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold", function() {});
+                preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold");
 
                 preferences.createPrefItemEnum("on Left", "Left side elements", [
                     "none" => "None",
@@ -129,61 +128,63 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemPercentage("HUD Opacity", "Changes the opacity of the HUD", value -> badOptions.hudOpacity = value, badOptions.hudOpacity);
 
                 preferences.createPrefItemEnum("HUD Font", "Changes the font of the HUD", [
-                "0" => "VCR OSD Mono (Vanilla)",
-                "1" => "VCR OSD Neue",
-                "2" => "Minecraft",
-                "3" => "Retro Gaming",
-                "4" => "Roblox",
-                "5" => "Super Mario 64",
-                "6" => "New Super Mario Font U",
-                "7" => "Karmatic Arcade",
-                "8" => "ModernDOS"
-                "9" => "fbUsv8C5eI"
+                    "0" => "VCR OSD Mono (Vanilla)",
+                    "1" => "VCR OSD Neue",
+                    "2" => "Minecraft",
+                    "3" => "Retro Gaming",
+                    "4" => "Roblox",
+                    "5" => "Super Mario 64",
+                    "6" => "New Super Mario Font U",
+                    "7" => "Karmatic Arcade",
+                    "8" => "ModernDOS",
+                    "9" => "fbUsv8C5eI"
                 ], value -> {
-                badOptions.hudFont = Std.parseInt(value);
-                switch (badOptions.hudFont) {
-                case 0: // px = 21;
-                font = "vcr.ttf";
-                case 1: // px = 16;
-                font = "VCRosdNEUE.ttf";
-                case 2: // px = 16;
-                font = "Minecraft.ttf";
-                case 3: // px = 11;
-                font = "Retro Gaming.ttf";
-                case 4: // px = ?;
-                font = "RobloxFont-Regular.ttf";
-                case 5: // px = ?;
-                font = "Super Mario 64.ttf";
-                case 6: // px = ?;
-                font = "New Super Mario Font U.ttf";
-                case 7: // px = ?;
-                font = "ka1.ttf";
-                case 8: // px = 16;
-                font = "ModernDOS.ttf";
-                case 9: // px = ?;
-                font = "fbUsv8C5eI.ttf";
-            } changeDebugDisplay(font); }, badOptions.hudFont);
+                    badOptions.hudFont = Std.parseInt(value);
+                    switch (badOptions.hudFont) {
+                        case 0: // px = 21;
+                            font = "vcr.ttf";
+                        case 1: // px = 16;
+                            font = "VCRosdNEUE.ttf";
+                        case 2: // px = 16;
+                            font = "Minecraft.ttf";
+                        case 3: // px = 11;
+                            font = "Retro Gaming.ttf";
+                        case 4: // px = ?;
+                            font = "RobloxFont-Regular.ttf";
+                        case 5: // px = ?;
+                            font = "Super Mario 64.ttf";
+                        case 6: // px = ?;
+                            font = "New Super Mario Font U.ttf";
+                        case 7: // px = ?;
+                            font = "ka1.ttf";
+                        case 8: // px = 16;
+                            font = "ModernDOS.ttf";
+                        case 9: // px = ?;
+                            font = "fbUsv8C5eI.ttf";
+                    } changeDebugDisplay(font); }, Std.string(badOptions.hudFont));
 
                 preferences.createPrefItemNumber("HUD Font Size", "Changes the size of the HUD text", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
 
-                    // Extras
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold", function() {});
+                // Extras
+                preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold");
 
                 preferences.createPrefItemEnum("Accuracy System", "Change the accuracy/score system (visually)", [
-                "vanilla" => "Vanilla",
-                "psych" => "Psych Engine",
-                "osu" => "osu!Mania"
+                    "vanilla" => "Vanilla",
+                    "psych" => "Psych Engine",
+                    "osu" => "osu!Mania"
                 ], value -> badOptions.accuracyType = value, badOptions.accuracyType);
 
                 preferences.createPrefItemCheckbox("Comma Separated Score", "", value -> badOptions.commaSeparatedScore = value, badOptions.commaSeparatedScore);
 
                 preferences.createPrefItemEnum("Combo PopUp Animation", "Change the animation of the Combo PopUps when popping up", [
-                "off" => "Off",
-                "vanilla" => "Vanilla",
-                "popup" => "Pop-Up"
+                    "off" => "Off",
+                    "vanilla" => "Vanilla",
+                    "popup" => "Pop-Up"
                 ], value -> badOptions.popUpType = value, badOptions.popUpType);
 
-                preferences.createPrefItemCheckbox("Mute Miss Sounds", "", value -> badOptions.muteMiss = value, badOptions.muteMiss);
+                preferences.createPrefItemCheckbox("Enable Keybind Reminder", "", value -> badOptions.remindKeys = value, badOptions.remindKeys);
+
+                preferences.createPrefItemCheckbox("Mute Miss Sounds", "If enabled, mutes the sound of missing a note.", value -> badOptions.muteMiss = value, badOptions.muteMiss);
 
                 var underlayOpacityItem = new NumberPreferenceItem(0, (120 * preferences.items.length) + 30, "Note Underlay Opacity",
                 badOptions.underlayOpacity, 0, 100, 5, 0,
@@ -193,16 +194,14 @@ class BadHUDOptions extends Module {
                 preferences.items.addItem("Note Underlay Opacity", underlayOpacityItem);
                 preferences.preferenceItems.add(underlayOpacityItem.lefthandText);
 
-                preferences.createPrefItemCheckbox("Enable Keybind Reminder", "", value -> badOptions.remindKeys = value, badOptions.remindKeys);
-
                 preferences.createPrefItemCheckbox("Show KPS Counter", "", value -> badOptions.kpsCounter = value, badOptions.kpsCounter);
 
                 preferences.createPrefItemCheckbox("Custom Scroll Speed", "", value -> badOptions.customScrollSpeed = value, badOptions.customScrollSpeed);
 
                 preferences.createPrefItemNumber("Scroll Speed Factor", "Changes the speed of the notes",
                 value -> badOptions.scrollSpeedFactor = value,
-                value -> return badOptions.scrollSpeedFactor / 10,
-                badOptions.scrollSpeedFactor, 1, 9999, 1, 0);
+                value -> Std.string(badOptions.scrollSpeedFactor / 10),
+                Std.int(badOptions.scrollSpeedFactor), 1, 9999, 1, 0);
             }
         }
     }
@@ -270,9 +269,10 @@ typedef BadSaveData = {
     accuracyType:String,
     commaSeparatedScore:Bool,
     popUpType:String,
+    remindKeys:Bool,
+    muteMiss:Bool,
     underlayOpacity:Int,
     kpsCounter:Bool,
     customScrollSpeed:Bool,
-    scrollSpeedFactor:Int,
-    remindKeys:Bool
+    scrollSpeedFactor:Float
 }

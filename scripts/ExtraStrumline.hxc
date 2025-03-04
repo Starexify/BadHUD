@@ -192,9 +192,14 @@ class ExtraStrumline extends ScriptedModule {
             if (numCombo == null) continue;
 
             var comboOffsets = Save.instance.modOptions.get("comboOffsets");
-            if (comboOffsets != null) numCombo.setPosition(comboOffsets[0] - (37 * (daLoop - 1)), comboOffsets[1]);
-            else {
-                numCombo.x = (FlxG.width * 0.507) - (37 * daLoop) - 65;
+            if (comboOffsets != null) {
+                var originalWidth = numCombo.width;
+                numCombo.scale.set(comboOffsets[2], comboOffsets[3]);
+                numCombo.updateHitbox();
+                var newWidth = numCombo.width;
+                numCombo.setPosition(comboOffsets[0] - ((38 - (originalWidth - newWidth)) * (daLoop - 1)), comboOffsets[1]);
+            } else {
+                numCombo.x = (FlxG.width * 0.507) - (38 * daLoop) - 65;
                 numCombo.y = (FlxG.camera.height * 0.44);
                 var styleOffsets = noteStyle.getComboNumSpriteOffsets(digit);
                 numCombo.x += styleOffsets[0];
@@ -250,17 +255,17 @@ class ExtraStrumline extends ScriptedModule {
         var judgementSprite:FunkinSprite = noteStyle.buildJudgementSprite(judgement);
         if (judgementSprite == null) return;
 
-        var originalScaleX = judgementSprite.scale.x;
-        var originalScaleY = judgementSprite.scale.y;
-
         var judgementOffsets = Save.instance.modOptions.get("judgementOffsets");
-        if (judgementOffsets != null) judgementSprite.setPosition(judgementOffsets[0], judgementOffsets[1]);
-        else {
+        if (judgementOffsets != null) {
+            judgementSprite.setPosition(judgementOffsets[0], judgementOffsets[1]);
+            judgementSprite.scale.set(judgementOffsets[2], judgementOffsets[3]);
+            judgementSprite.updateHitbox();
+        } else {
             judgementSprite.x = (FlxG.width * 0.474);
             judgementSprite.x -= judgementSprite.width / 2;
             judgementSprite.y = (FlxG.camera.height * 0.45 - 60);
             judgementSprite.y -= judgementSprite.height / 2;
-            var styleOffsets = noteStyle.getJudgementSpriteOffsets(dajudgementSprite);
+            var styleOffsets = noteStyle.getJudgementSpriteOffsets(judgement);
             judgementSprite.x += styleOffsets[0];
             judgementSprite.y += styleOffsets[1];
         }
@@ -288,7 +293,9 @@ class ExtraStrumline extends ScriptedModule {
                     ease: fadeEase
                 });
             case "popup":
-                judgementSprite.scale.set(0.8, 0.8);
+                var originalScaleX = judgementSprite.scale.x;
+                var originalScaleY = judgementSprite.scale.y;
+                judgementSprite.scale.set(originalScaleX * 0.8, originalScaleX * 0.8);
                 FlxTween.tween(judgementSprite.scale, {x: originalScaleX, y: originalScaleY}, 0.2, {
                     ease: FlxEase.backOut,
                     onComplete: tween -> {
