@@ -133,7 +133,8 @@ class BadHUDOptions extends Module {
                     "4" => "Roblox",
                     "5" => "Super Mario 64",
                     "6" => "New Super Mario Font U",
-                    "7" => "Karmatic Arcade"
+                    "7" => "Karmatic Arcade",
+                    "8" => "fbUsv8C5eI"
                 ], value -> {
                     badOptions.hudFont = Std.parseInt(value);
                     switch (badOptions.hudFont) {
@@ -153,6 +154,10 @@ class BadHUDOptions extends Module {
                             font = "New Super Mario Font U.ttf";
                         case 7: // px = ?;
                             font = "ka1.ttf";
+                        case 8: // px = 16;
+                            font = "ModernDOS.ttf";
+                        case 9: // px = ?;
+                            font = "fbUsv8C5eI.ttf";
                     } changeDebugDisplay(font); }, badOptions.hudFont);
 
                 preferences.createPrefItemNumber("HUD Font Size", "Changes the size of the HUD text", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
@@ -235,6 +240,10 @@ class BadHUDOptions extends Module {
                 font = "New Super Mario Font U.ttf";
             case 7: // px = ?;
                 font = "ka1.ttf";
+            case 8: // px = 16;
+                font = "ModernDOS.ttf";
+            case 9: // px = ?;
+                font = "fbUsv8C5eI.ttf";
         }
     }
 }
