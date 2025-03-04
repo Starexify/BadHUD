@@ -1,5 +1,6 @@
-import funkin.modding.module.Module;
+import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
+import funkin.modding.module.ScriptedModule;
 import funkin.play.PlayState;
 import funkin.play.components.HealthIcon;
 import funkin.util.Constants;
@@ -11,7 +12,7 @@ import flixel.math.FlxMath;
 
 import Std;
 
-class BadHealthBar extends Module {
+class BadHealthBar extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
 
     var state:PlayState;

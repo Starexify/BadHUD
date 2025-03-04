@@ -1,4 +1,3 @@
-import funkin.modding.module.Module;
 import funkin.Highscore;
 import funkin.Paths;
 import funkin.PlayerSettings;
@@ -6,7 +5,9 @@ import funkin.Preferences;
 import funkin.data.notestyle.NoteStyleRegistry;
 import funkin.graphics.FunkinSprite;
 import funkin.input.PreciseInputManager;
+import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
+import funkin.modding.module.ScriptedModule;
 import funkin.play.notes.Strumline;
 import funkin.play.notes.notestyle.NoteStyle;
 import funkin.play.PauseSubState;
@@ -27,7 +28,7 @@ import openfl.display.BitmapData;
 
 import Std;
 
-class ExtraStrumline extends Module {
+class ExtraStrumline extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var state:PlayState;
 

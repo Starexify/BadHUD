@@ -1,8 +1,6 @@
-import flixel.FlxG;
-import flixel.tweens.FlxEase;
-import flixel.tweens.FlxTween;
 import funkin.api.discord.DiscordClient;
 import funkin.modding.base.ScriptedMusicBeatSubState;
+import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ScriptedModule;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
@@ -10,6 +8,11 @@ import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.debug.latency.LatencyState;
 import funkin.ui.options.OptionsState;
 import funkin.util.ReflectUtil;
+
+import flixel.FlxG;
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
+
 import polymod.hscript._internal.PolymodScriptClass;
 
 class PauseOptions extends ScriptedModule {

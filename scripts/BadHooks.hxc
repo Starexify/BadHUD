@@ -1,8 +1,8 @@
-import funkin.modding.module.Module;
+import funkin.modding.module.ScriptedModule;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 
-class BadHooks extends Module {
+class BadHooks extends ScriptedModule {
     var state:PlayState;
 
     var healthBarExcluded:Array<String> = ["Silly Billy",

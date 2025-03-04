@@ -1,8 +1,9 @@
-import funkin.modding.module.Module;
 import funkin.Paths;
 import funkin.Preferences;
 import funkin.play.PauseSubState;
+import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
+import funkin.modding.module.ScriptedModule;
 import funkin.play.PlayState;
 import funkin.save.Save;
 
@@ -13,7 +14,7 @@ import flixel.text.FlxTextBorderStyle;
 import Math;
 import Std;
 
-class KPSCounter extends Module {
+class KPSCounter extends ScriptedModule {
     var state:PlayState;
 
     var kpsText:FlxText;

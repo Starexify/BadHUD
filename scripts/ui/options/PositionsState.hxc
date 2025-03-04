@@ -1,23 +1,24 @@
 package ui.options;
 
-import flixel.FlxG;
-import flixel.FlxSprite;
-import flixel.text.FlxText;
+import funkin.Paths;
+import funkin.Preferences;
 import funkin.audio.FunkinSound;
 import funkin.data.notestyle.NoteStyleRegistry;
+import funkin.graphics.FunkinSprite;
 import funkin.input.Cursor;
-import funkin.modding.base.ScriptedMusicBeatSubState;
-import funkin.Paths;
-import funkin.play.notes.Strumline;
-import funkin.Preferences;
 import funkin.input.CursorMode;
+import funkin.modding.base.ScriptedMusicBeatSubState;
+import funkin.modding.module.ModuleHandler;
+import funkin.play.PauseSubState;
+import funkin.play.notes.Strumline;
+import funkin.save.Save;
 import funkin.ui.debug.charting.handlers.ChartEditorThemeHandler;
 import funkin.ui.options.OptionsState;
 import funkin.util.Constants;
-import funkin.graphics.FunkinSprite;
-import funkin.save.Save;
-import funkin.play.PauseSubState;
-import funkin.modding.module.ModuleHandler;
+
+import flixel.FlxG;
+import flixel.FlxSprite;
+import flixel.text.FlxText;
 
 class PositionsState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");

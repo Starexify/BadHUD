@@ -1,12 +1,15 @@
 import funkin.Assets;
-import funkin.modding.module.Module;
 import funkin.Paths;
 import funkin.Preferences;
 import funkin.save.Save;
-import funkin.ui.options.items.NumberPreferenceItem;
+import funkin.modding.events.ScriptEvent;
+import funkin.modding.module.Module;
 import funkin.ui.options.OptionsState;
-import Main;
+import funkin.ui.options.items.NumberPreferenceItem;
+
 import openfl.text.TextFormat;
+
+import Main;
 import Std;
 
 class BadHUDOptions extends Module {

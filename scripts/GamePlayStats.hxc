@@ -1,7 +1,8 @@
-import funkin.modding.module.Module;
 import funkin.Highscore;
 import funkin.Paths;
+import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
+import funkin.modding.module.ScriptedModule;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.play.PlayStatePlaylist;
@@ -23,7 +24,7 @@ import Std;
 Psych Engine HUD V-Slice by nubz4lif
 OG Psych Engine HUD by Shadow Mario and his team
 */
-class GamePlayStats extends Module {
+class GamePlayStats extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var state:PlayState;
 

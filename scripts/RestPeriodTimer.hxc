@@ -1,8 +1,9 @@
-import funkin.modding.module.Module;
 import funkin.Paths;
 import funkin.Preferences;
 import funkin.graphics.FunkinSprite;
+import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
+import funkin.modding.module.ScriptedModule;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.save.Save;
@@ -14,7 +15,7 @@ import flixel.util.FlxSpriteUtil;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 
-class RestPeriodTimer extends Module {
+class RestPeriodTimer extends ScriptedModule {
     var state:PlayState;
 
     var restBarBG:FunkinSprite;
