@@ -12,6 +12,8 @@ import flixel.math.FlxMath;
 import Std;
 
 class BadHealthBar extends Module {
+    var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
+
     var state:PlayState;
 
     var iconP1:HealthIcon;
@@ -29,11 +31,11 @@ class BadHealthBar extends Module {
         iconP1 = state.iconP1;
         iconP2 = state.iconP2;
 
-        if (Save.instance.modOptions.get("badOptions").smoothBars) state.healthBar.numDivisions = Std.int(state.healthBarBG.width / 1.2);
+        if (badOptions.smoothBars) state.healthBar.numDivisions = Std.int(state.healthBarBG.width / 1.2);
 
         // Health Bar
-        if (Save.instance.modOptions.get("badOptions").healthBarPosition != "off") {
-            if (Save.instance.modOptions.get("badOptions").healthBarPosition == "vertical") {
+        if (badOptions.healthBarPosition != "off") {
+            if (badOptions.healthBarPosition == "vertical") {
                 // Vertical HP Bar
                 state.healthBar.x = FlxG.width * 0.7;
                 state.healthBar.y = FlxG.height * 0.5;
@@ -47,11 +49,11 @@ class BadHealthBar extends Module {
             }
             state.healthBarBG.setPosition(state.healthBar.x - 4, state.healthBar.y - 4);
             if (!state.isMinimalMode) {
-                if (iconP1 != null) iconP1.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;
-                if (iconP2 != null) iconP2.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;
+                if (iconP1 != null) iconP1.alpha = badOptions.hudOpacity / 100;
+                if (iconP2 != null) iconP2.alpha = badOptions.hudOpacity / 100;
             }
-            state.healthBar.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;
-            state.healthBarBG.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;
+            state.healthBar.alpha = badOptions.hudOpacity / 100;
+            state.healthBarBG.alpha = badOptions.hudOpacity / 100;
         } else {
             state.healthBar.visible = false;
             state.healthBarBG.visible = false;
@@ -63,7 +65,7 @@ class BadHealthBar extends Module {
 
         // Health Icon Positions
         if (!state.isMinimalMode) {
-            switch (Save.instance.modOptions.get("badOptions").healthIconPosition) {
+            switch (badOptions.healthIconPosition) {
                 case "off":
                     if (iconP1 != null) iconP1.visible = false;
                     if (iconP2 != null) iconP2.visible = false;
@@ -77,7 +79,7 @@ class BadHealthBar extends Module {
                     var healthBarWidth:Float = state.healthBar.width;
                     if (iconP1 != null) iconP1.autoUpdate = false;
                     if (iconP2 != null) iconP2.autoUpdate = false;
-                    if (Save.instance.modOptions.get("badOptions").healthBarPosition == "vertical") {
+                    if (badOptions.healthBarPosition == "vertical") {
                         if (iconP1 != null) iconP1.y = healthBarY + (healthBarWidth / 2) - (state.iconP1.width / 2);
                         if (iconP2 != null) iconP2.y = healthBarY - (healthBarWidth / 2) - (state.iconP2.width / 2);
                         if (iconP1 != null) iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
@@ -93,43 +95,12 @@ class BadHealthBar extends Module {
         }
 
         // Icon Colored Health Bar
-        if (Save.instance.modOptions.get("badOptions").iconColors) {
+        if (badOptions.iconColors) {
             var bfHealthColor = getDominantColor(iconP1);
             var opponentHealthColor = getDominantColor(iconP2);
             state.healthBar.createFilledBar(opponentHealthColor, bfHealthColor);
             state.healthBar.updateBar();
         }
-    }
-
-    function updateIconsPosition() {
-        // Vertical Health Icons (WORKING SOMEHOW)
-        if (Save.instance.modOptions.get("badOptions").healthBarPosition == "vertical" && (Save.instance.modOptions.get("badOptions").healthIconPosition == "vanilla" || Save.instance.modOptions.get("badOptions").healthIconPosition == "flipped")) {
-            var healthBarX:Float = state.healthBar.x;
-            var healthBarY:Float = state.healthBar.y;
-            var healthBarWidth:Float = state.healthBar.width;
-            var yCentering:Float = healthBarWidth / 2 - 15;
-            var gapReduction:Float = 5;
-
-            // Move icons horizontally relative to health bar
-            iconP1.y = healthBarY
-            + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering
-            - HealthIcon.POSITION_OFFSET);
-            iconP2.y = healthBarY
-            + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering + gapReduction)
-            - (iconP2.height - HealthIcon.POSITION_OFFSET);
-
-            // Center icons vertically relative to the health bar
-            iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
-            iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2);
-        }
-        if (Save.instance.modOptions.get("badOptions").healthIconPosition == "vanilla" || Save.instance.modOptions.get("badOptions").healthIconPosition == "flipped") {
-            updateHealthIcon(iconP1, state.health);
-            updateHealthIcon(iconP2, Constants.HEALTH_MAX - state.health);
-        }
-    }
-
-    function updateHealthIcon(icon:HealthIcon, health:Float) {
-        if (icon != null) icon.playAnimation(health < HealthIcon.LOSING_THRESHOLD ? "losing" : health > HealthIcon.WINNING_THRESHOLD ? "winning" : "idle");
     }
 
     // bop for icons, I think onBeatHit is better than onUpdate and fixes it ?
@@ -176,4 +147,33 @@ class BadHealthBar extends Module {
         colorData = [];
         return dominantColor;
     }
+
+    function updateIconsPosition() {
+        // Vertical Health Icons (WORKING SOMEHOW)
+        if (badOptions.healthBarPosition == "vertical" && (badOptions.healthIconPosition == "vanilla" || badOptions.healthIconPosition == "flipped")) {
+            var healthBarX:Float = state.healthBar.x;
+            var healthBarY:Float = state.healthBar.y;
+            var healthBarWidth:Float = state.healthBar.width;
+            var yCentering:Float = healthBarWidth / 2 - 15;
+            var gapReduction:Float = 5;
+
+            // Move icons horizontally relative to health bar
+            iconP1.y = healthBarY
+            + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering
+            - HealthIcon.POSITION_OFFSET);
+            iconP2.y = healthBarY
+            + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering + gapReduction)
+            - (iconP2.height - HealthIcon.POSITION_OFFSET);
+
+            // Center icons vertically relative to the health bar
+            iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
+            iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2);
+        }
+        if (badOptions.healthIconPosition == "vanilla" || badOptions.healthIconPosition == "flipped") {
+            updateHealthIcon(iconP1, state.health);
+            updateHealthIcon(iconP2, Constants.HEALTH_MAX - state.health);
+        }
+    }
+
+    function updateHealthIcon(icon:HealthIcon, health:Float) { if (icon != null) icon.playAnimation(health < HealthIcon.LOSING_THRESHOLD ? "losing" : health > HealthIcon.WINNING_THRESHOLD ? "winning" : "idle"); }
 }

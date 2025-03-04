@@ -1,4 +1,5 @@
 import funkin.modding.module.Module;
+import funkin.Highscore;
 import funkin.Paths;
 import funkin.PlayerSettings;
 import funkin.Preferences;
@@ -11,6 +12,7 @@ import funkin.play.notes.notestyle.NoteStyle;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.util.Constants;
+import funkin.util.EaseUtil;
 import funkin.util.InputUtil;
 import funkin.save.Save;
 
@@ -26,17 +28,20 @@ import openfl.display.BitmapData;
 import Std;
 
 class ExtraStrumline extends Module {
+    var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var state:PlayState;
 
     var laneUnderlay:FlxSprite;
     var leftGradient:FlxSprite;
     var rightGradient:FlxSprite;
-
-    var judgementSprite:FunkinSprite;
-    var noteStyle:NoteStyle;
-
     var underlaySprites:Array<FlxSprite>;
+
     var keybindTexts:Array<FlxText> = [];
+
+    var tempComboSprites:Array<FunkinSprite> = [];
+    var tempJudgementSprite:FunkinSprite;
+
+    var noteStyle:NoteStyle;
 
     function new() {
         super("ExtraStrumline", 3);
@@ -50,12 +55,12 @@ class ExtraStrumline extends Module {
         if (noteStyle == null) noteStyle = NoteStyleRegistry.instance.fetchDefault();
 
         // Center player strumline
-        if (Save.instance.modOptions.get("badOptions").middlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) {
+        if (badOptions.middlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) {
             state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
 
             // Opponent Strumline
-            if (Save.instance.modOptions.get("badOptions").oppNotesOpacity != 0) {
-                var rightXOffset = Save.instance.modOptions.get("badOptions").healthBarPosition == 2 ? -Constants.STRUMLINE_X_OFFSET : -150;
+            if (badOptions.opponentNoteOpacity != 0) {
+                var rightXOffset = badOptions.healthBarPosition == "vertical" ? -Constants.STRUMLINE_X_OFFSET : -150;
 
                 // Place last 2 notes on right side
                 for (i in 2...4) {
@@ -65,21 +70,21 @@ class ExtraStrumline extends Module {
             }
         }
 
-        if (Save.instance.modOptions.get("badOptions").oppNotesOpacity > 0) state.opponentStrumline.alpha = Save.instance.modOptions.get("badOptions").oppNotesOpacity / 100;
+        if (badOptions.opponentNoteOpacity > 0) state.opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
 
         // Note Underlay
-        if (Save.instance.modOptions.get("badOptions").underlayOpacity > 0) {
+        if (badOptions.underlayOpacity > 0) {
             laneUnderlay = new FlxSprite(0, 0).makeGraphic(Std.int(state.playerStrumline.get_width()), FlxG.height * 2);
             laneUnderlay.x = state.playerStrumline.x;
             laneUnderlay.color = 0x000000;
-            laneUnderlay.alpha = Save.instance.modOptions.get("badOptions").underlayOpacity / 100;
+            laneUnderlay.alpha = badOptions.underlayOpacity / 100;
 
             var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
 
-            leftGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, Save.instance.modOptions.get("badOptions").underlayOpacity / 100, true);
+            leftGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, badOptions.underlayOpacity / 100, true);
             leftGradient.x = state.playerStrumline.x - fadeRegionWidth;
 
-            rightGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, Save.instance.modOptions.get("badOptions").underlayOpacity / 100, false);
+            rightGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, badOptions.underlayOpacity / 100, false);
             rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
 
             underlaySprites = [laneUnderlay, leftGradient, rightGradient];
@@ -91,11 +96,11 @@ class ExtraStrumline extends Module {
             }
         }
 
-        // Combo PopUps
+        // Replace Combo PopUps
         state.remove(state.comboPopUps);
 
         // Remind Keybinds
-        if (Save.instance.modOptions.get("badOptions").remindKeys) {
+        if (badOptions.remindKeys) {
             for (staticNote in state.playerStrumline.strumlineNotes.members) {
                 var keyArray = PreciseInputManager.getKeysForDirection(PlayerSettings.player1.controls, staticNote.direction);
                 var keyName = InputUtil.getKeyName(keyArray[0]) ;
@@ -114,8 +119,8 @@ class ExtraStrumline extends Module {
     override function onUpdate(event:UpdateScriptEvent) {
         if (state == null) return;
         try {
-            if (Save.instance.modOptions.get("badOptions").underlayOpacity > 0) updatePosition();
-            if (Save.instance.modOptions.get("badOptions").middlescroll && !Save.instance.modOptions.get("badOptions").oppNotes) {
+            if (badOptions.underlayOpacity > 0) updatePosition();
+            if (badOptions.middlescroll && !badOptions.oppNotes) {
                 if (state.currentStage != null && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) updateOpponentNotes();
                 else if (state.isMinimalMode) updateOpponentNotes();
             }
@@ -124,77 +129,11 @@ class ExtraStrumline extends Module {
         }
     }
 
-    override function onNoteHit(event:HitNoteScriptEvent) {
-        if (state == null) return;
-        if (event.note.noteData.getMustHitNote()) displayRating(event.judgement);
-    }
+    override function onNoteHit(event:HitNoteScriptEvent) { if (state != null && !state.isPracticeMode && event.note.noteData.getMustHitNote()) displayPopUps(event.judgement); }
 
-    override function onNoteMiss(event:NoteScriptEvent) { event.playSound = !Save.instance.modOptions.get("badOptions").muteMiss; }
+    override function onNoteMiss(event:NoteScriptEvent) { event.playSound = !badOptions.muteMiss; }
 
-    override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) { event.playSound = !Save.instance.modOptions.get("badOptions").muteMiss; }
-
-    function displayRating(daRating:String) {
-        if (daRating == null) return;
-
-        // Remove existing judgement sprite if it exists
-        if (judgementSprite != null) {
-            state.remove(judgementSprite);
-            judgementSprite.destroy();
-            judgementSprite = null;
-        }
-
-        // Create new rating sprite
-        var rating:FunkinSprite = noteStyle.buildJudgementSprite(daRating);
-        if (rating == null) return;
-
-        var originalScaleX = rating.scale.x;
-        var originalScaleY = rating.scale.y;
-
-        // Center horizontally
-        rating.x = state.playerStrumline.x + (state.playerStrumline.width / 2) - (rating.width / 2);
-        rating.y = FlxG.height / 2 - rating.height * 1.5;
-        if (!Preferences.downscroll) rating.y = FlxG.height / 2 + rating.height;
-
-        // Apply note style offsets
-        var styleOffsets = noteStyle.getJudgementSpriteOffsets(daRating);
-        var badHooks = ModuleHandler.getModule("BadHooks");
-        if (badHooks != null) {
-            var judgementOffsets = badHooks.scriptGet("judgementOffsets");
-            trace(judgementOffsets);
-        }
-        rating.x += styleOffsets[0];
-        rating.y += styleOffsets[1];
-
-        // Save reference to current sprite
-        judgementSprite = rating;
-
-        // Add to state
-        rating.zIndex = 900;
-        rating.cameras = [state.camHUD];
-        state.add(rating);
-        state.refresh();
-
-        rating.scale.set(0.8, 0.8);
-
-        // Pop-in tween with scale
-        FlxTween.tween(rating.scale, {x: originalScaleX, y: originalScaleY}, 0.2, {
-            ease: FlxEase.backOut,
-            onComplete: function(tween:FlxTween) {
-                // Fade out
-                FlxTween.tween(rating, {alpha: 0}, 0.3, {
-                    onComplete: function(tween:FlxTween) {
-                        state.remove(rating);
-                        rating.destroy();
-                        if (judgementSprite == rating) {
-                            judgementSprite = null;
-                        }
-                    },
-                    startDelay: state.conductorInUse.beatLengthMs * 0.001,
-                    ease: FlxEase.expoOut
-                });
-            }
-        });
-    }
+    override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) { event.playSound = !badOptions.muteMiss; }
 
     // Gradient Underlay
     function createGradient(width:Int, height:Int, alphaStart:Float, alphaEnd:Float, isLeftToRight:Bool = true):FlxSprite {
@@ -218,30 +157,177 @@ class ExtraStrumline extends Module {
         return gradientSprite;
     }
 
-    // Strumline Helper Methods
+    // Helper Methods
+    function displayPopUps(judgement:String, ?combo:Int) {
+        if (judgement == "miss" || badOptions.popUpType == "off") return;
+        displayJudgements(judgement);
+
+        if (combo == null) combo = Highscore.tallies.combo;
+        if (combo >= 10) displayCombo(combo);
+    }
+
+    function displayCombo(combo:Int = 0) {
+        if (tempComboSprites.length > 0 && badOptions.popUpType == "popup") {
+            for (sprite in tempComboSprites) {
+                state.remove(sprite, true);
+                sprite.destroy();
+            }
+            tempComboSprites = [];
+        }
+
+        var seperatedScore:Array<Int> = [];
+        var tempCombo:Int = combo;
+
+        while (tempCombo != 0) {
+            seperatedScore.push(tempCombo % 10);
+            tempCombo = Std.int(tempCombo / 10);
+        }
+        while (seperatedScore.length < 3) seperatedScore.push(0);
+
+        var daLoop:Int = 1;
+
+        for (digit in seperatedScore) {
+            var numCombo:FunkinSprite = noteStyle.buildComboNumSprite(digit);
+            if (numCombo == null) continue;
+
+            var comboOffsets = Save.instance.modOptions.get("comboOffsets");
+            if (comboOffsets != null) numCombo.setPosition(comboOffsets[0] - (37 * (daLoop - 1)), comboOffsets[1]);
+            else {
+                numCombo.x = (FlxG.width * 0.507) - (37 * daLoop) - 65;
+                numCombo.y = (FlxG.camera.height * 0.44);
+                var styleOffsets = noteStyle.getComboNumSpriteOffsets(digit);
+                numCombo.x += styleOffsets[0];
+                numCombo.y += styleOffsets[1];
+            }
+
+            numCombo.zIndex = 900;
+            numCombo.cameras = [state.camHUD];
+            state.add(numCombo);
+            tempComboSprites.push(numCombo);
+            state.refresh();
+
+            var fadeEase = noteStyle.isComboNumSpritePixel(digit) ? EaseUtil.stepped(2) : null;
+            switch (badOptions.popUpType) {
+                case "vanilla":
+                    numCombo.acceleration.y = FlxG.random.int(250, 300);
+                    numCombo.velocity.y -= FlxG.random.int(130, 150);
+                    numCombo.velocity.x = FlxG.random.float(-5, 5);
+                    FlxTween.tween(numCombo, {alpha: 0}, 0.2, {
+                        onComplete: tween -> {
+                            state.remove(numCombo, true);
+                            numCombo.destroy();
+                        },
+                        startDelay: state.conductorInUse.beatLengthMs * 0.002,
+                        ease: fadeEase
+                    });
+                case "popup":
+                    FlxTween.tween(numCombo, {alpha: 0}, 0.2, {
+                        onComplete: tween -> {
+                            state.remove(numCombo, true);
+                            numCombo.destroy();
+                            tempComboSprites.remove(numCombo);
+                        },
+                        startDelay: state.conductorInUse.beatLengthMs * 0.002,
+                        ease: fadeEase
+                    });
+            }
+            daLoop++;
+        }
+    }
+
+    function displayJudgements(judgement:String) {
+        if (judgement == null) return;
+
+        // Remove existing judgement sprite if it exists
+        if (tempJudgementSprite != null && badOptions.popUpType == "popup") {
+            state.remove(tempJudgementSprite, true);
+            tempJudgementSprite.destroy();
+            tempJudgementSprite = null;
+        }
+
+        // Create new rating sprite
+        var judgementSprite:FunkinSprite = noteStyle.buildJudgementSprite(judgement);
+        if (judgementSprite == null) return;
+
+        var originalScaleX = judgementSprite.scale.x;
+        var originalScaleY = judgementSprite.scale.y;
+
+        var judgementOffsets = Save.instance.modOptions.get("judgementOffsets");
+        if (judgementOffsets != null) judgementSprite.setPosition(judgementOffsets[0], judgementOffsets[1]);
+        else {
+            judgementSprite.x = (FlxG.width * 0.474);
+            judgementSprite.x -= judgementSprite.width / 2;
+            judgementSprite.y = (FlxG.camera.height * 0.45 - 60);
+            judgementSprite.y -= judgementSprite.height / 2;
+            var styleOffsets = noteStyle.getJudgementSpriteOffsets(dajudgementSprite);
+            judgementSprite.x += styleOffsets[0];
+            judgementSprite.y += styleOffsets[1];
+        }
+
+        // Save reference to current sprite
+        tempJudgementSprite = judgementSprite;
+
+        judgementSprite.zIndex = 900;
+        judgementSprite.cameras = [state.camHUD];
+        state.add(judgementSprite);
+        state.refresh();
+
+        var fadeEase = noteStyle.isJudgementSpritePixel(judgement) ? EaseUtil.stepped(2) : null;
+        switch (badOptions.popUpType) {
+            case "vanilla":
+                judgementSprite.acceleration.y = 550;
+                judgementSprite.velocity.y -= FlxG.random.int(140, 175);
+                judgementSprite.velocity.x -= FlxG.random.int(0, 10);
+                FlxTween.tween(judgementSprite, {alpha: 0}, 0.2, {
+                    onComplete: tween -> {
+                        state.remove(judgementSprite, true);
+                        judgementSprite.destroy();
+                    },
+                    startDelay: state.conductorInUse.beatLengthMs * 0.001,
+                    ease: fadeEase
+                });
+            case "popup":
+                judgementSprite.scale.set(0.8, 0.8);
+                FlxTween.tween(judgementSprite.scale, {x: originalScaleX, y: originalScaleY}, 0.2, {
+                    ease: FlxEase.backOut,
+                    onComplete: tween -> {
+                        FlxTween.tween(judgementSprite, {alpha: 0}, 0.3, {
+                            onComplete: tween -> {
+                                state.remove(judgementSprite, true);
+                                judgementSprite.destroy();
+                                if (tempJudgementSprite == judgementSprite) tempJudgementSprite = null;
+                            },
+                            startDelay: state.conductorInUse.beatLengthMs * 0.001,
+                            ease: fadeEase
+                        });
+                    }
+                });
+        }
+    }
+
     function updateOpponentNotes() {
         // Transparent Opponent Strumline
-        for (staticNote in state.opponentStrumline.strumlineNotes.members) staticNote.alpha = Save.instance.modOptions.get("badOptions").oppNotesOpacity / 100;
+        for (staticNote in state.opponentStrumline.strumlineNotes.members) staticNote.alpha = badOptions.opponentNoteOpacity / 100;
 
         // Incoming Notes
         for (note in state.opponentStrumline.notes.members) {
             if (note == null || !note.alive) continue;
             note.x = state.opponentStrumline.strumlineNotes.members[note.direction].x + (state.opponentStrumline.strumlineNotes.members[note.direction].width - note.width) * 0.5;
-            note.alpha = Save.instance.modOptions.get("badOptions").oppNotesOpacity / 100;
+            note.alpha = badOptions.opponentNoteOpacity / 100;
         }
 
         // Hold Notes
         for (note in state.opponentStrumline.holdNotes.members) {
             if (note == null || !note.alive) continue;
             note.x = state.opponentStrumline.strumlineNotes.members[note.noteDirection].x + (state.opponentStrumline.strumlineNotes.members[note.noteDirection].width - note.width) * 0.5;
-            note.alpha = Save.instance.modOptions.get("badOptions").oppNotesOpacity / 100;
+            note.alpha = badOptions.opponentNoteOpacity / 100;
         }
 
         // Hold Covers / Hold Splashes
         for (note in state.opponentStrumline.noteHoldCovers.members) {
             if (note == null || !note.alive) continue;
             note.x = state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].x + (state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].width - note.width) * 0.5;
-            note.alpha = Save.instance.modOptions.get("badOptions").oppNotesOpacity / 100;
+            note.alpha = badOptions.opponentNoteOpacity / 100;
         }
     }
 
@@ -294,6 +380,6 @@ class ExtraStrumline extends Module {
         laneUnderlay = null;
         leftGradient = null;
         rightGradient = null;
-        judgementSprite = null;
+        tempJudgementSprite = null;
     }
 }

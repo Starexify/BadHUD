@@ -11,7 +11,7 @@ import flixel.text.FlxTextBorderStyle;
 import Math;
 
 class CustomScrollSpeed extends Module {
-    var badOptions:Null<Dynamic> = Save.instance.modOptions.get("badOptions");
+    var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var state:PlayState;
 
     var speedText:FlxText;

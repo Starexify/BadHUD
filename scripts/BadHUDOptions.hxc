@@ -10,14 +10,14 @@ import openfl.text.TextFormat;
 import Std;
 
 class BadHUDOptions extends Module {
-    var badOptions:Null<Dynamic> = Save.instance.modOptions.get("badOptions");
+    var badOptions:BadSaveData = Save.instance.modOptions.get("badOptions");
 
     // Hooks or smth like that for other classes
     var font;
     var timeBarBGStyle;
     var timeTextSize;
 
-    var saveObject:Dynamic = {
+    var saveObject:BadSaveData = {
         middlescroll: false,
         opponentNoteOpacity: 100,
         healthBarPosition: "vanilla",
@@ -126,57 +126,58 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemPercentage("HUD Opacity", "Changes the opacity of the HUD", value -> badOptions.hudOpacity = value, badOptions.hudOpacity);
 
                 preferences.createPrefItemEnum("HUD Font", "Changes the font of the HUD", [
-                    "0" => "VCR OSD Mono (Vanilla)",
-                    "1" => "VCR OSD Neue",
-                    "2" => "Minecraft",
-                    "3" => "Retro Gaming",
-                    "4" => "Roblox",
-                    "5" => "Super Mario 64",
-                    "6" => "New Super Mario Font U",
-                    "7" => "Karmatic Arcade",
-                    "8" => "fbUsv8C5eI"
+                "0" => "VCR OSD Mono (Vanilla)",
+                "1" => "VCR OSD Neue",
+                "2" => "Minecraft",
+                "3" => "Retro Gaming",
+                "4" => "Roblox",
+                "5" => "Super Mario 64",
+                "6" => "New Super Mario Font U",
+                "7" => "Karmatic Arcade",
+                "8" => "ModernDOS"
+                "9" => "fbUsv8C5eI"
                 ], value -> {
-                    badOptions.hudFont = Std.parseInt(value);
-                    switch (badOptions.hudFont) {
-                        case 0: // px = 21;
-                            font = "vcr.ttf";
-                        case 1: // px = 16;
-                            font = "VCRosdNEUE.ttf";
-                        case 2: // px = 16;
-                            font = "Minecraft.ttf";
-                        case 3: // px = 11;
-                            font = "Retro Gaming.ttf";
-                        case 4: // px = ?;
-                            font = "RobloxFont-Regular.ttf";
-                        case 5: // px = ?;
-                            font = "Super Mario 64.ttf";
-                        case 6: // px = ?;
-                            font = "New Super Mario Font U.ttf";
-                        case 7: // px = ?;
-                            font = "ka1.ttf";
-                        case 8: // px = 16;
-                            font = "ModernDOS.ttf";
-                        case 9: // px = ?;
-                            font = "fbUsv8C5eI.ttf";
-                    } changeDebugDisplay(font); }, badOptions.hudFont);
+                badOptions.hudFont = Std.parseInt(value);
+                switch (badOptions.hudFont) {
+                case 0: // px = 21;
+                font = "vcr.ttf";
+                case 1: // px = 16;
+                font = "VCRosdNEUE.ttf";
+                case 2: // px = 16;
+                font = "Minecraft.ttf";
+                case 3: // px = 11;
+                font = "Retro Gaming.ttf";
+                case 4: // px = ?;
+                font = "RobloxFont-Regular.ttf";
+                case 5: // px = ?;
+                font = "Super Mario 64.ttf";
+                case 6: // px = ?;
+                font = "New Super Mario Font U.ttf";
+                case 7: // px = ?;
+                font = "ka1.ttf";
+                case 8: // px = 16;
+                font = "ModernDOS.ttf";
+                case 9: // px = ?;
+                font = "fbUsv8C5eI.ttf";
+            } changeDebugDisplay(font); }, badOptions.hudFont);
 
                 preferences.createPrefItemNumber("HUD Font Size", "Changes the size of the HUD text", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
 
-                // Extras
+                    // Extras
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold", function() {});
 
                 preferences.createPrefItemEnum("Accuracy System", "Change the accuracy/score system (visually)", [
-                    "vanilla" => "Vanilla",
-                    "psych" => "Psych Engine",
-                    "osu" => "osu!Mania"
+                "vanilla" => "Vanilla",
+                "psych" => "Psych Engine",
+                "osu" => "osu!Mania"
                 ], value -> badOptions.accuracyType = value, badOptions.accuracyType);
 
                 preferences.createPrefItemCheckbox("Comma Separated Score", "", value -> badOptions.commaSeparatedScore = value, badOptions.commaSeparatedScore);
 
-                preferences.createPrefItemEnum("Combo Pop Ups", "Change the Combo Pop Ups", [
-                    "off" => "Off",
-                    "vanilla" => "Vanilla",
-                    "centered" => "Centered"
+                preferences.createPrefItemEnum("Combo PopUp Animation", "Change the animation of the Combo PopUps when popping up", [
+                "off" => "Off",
+                "vanilla" => "Vanilla",
+                "popup" => "Pop-Up"
                 ], value -> badOptions.popUpType = value, badOptions.popUpType);
 
                 preferences.createPrefItemCheckbox("Mute Miss Sounds", "", value -> badOptions.muteMiss = value, badOptions.muteMiss);
@@ -246,4 +247,29 @@ class BadHUDOptions extends Module {
                 font = "fbUsv8C5eI.ttf";
         }
     }
+}
+
+typedef BadSaveData = {
+    middlescroll:Bool,
+    opponentNoteOpacity:Int,
+    healthBarPosition:String,
+    healthIconPosition:String,
+    timebarPosition:String,
+    timebarType:String,
+    timebarStyle:String,
+    restBar:String,
+    smoothBars:Bool,
+    iconColors:Bool,
+    leftPos:String,
+    hudOpacity:Int,
+    hudFont:Int,
+    hudFontSize:Int,
+    accuracyType:String,
+    commaSeparatedScore:Bool,
+    popUpType:String,
+    underlayOpacity:Int,
+    kpsCounter:Bool,
+    customScrollSpeed:Bool,
+    scrollSpeedFactor:Int,
+    remindKeys:Bool
 }
