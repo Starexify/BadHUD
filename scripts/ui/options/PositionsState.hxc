@@ -49,17 +49,18 @@ class PositionsState extends ScriptedMusicBeatSubState {
         if (badOptions.middlescroll) strumLine.screenCenter(0x01);
         add(strumLine);
 
-        var helpText:FlxText = new FlxText(0, 0, 0, "Press BACK to return to main menu").setFormat(Paths.font("vcr.ttf"), 20);
+        var helpText:FlxText = new FlxText(0, 0, 0, "Press BACK/ESC to return to Options").setFormat(Paths.font("vcr.ttf"), 20);
         helpText.x = FlxG.width - helpText.width;
         helpText.y = FlxG.height - (helpText.height * 2) - 2;
         add(helpText);
 
         var judgementSprite = noteStyle.buildJudgementSprite("sick");
-        // Set Offsets
-        var judgementOffsets = Save.instance.modOptions.get("judgementOffsets");
-        if (judgementOffsets != null) {
-            judgementSprite.setPosition(judgementOffsets[0], judgementOffsets[1]);
-            judgementSprite.scale.set(judgementOffsets[2], judgementOffsets[3]);
+        // Set Offsets/Size
+        var judgementSettings = Save.instance.modOptions.get("judgementSettings");
+        if (judgementSettings != null) {
+            judgementSprite.setPosition(judgementSettings[0], judgementSettings[1]);
+            judgementSprite.angle = judgementSettings[4];
+            judgementSprite.scale.set(judgementSettings[2], judgementSettings[3]);
             judgementSprite.updateHitbox();
         } else {
             judgementSprite.x = (FlxG.width * 0.474);
@@ -74,11 +75,12 @@ class PositionsState extends ScriptedMusicBeatSubState {
         add(judgementSprite);
 
         var comboSprite = noteStyle.buildComboNumSprite(0);
-        // Set Offsets
-        var comboOffsets = Save.instance.modOptions.get("comboOffsets");
-        if (comboOffsets != null) {
-            comboSprite.setPosition(comboOffsets[0], comboOffsets[1]);
-            comboSprite.scale.set(comboOffsets[2], comboOffsets[3]);
+        // Set Offsets/Size
+        var comboSettings = Save.instance.modOptions.get("comboSettings");
+        if (comboSettings != null) {
+            comboSprite.setPosition(comboSettings[0], comboSettings[1]);
+            comboSprite.angle = comboSettings[4];
+            comboSprite.scale.set(comboSettings[2], comboSettings[3]);
             comboSprite.updateHitbox();
         } else {
             comboSprite.x = (FlxG.width * 0.507) - (36 * 1) - 65;
@@ -123,16 +125,23 @@ class PositionsState extends ScriptedMusicBeatSubState {
         for (draggable in draggableSprites) {
             if (draggable.isDragging) {
                 if (FlxG.mouse.pressed) {
-                    var newX = mouseX - draggable.dragOffsetX;
-                    var newY = mouseY - draggable.dragOffsetY;
+                    if (FlxG.keys.pressed.ALT) {
+                        var spriteMiddleX = draggable.sprite.x + draggable.sprite.width / 2;
+                        var spriteMiddleY = draggable.sprite.y + draggable.sprite.height / 2;
+                        var angle = Math.atan2(mouseY - spriteMiddleY, mouseX - spriteMiddleX) * 180 / Math.PI;
+                        draggable.sprite.angle = angle;
+                    } else {
+                        var newX = mouseX - draggable.dragOffsetX;
+                        var newY = mouseY - draggable.dragOffsetY;
 
-                    newX = Math.max(0, Math.min(FlxG.width - draggable.sprite.width, newX));
-                    newY = Math.max(0, Math.min(FlxG.height - draggable.sprite.height, newY));
+                        newX = Math.max(0, Math.min(FlxG.width - draggable.sprite.width, newX));
+                        newY = Math.max(0, Math.min(FlxG.height - draggable.sprite.height, newY));
 
-                    draggable.sprite.setPosition(newX, newY);
+                        draggable.sprite.setPosition(newX, newY);
+                    }
                 } else { // Mouse released
                     draggable.isDragging = false;
-                    saveOffsets(draggable);
+                    saveSpriteSettings(draggable);
                 }
             } else if (draggable.isSelected) {
                 var pressArray:Array<Bool> = [
@@ -180,10 +189,9 @@ class PositionsState extends ScriptedMusicBeatSubState {
 
                 draggable.sprite.setPosition(newX, newY);
 
-                if (controls.UI_DOWN_R || controls.UI_UP_R || controls.UI_LEFT_R || controls.UI_RIGHT_R) saveOffsets(draggable);
+                if (controls.UI_DOWN_R || controls.UI_UP_R || controls.UI_LEFT_R || controls.UI_RIGHT_R) saveSpriteSettings(draggable);
 
                 if (FlxG.mouse.wheel != 0) {
-                    var minScale:Float = 0.1; // Minimum scale to prevent complete disappearance
                     var maxScaleX:Float = FlxG.width / draggable.sprite.frameWidth;
                     var maxScaleY:Float = FlxG.height / draggable.sprite.frameHeight;
 
@@ -198,7 +206,7 @@ class PositionsState extends ScriptedMusicBeatSubState {
                         }
                     }
                     draggable.sprite.updateHitbox();
-                    saveOffsets(draggable);
+                    saveSpriteSettings(draggable);
                 }
             }
         }
@@ -212,12 +220,9 @@ class PositionsState extends ScriptedMusicBeatSubState {
     }
 
     // Helper Methods
-    function saveOffsets(draggable:DraggableSprite) {
-        var badHooks = ModuleHandler.getModule("BadHooks");
-        if (badHooks != null) {
-            if (draggable.spriteType == "judgement") Save.instance.modOptions.set("judgementOffsets", [Std.int(draggable.sprite.x), Std.int(draggable.sprite.y), draggable.sprite.scale.x, draggable.sprite.scale.y ]);
-            else if (draggable.spriteType == "combo") Save.instance.modOptions.set("comboOffsets", [Std.int(draggable.sprite.x), Std.int(draggable.sprite.y), draggable.sprite.scale.x, draggable.sprite.scale.y]);
-        }
+    function saveSpriteSettings(draggable:DraggableSprite) {
+        var settingsKey = (draggable.spriteType == "judgement") ? "judgementSettings" : (draggable.spriteType == "combo") ? "comboSettings" : null;
+        if (settingsKey != null) Save.instance.modOptions.set(settingsKey, [Std.int(draggable.sprite.x), Std.int(draggable.sprite.y), draggable.sprite.scale.x, draggable.sprite.scale.y, draggable.sprite.angle]);
     }
 
     function handleCursor(hoveredSprite) {
@@ -238,8 +243,8 @@ class PositionsState extends ScriptedMusicBeatSubState {
         if (FlxG.sound.music != null) FlxG.sound.music.pause();
         var pauseState:PauseSubState = ModuleHandler.getModule("PauseOptions").scriptGet("pauseState");
         if (pauseState != null) pauseState.pauseMusic.pause();
-        this.welcomeMusic = FunkinSound.load(Paths.music('chartEditorLoop/chartEditorLoop'), true, true);
-        this.welcomeMusic.play(false, FlxG.random.int(0, Std.int(welcomeMusic.length / 2)));
+        welcomeMusic = FunkinSound.load(Paths.music('chartEditorLoop/chartEditorLoop'), true, true);
+        welcomeMusic.play(false, FlxG.random.int(0, Std.int(welcomeMusic.length / 2)));
     }
 
     function addDraggableSprite(sprite:FunkinSprite, type:String) {

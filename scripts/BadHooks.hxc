@@ -1,3 +1,4 @@
+import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ScriptedModule;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;

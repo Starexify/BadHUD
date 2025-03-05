@@ -64,32 +64,32 @@ class BadHUDOptions extends Module {
                 updatetypetext();
                 Save.instance.flush();
 
-                preferences.createPrefItemCheckbox("Middlescroll", "If enabled, player notes will be centerd on the screen, while the opponent's notes will be split.", value -> badOptions.middlescroll = value, badOptions.middlescroll);
-                preferences.createPrefItemPercentage("Opponent Notes Opacity", "The opacity of the opponent notes.", value -> badOptions.opponentNoteOpacity = value, badOptions.opponentNoteOpacity);
+                preferences.createPrefItemCheckbox("Middlescroll", "If enabled, player notes will be centerd on the screen, and opponent's notes will be split.", value -> badOptions.middlescroll = value, badOptions.middlescroll);
+                preferences.createPrefItemPercentage("Opponent Notes Opacity", "Adjust the opacity of the opponent's notes.", value -> badOptions.opponentNoteOpacity = value, badOptions.opponentNoteOpacity);
 
                 // Bars
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Bars :", "bold");
-                preferences.createPrefItemEnum("Health Bar Position", "The position of the Health Bar.", [
+                preferences.createPrefItemEnum("Health Bar Position", "Choose what the position of the Health Bar.", [
                     "off" => "Off",
                     "vanilla" => "Vanilla",
                     "vertical" => "Vertical"
                 ], value -> badOptions.healthBarPosition = value, badOptions.healthBarPosition);
 
-                preferences.createPrefItemEnum("Health Icons Position", "Option to change the position of the Health Icons", [
+                preferences.createPrefItemEnum("Health Icons Position", "Select the position of the Health Icons.", [
                     "off" => "Off",
                     "vanilla" => "Vanilla",
                     "flipped" => "Flipped",
                     "ends" => "Ends"
                 ], value -> badOptions.healthIconPosition = value, badOptions.healthIconPosition);
 
-                preferences.createPrefItemEnum("Time Bar Position", "Changes position of the Time Bar", [
+                preferences.createPrefItemEnum("Time Bar Position", "Select the position of the Time Bar.", [
                     "off" => "Off",
                     "down" => "Down",
                     "up" => "Up",
                     "vertical" => "Vertical"
                 ], value -> badOptions.timebarPosition = value, badOptions.timebarPosition);
 
-                preferences.createPrefItemEnum("Time Bar Display", "Changes the display of the Time Bar", [
+                preferences.createPrefItemEnum("Time Bar Display", "Choose how to display the Time Bar's text.", [
                     "off" => "Off",
                     "left" => "Time Left",
                     "left-total" => "Time Left / Total",
@@ -99,35 +99,35 @@ class BadHUDOptions extends Module {
                     "name" => "Song Name"
                 ], value -> badOptions.timebarType = value, badOptions.timebarType);
 
-                preferences.createPrefItemEnum("Time Bar Style", "Changes the style of the Time Bar", [
+                preferences.createPrefItemEnum("Time Bar Style", "Select the style of the Time Bar texture.", [
                     "psych" => "Psych Engine",
                     "minimal" => "Minimal",
                     "minimal-rounded" => "Minimal Rounded"
                 ], value -> badOptions.timebarStyle = value, badOptions.timebarStyle);
 
-                preferences.createPrefItemEnum("Rest Bar Display", "Changes the display of the Rest Bar", [
+                preferences.createPrefItemEnum("Rest Bar Display", "Choose how to display the Rest Bar.", [
                     "off" => "Off",
                     "countdown" => "Countdown",
                     "countup" => "Countup"
                 ], value -> badOptions.restBar = value, badOptions.restBar);
 
-                preferences.createPrefItemCheckbox("Smooth Bars", "", value -> badOptions.smoothBars = value, badOptions.smoothBars);
+                preferences.createPrefItemCheckbox("Smooth Bars", "If enabled, bars will fill smoothly with fluid animation. (May reduce performance!)", value -> badOptions.smoothBars = value, badOptions.smoothBars);
 
-                preferences.createPrefItemCheckbox("Icon Colored Health Bar", "If enabled, the health bar will use the dominant icon color.", value -> badOptions.iconColors = value, badOptions.iconColors);
+                preferences.createPrefItemCheckbox("Icon Colored Health Bar", "If enabled, the health bar will match the dominant color of the icon.", value -> badOptions.iconColors = value, badOptions.iconColors);
 
                 // HUD Customization
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold");
 
-                preferences.createPrefItemEnum("on Left", "Left side elements", [
+                preferences.createPrefItemEnum("on Left", "Choose which elements that are shown on the left side.", [
                     "none" => "None",
                     "judgements" => "Judgements",
                     "stats" => "Stats",
                     "judgements-stats" => "Judgements and Stats",
                 ], value -> badOptions.leftPos = value, badOptions.leftPos);
 
-                preferences.createPrefItemPercentage("HUD Opacity", "Changes the opacity of the HUD", value -> badOptions.hudOpacity = value, badOptions.hudOpacity);
+                preferences.createPrefItemPercentage("HUD Opacity", "Adjust the opacity of the HUD.", value -> badOptions.hudOpacity = value, badOptions.hudOpacity);
 
-                preferences.createPrefItemEnum("HUD Font", "Changes the font of the HUD", [
+                preferences.createPrefItemEnum("HUD Font", "Select the font style for the HUD text.", [
                     "0" => "VCR OSD Mono (Vanilla)",
                     "1" => "VCR OSD Neue",
                     "2" => "Minecraft",
@@ -137,54 +137,30 @@ class BadHUDOptions extends Module {
                     "6" => "New Super Mario Font U",
                     "7" => "Karmatic Arcade",
                     "8" => "ModernDOS",
-                    "9" => "fbUsv8C5eI"
+                    "9" => "Euxoi",
+                    "10" => "fbUsv8C5eI"
                 ], value -> {
                     badOptions.hudFont = Std.parseInt(value);
-                    switch (badOptions.hudFont) {
-                        case 0: // px = 21;
-                            font = "vcr.ttf";
-                        case 1: // px = 16;
-                            font = "VCRosdNEUE.ttf";
-                        case 2: // px = 16;
-                            font = "Minecraft.ttf";
-                        case 3: // px = 11;
-                            font = "Retro Gaming.ttf";
-                        case 4: // px = ?;
-                            font = "RobloxFont-Regular.ttf";
-                        case 5: // px = ?;
-                            font = "Super Mario 64.ttf";
-                        case 6: // px = ?;
-                            font = "New Super Mario Font U.ttf";
-                        case 7: // px = ?;
-                            font = "ka1.ttf";
-                        case 8: // px = 16;
-                            font = "ModernDOS.ttf";
-                        case 9: // px = ?;
-                            font = "fbUsv8C5eI.ttf";
-                    } changeDebugDisplay(font); }, Std.string(badOptions.hudFont));
+                    switchFont();
+                    changeDebugDisplay(font);
+                }, Std.string(badOptions.hudFont));
 
-                preferences.createPrefItemNumber("HUD Font Size", "Changes the size of the HUD text", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
+                preferences.createPrefItemNumber("HUD Font Size", "Adjust the size of the HUD text.", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
 
                 // Extras
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold");
 
-                preferences.createPrefItemEnum("Accuracy System", "Change the accuracy/score system (visually)", [
+                preferences.createPrefItemEnum("Accuracy System", "Choose the accuracy/score for visual display on the HUD. (Only visual!)", [
                     "vanilla" => "Vanilla",
                     "psych" => "Psych Engine",
                     "osu" => "osu!Mania"
                 ], value -> badOptions.accuracyType = value, badOptions.accuracyType);
 
-                preferences.createPrefItemCheckbox("Comma Separated Score", "", value -> badOptions.commaSeparatedScore = value, badOptions.commaSeparatedScore);
+                preferences.createPrefItemCheckbox("Comma Separated Score", "If enabled, the score will use commas as thousand separators", value -> badOptions.commaSeparatedScore = value, badOptions.commaSeparatedScore);
 
-                preferences.createPrefItemEnum("Combo PopUp Animation", "Change the animation of the Combo PopUps when popping up", [
-                    "off" => "Off",
-                    "vanilla" => "Vanilla",
-                    "popup" => "Pop-Up"
-                ], value -> badOptions.popUpType = value, badOptions.popUpType);
+                preferences.createPrefItemCheckbox("Enable Keybind Reminder", "If enabled, a keybind reminder will appear above notes when loaded, then fade.", value -> badOptions.remindKeys = value, badOptions.remindKeys);
 
-                preferences.createPrefItemCheckbox("Enable Keybind Reminder", "", value -> badOptions.remindKeys = value, badOptions.remindKeys);
-
-                preferences.createPrefItemCheckbox("Mute Miss Sounds", "If enabled, mutes the sound of missing a note.", value -> badOptions.muteMiss = value, badOptions.muteMiss);
+                preferences.createPrefItemCheckbox("Mute Miss Sounds", "If enabled, mutes the sound of the note being missed.", value -> badOptions.muteMiss = value, badOptions.muteMiss);
 
                 var underlayOpacityItem = new NumberPreferenceItem(0, (120 * preferences.items.length) + 30, "Note Underlay Opacity",
                 badOptions.underlayOpacity, 0, 100, 5, 0,
@@ -194,11 +170,17 @@ class BadHUDOptions extends Module {
                 preferences.items.addItem("Note Underlay Opacity", underlayOpacityItem);
                 preferences.preferenceItems.add(underlayOpacityItem.lefthandText);
 
-                preferences.createPrefItemCheckbox("Show KPS Counter", "", value -> badOptions.kpsCounter = value, badOptions.kpsCounter);
+                preferences.createPrefItemEnum("Rating Pop-Up Animation", "Choose the animation for rating pop-ups when hitting a note.", [
+                    "off" => "Off",
+                    "vanilla" => "Vanilla",
+                    "popup" => "Pop-Up"
+                ], value -> badOptions.popUpType = value, badOptions.popUpType);
 
-                preferences.createPrefItemCheckbox("Custom Scroll Speed", "", value -> badOptions.customScrollSpeed = value, badOptions.customScrollSpeed);
+                preferences.createPrefItemCheckbox("Show KPS Counter", "If enabled, a KPS (Key Per Second) counter will appear on the left side of the screen.", value -> badOptions.kpsCounter = value, badOptions.kpsCounter);
 
-                preferences.createPrefItemNumber("Scroll Speed Factor", "Changes the speed of the notes",
+                preferences.createPrefItemCheckbox("Custom Scroll Speed", "If enabled, the Scroll Speed Factor option will be used.", value -> badOptions.customScrollSpeed = value, badOptions.customScrollSpeed);
+
+                preferences.createPrefItemNumber("Scroll Speed Factor", "Adjust the speed of the incoming notes.",
                 value -> badOptions.scrollSpeedFactor = value,
                 value -> Std.string(badOptions.scrollSpeedFactor / 10),
                 Std.int(badOptions.scrollSpeedFactor), 1, 9999, 1, 0);
@@ -226,6 +208,10 @@ class BadHUDOptions extends Module {
                 timeTextSize = 24;
         }
 
+        switchFont();
+    }
+
+    function switchFont() {
         switch (badOptions.hudFont) {
             case 0: // px = 21;
                 font = "vcr.ttf";
@@ -245,7 +231,9 @@ class BadHUDOptions extends Module {
                 font = "ka1.ttf";
             case 8: // px = 16;
                 font = "ModernDOS.ttf";
-            case 9: // px = ?;
+            case 9: // px = 32;
+                font = "Euxoi.ttf";
+            case 10: // px = ?;
                 font = "fbUsv8C5eI.ttf";
         }
     }

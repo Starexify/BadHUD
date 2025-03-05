@@ -26,6 +26,8 @@ import flixel.tweens.FlxTween;
 
 import openfl.display.BitmapData;
 
+import haxe.Exception;
+
 import Std;
 
 class ExtraStrumline extends ScriptedModule {
@@ -49,7 +51,7 @@ class ExtraStrumline extends ScriptedModule {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        var badHooks = ModuleHandler.getModule("BadHooks");
+        var badHooks:ScriptedModule = ModuleHandler.getModule("BadHooks");
         if (badHooks != null) state = badHooks.scriptGet("state");
         if (state == null) return;
         noteStyle = NoteStyleRegistry.instance.fetchEntry(state.currentChart.noteStyle);
@@ -97,23 +99,25 @@ class ExtraStrumline extends ScriptedModule {
             }
         }
 
-        // Replace Combo PopUps
+        // Replace Rating PopUps
         state.remove(state.comboPopUps);
 
         // Remind Keybinds
         if (badOptions.remindKeys) {
+            var noteHeigth:Int;
             for (staticNote in state.playerStrumline.strumlineNotes.members) {
                 var keyArray = PreciseInputManager.getKeysForDirection(PlayerSettings.player1.controls, staticNote.direction);
-                var keyName = InputUtil.getKeyName(keyArray[0]) ;
+                var keyName = InputUtil.getKeyName(keyArray[0]);
                 var keybindText = new FlxText(staticNote.x, staticNote.y, staticNote.width, keyName);
-                keybindText.y = staticNote.y + (Preferences.downscroll ? keybindText.height * 2 : staticNote.height - keybindText.height * 2);
+                keybindText.y = staticNote.y + staticNote.height / 2 - keybindText.height * staticNote.scale.y;
                 keybindText.setFormat(Paths.font(new BadHUDOptions().font), 32, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
                 keybindText.alpha = 0;
                 keybindText.cameras = [state.camHUD];
                 state.add(keybindText);
                 keybindTexts.push(keybindText);
+                noteHeigth = Std.int(staticNote.height);
             }
-            fadeInKeybinds();
+            fadeInKeybinds(noteHeigth);
         }
     }
 
@@ -191,13 +195,14 @@ class ExtraStrumline extends ScriptedModule {
             var numCombo:FunkinSprite = noteStyle.buildComboNumSprite(digit);
             if (numCombo == null) continue;
 
-            var comboOffsets = Save.instance.modOptions.get("comboOffsets");
-            if (comboOffsets != null) {
+            var comboSettings = Save.instance.modOptions.get("comboSettings");
+            if (comboSettings != null) {
                 var originalWidth = numCombo.width;
-                numCombo.scale.set(comboOffsets[2], comboOffsets[3]);
+                numCombo.angle = comboSettings[4];
+                numCombo.scale.set(comboSettings[2], comboSettings[3]);
                 numCombo.updateHitbox();
                 var newWidth = numCombo.width;
-                numCombo.setPosition(comboOffsets[0] - ((38 - (originalWidth - newWidth)) * (daLoop - 1)), comboOffsets[1]);
+                numCombo.setPosition(comboSettings[0] - ((38 - (originalWidth - newWidth)) * (daLoop - 1)), comboSettings[1]);
             } else {
                 numCombo.x = (FlxG.width * 0.507) - (38 * daLoop) - 65;
                 numCombo.y = (FlxG.camera.height * 0.44);
@@ -255,10 +260,11 @@ class ExtraStrumline extends ScriptedModule {
         var judgementSprite:FunkinSprite = noteStyle.buildJudgementSprite(judgement);
         if (judgementSprite == null) return;
 
-        var judgementOffsets = Save.instance.modOptions.get("judgementOffsets");
-        if (judgementOffsets != null) {
-            judgementSprite.setPosition(judgementOffsets[0], judgementOffsets[1]);
-            judgementSprite.scale.set(judgementOffsets[2], judgementOffsets[3]);
+        var judgementSettings = Save.instance.modOptions.get("judgementSettings");
+        if (judgementSettings != null) {
+            judgementSprite.setPosition(judgementSettings[0], judgementSettings[1]);
+            judgementSprite.angle = judgementSettings[4];
+            judgementSprite.scale.set(judgementSettings[2], judgementSettings[3]);
             judgementSprite.updateHitbox();
         } else {
             judgementSprite.x = (FlxG.width * 0.474);
@@ -349,10 +355,10 @@ class ExtraStrumline extends ScriptedModule {
         rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
     }
 
-    function fadeInKeybinds() {
+    function fadeInKeybinds(noteHeight:Float) {
         var index = 0;
         for (text in keybindTexts) {
-            var textYDirI = Preferences.downscroll ? text.y - text.height : text.y + text.height;
+            var textYDirI = Preferences.downscroll ? text.y - noteHeight / 2 : text.y + noteHeight * 2;
             var textYDirII = Preferences.downscroll ? text.y + 20 : text.y - 20;
             FlxTween.tween(text, {y: textYDirI, alpha: 1}, 1, {
                 ease: FlxEase.circOut,
@@ -388,6 +394,5 @@ class ExtraStrumline extends ScriptedModule {
         laneUnderlay = null;
         leftGradient = null;
         rightGradient = null;
-        tempJudgementSprite = null;
     }
 }
