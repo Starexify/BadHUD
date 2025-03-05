@@ -28,13 +28,15 @@ class PositionsState extends ScriptedMusicBeatSubState {
     var strumLine:Strumline;
 
     var noteStyleIndex:Int = 0;
-    var noteStyles:Array<String> = [
-        Constants.DEFAULT_PIXEL_NOTE_STYLE,
-        Constants.DEFAULT_NOTE_STYLE
+    var noteStylesArray:Array<NoteStyle> = [
+        NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE),
+        NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_PIXEL_NOTE_STYLE)
     ];
     var noteStyle:NoteStyle;
 
     var draggableSprites:Array<DraggableSprite> = [];
+
+    var spriteSettingsText:FlxText;
 
     override function create() {
         super.create();
@@ -50,7 +52,7 @@ class PositionsState extends ScriptedMusicBeatSubState {
         menuBG.color = ChartEditorThemeHandler.BACKGROUND_COLOR_DARK;
         add(menuBG);
 
-        noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE);
+        noteStyle = noteStylesArray[0];
 
         initStrumline();
 
@@ -58,6 +60,11 @@ class PositionsState extends ScriptedMusicBeatSubState {
         helpText.x = FlxG.width - helpText.width;
         helpText.y = FlxG.height - (helpText.height * 2) - 2;
         add(helpText);
+
+        spriteSettingsText = new FlxText(10, FlxG.height * 0.95, 0).setFormat(Paths.font("vcr.ttf"), 20);
+        spriteSettingsText.y -= spriteSettingsText.height;
+
+        add(spriteSettingsText);
 
         initDraggableSprites();
     }
@@ -98,7 +105,7 @@ class PositionsState extends ScriptedMusicBeatSubState {
                         var spriteMiddleX = draggable.sprite.x + draggable.sprite.width / 2;
                         var spriteMiddleY = draggable.sprite.y + draggable.sprite.height / 2;
                         var angle = Math.atan2(mouseY - spriteMiddleY, mouseX - spriteMiddleX) * 180 / Math.PI;
-                        draggable.sprite.angle = angle;
+                        draggable.sprite.angle = Math.round(angle);
                     } else {
                         var newX = mouseX - draggable.dragOffsetX;
                         var newY = mouseY - draggable.dragOffsetY;
@@ -108,6 +115,7 @@ class PositionsState extends ScriptedMusicBeatSubState {
 
                         draggable.sprite.setPosition(newX, newY);
                     }
+                    if (spriteSettingsText != null) spriteSettingsText.text = "Offset: " + draggable.sprite.getPosition() + "\nScale: " + draggable.sprite.scale + "\nRotation: " + draggable.sprite.angle;
                 } else { // Mouse released
                     draggable.isDragging = false;
                     saveSpriteSettings(draggable);
@@ -164,36 +172,48 @@ class PositionsState extends ScriptedMusicBeatSubState {
                     var maxScaleX:Float = FlxG.width / draggable.sprite.frameWidth;
                     var maxScaleY:Float = FlxG.height / draggable.sprite.frameHeight;
 
+                    // Store original center coordinates
+                    var centerX = draggable.sprite.x + draggable.sprite.width / 2;
+                    var centerY = draggable.sprite.y + draggable.sprite.height / 2;
+
+                    var scaleChange = FlxG.mouse.wheel > 0 ? 0.1 : -0.1;
+
                     if (FlxG.keys.pressed.CONTROL)
                         draggable.sprite.scale.x = Math.min(
-                            draggable.sprite.scale.x + (FlxG.mouse.wheel > 0 ? 0.1 : -0.1),
+                            Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10,
                             maxScaleX
                         );
                     else if (FlxG.keys.pressed.SHIFT)
                         draggable.sprite.scale.y = Math.min(
-                            draggable.sprite.scale.y + (FlxG.mouse.wheel > 0 ? 0.1 : -0.1),
+                            Math.round((draggable.sprite.scale.y + scaleChange) * 10) / 10,
                             maxScaleY
                         );
                     else {
                         draggable.sprite.scale.x = Math.min(
-                            draggable.sprite.scale.x + (FlxG.mouse.wheel > 0 ? 0.1 : -0.1),
+                            Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10,
                             maxScaleX
                         );
                         draggable.sprite.scale.y = Math.min(
-                            draggable.sprite.scale.y + (FlxG.mouse.wheel > 0 ? 0.1 : -0.1),
+                            Math.round((draggable.sprite.scale.y + scaleChange) * 10) / 10,
                             maxScaleY
                         );
                     }
-
                     draggable.sprite.updateHitbox();
+
+                    // Reposition to maintain center
+                    draggable.sprite.x = centerX - draggable.sprite.width / 2;
+                    draggable.sprite.y = centerY - draggable.sprite.height / 2;
+
                     saveSpriteSettings(draggable);
                 }
+                if (spriteSettingsText != null) spriteSettingsText.text = "Offset: " + draggable.sprite.getPosition() + "\nScale: " + draggable.sprite.scale + "\nRotation: " + draggable.sprite.angle;
             }
         }
 
         if (FlxG.keys.justPressed.TAB) {
-            noteStyleIndex = (noteStyleIndex + 1) % noteStyles.length;
-            noteStyle = NoteStyleRegistry.instance.fetchEntry(noteStyles[noteStyleIndex]);
+            noteStyleIndex = (noteStyleIndex + 1) % noteStylesArray.length;
+            noteStyle = noteStylesArray[noteStyleIndex];
+            // Reinit Sprites
             initStrumline();
             for (sprite in draggableSprites) remove(sprite.sprite);
             draggableSprites = [];
