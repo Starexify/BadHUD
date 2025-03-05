@@ -42,45 +42,6 @@ class RestPeriodTimer extends ScriptedModule {
         initRestBar();
     }
 
-    function initRestBar() {
-        // Binding with BadHUDOptions
-        var badHUDOptions = new BadHUDOptions();
-
-        restBar = new FlxSprite();
-        restBar.scrollFactor.set(0, 0);
-        restBar.zIndex = 801;
-
-        restBarBG = FunkinSprite.create(0, 0, "restBackground");
-        restBarBG.scrollFactor.set(0, 0);
-        restBarBG.zIndex = 800;
-        restBarBG.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restBarBG.width / 2;
-        restBarBG.y = Preferences.downscroll ? state.playerStrumline.y - restBarBG.height : state.playerStrumline.y + restBarBG.height * 1.75;
-
-        restBarRadius = restBarBG.width / 2.5;
-        var restBarWidth = Std.int((restBarRadius + restBarThickness) * 2);
-        restBar.makeGraphic(restBarWidth, restBarWidth, 0x00000000, true);
-        restBar.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restBar.width / 2;
-        restBar.y = restBarBG.y;
-
-        restText = new FlxText(0, 0, 400, "", 32);
-        restText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
-        restText.borderSize = 1.75;
-        restText.scrollFactor.set();
-        restText.zIndex = 802;
-
-        restText.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restText.width / 2;
-        restText.y = Preferences.downscroll ? state.playerStrumline.y - restBarBG.height / 2 - restText.height / 2 + 3 : restBarBG.y + restText.height + 3;
-
-        restBarSprites = [restBarBG, restBar, restText];
-
-        for (sprite in restBarSprites) if (sprite != null) {
-            sprite.cameras = [state.camHUD];
-            sprite.visible = false;
-            sprite.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;
-            state.add(sprite);
-        }
-    }
-
     override function onUpdate(event:UpdateScriptEvent) {
         if (state == null || Save.instance.modOptions.get("badOptions").restBar == "off" || restText == null) return;
         var restBarFadeOut = 1000 ; // 1s
@@ -100,6 +61,11 @@ class RestPeriodTimer extends ScriptedModule {
         }
     }
 
+    override function onNoteHit(event:HitNoteScriptEvent) { if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time); }
+
+    override function onNoteMiss(event:NoteScriptEvent) { if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time); }
+
+    // Helper Methods
     function drawCurvedBar(currentRestTime:Float, totalRestTime:Float) {
         if (restBar == null) return;
 
@@ -163,9 +129,44 @@ class RestPeriodTimer extends ScriptedModule {
         for (note in state.currentChart.notes) if (note.getMustHitNote() && note.time > currentTime) return { note: note, time: note.time };
     }
 
-    override function onNoteHit(event:HitNoteScriptEvent) { if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time); }
+    function initRestBar() {
+        // Binding with BadHUDOptions
+        var badHUDOptions = new BadHUDOptions();
 
-    override function onNoteMiss(event:NoteScriptEvent) { if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time); }
+        restBar = new FlxSprite();
+        restBar.scrollFactor.set(0, 0);
+        restBar.zIndex = 801;
+
+        restBarBG = FunkinSprite.create(0, 0, "restBackground");
+        restBarBG.scrollFactor.set(0, 0);
+        restBarBG.zIndex = 800;
+        restBarBG.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restBarBG.width / 2;
+        restBarBG.y = Preferences.downscroll ? state.playerStrumline.y - restBarBG.height : state.playerStrumline.y + restBarBG.height * 1.75;
+
+        restBarRadius = restBarBG.width / 2.5;
+        var restBarWidth = Std.int((restBarRadius + restBarThickness) * 2);
+        restBar.makeGraphic(restBarWidth, restBarWidth, 0x00000000, true);
+        restBar.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restBar.width / 2;
+        restBar.y = restBarBG.y;
+
+        restText = new FlxText(0, 0, 400, "", 32);
+        restText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        restText.borderSize = 1.75;
+        restText.scrollFactor.set();
+        restText.zIndex = 802;
+
+        restText.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restText.width / 2;
+        restText.y = Preferences.downscroll ? state.playerStrumline.y - restBarBG.height / 2 - restText.height / 2 + 3 : restBarBG.y + restText.height + 3;
+
+        restBarSprites = [restBarBG, restBar, restText];
+
+        for (sprite in restBarSprites) if (sprite != null) {
+            sprite.cameras = [state.camHUD];
+            sprite.visible = false;
+            sprite.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;
+            state.add(sprite);
+        }
+    }
 
     // Cleanup stuff
     override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }

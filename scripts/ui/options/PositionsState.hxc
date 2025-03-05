@@ -20,6 +20,7 @@ import funkin.util.Constants;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.text.FlxText;
+import flixel.text.FlxInputText;
 
 class PositionsState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -27,19 +28,31 @@ class PositionsState extends ScriptedMusicBeatSubState {
     var welcomeMusic:FunkinSound = new FunkinSound();
     var strumLine:Strumline;
 
-    var noteStyleIndex:Int = 0;
-    var noteStylesArray:Array<NoteStyle> = [
-        NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE),
-        NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_PIXEL_NOTE_STYLE)
-    ];
     var noteStyle:NoteStyle;
 
     var draggableSprites:Array<DraggableSprite> = [];
 
     var spriteSettingsText:FlxText;
 
+    var toolboxSprite:FunkinSprite;
+    var toolboxTitleBar:FunkinSprite;
+    var toolboxTitleText:FlxText;
+    var toolboxContentText:FlxText;
+    var toolboxCloseButton:FunkinSprite;
+    var toolboxTextField:FlxInputText;
+    var isToolboxVisible:Bool = false;
+    var isToolboxDragging:Bool = false;
+    var toolboxDragOffsetX:Float = 0;
+    var toolboxDragOffsetY:Float = 0;
+
+    // Prevet OptionsState update
+    var prevPersistentUpdate:Bool;
+
     override function create() {
         super.create();
+
+        prevPersistentUpdate = FlxG.state.persistentUpdate;
+        FlxG.state.persistentUpdate = false;
 
         Cursor.show();
         setupWelcomeMusic();
@@ -52,21 +65,22 @@ class PositionsState extends ScriptedMusicBeatSubState {
         menuBG.color = ChartEditorThemeHandler.BACKGROUND_COLOR_DARK;
         add(menuBG);
 
-        noteStyle = noteStylesArray[0];
+        noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE);
 
         initStrumline();
 
         var helpText:FlxText = new FlxText(0, 0, 0, "Press BACK/ESC to return to Options").setFormat(Paths.font("vcr.ttf"), 20);
-        helpText.x = FlxG.width - helpText.width;
-        helpText.y = FlxG.height - (helpText.height * 2) - 2;
+        helpText.x = FlxG.width - helpText.width - 10;
+        helpText.y = helpText.height * 2;
         add(helpText);
 
-        spriteSettingsText = new FlxText(10, FlxG.height * 0.95, 0).setFormat(Paths.font("vcr.ttf"), 20);
+        spriteSettingsText = new FlxText(10, FlxG.height * 0.9, 0).setFormat(Paths.font("vcr.ttf"), 20);
         spriteSettingsText.y -= spriteSettingsText.height;
-
         add(spriteSettingsText);
 
         initDraggableSprites();
+
+        initToolboxSprite();
     }
 
     override function update(elapsed:Float) {
@@ -74,18 +88,49 @@ class PositionsState extends ScriptedMusicBeatSubState {
         var mouseY = FlxG.mouse.y;
         var hoveredSprite = null;
 
-        for (i in 0...draggableSprites.length) {
-            var draggable = draggableSprites[draggableSprites.length - 1 - i];
-            var sprite = draggable.sprite;
+        if (isToolboxVisible) {
+            var isOverTitleBar = mouseX >= toolboxTitleBar.x &&
+            mouseX <= toolboxTitleBar.x + toolboxTitleBar.width &&
+            mouseY >= toolboxTitleBar.y &&
+            mouseY <= toolboxTitleBar.y + toolboxTitleBar.height;
 
-            var isMouseOver:Bool = mouseX >= sprite.x &&
-            mouseX <= sprite.x + sprite.width &&
-            mouseY >= sprite.y &&
-            mouseY <= sprite.y + sprite.height;
+            if (isOverTitleBar && FlxG.mouse.justPressed) {
+                isToolboxDragging = true;
+                toolboxDragOffsetX = mouseX - toolboxSprite.x;
+                toolboxDragOffsetY = mouseY - toolboxSprite.y;
+            }
 
-            if (isMouseOver) {
-                hoveredSprite = draggable;
-                break;
+            if (isToolboxDragging) {
+                if (FlxG.mouse.pressed) {
+                    var newX = mouseX - toolboxDragOffsetX;
+                    var newY = mouseY - toolboxDragOffsetY;
+
+                    // Keep toolbox within screen bounds
+                    newX = Math.max(0, Math.min(FlxG.width - toolboxSprite.width, newX));
+                    newY = Math.max(0, Math.min(FlxG.height - toolboxSprite.height, newY));
+
+                    // Move all toolbox elements
+                    moveToolbox(newX, newY);
+                } else {
+                    isToolboxDragging = false;
+                }
+            }
+        }
+
+        if (!isToolboxDragging) {
+            for (i in 0...draggableSprites.length) {
+                var draggable = draggableSprites[draggableSprites.length - 1 - i];
+                var sprite = draggable.sprite;
+
+                var isMouseOver:Bool = mouseX >= sprite.x &&
+                mouseX <= sprite.x + sprite.width &&
+                mouseY >= sprite.y &&
+                mouseY <= sprite.y + sprite.height;
+
+                if (isMouseOver) {
+                    hoveredSprite = draggable;
+                    break;
+                }
             }
         }
 
@@ -115,7 +160,7 @@ class PositionsState extends ScriptedMusicBeatSubState {
 
                         draggable.sprite.setPosition(newX, newY);
                     }
-                    if (spriteSettingsText != null) spriteSettingsText.text = "Offset: " + draggable.sprite.getPosition() + "\nScale: " + draggable.sprite.scale + "\nRotation: " + draggable.sprite.angle;
+                    updateText(draggable);
                 } else { // Mouse released
                     draggable.isDragging = false;
                     saveSpriteSettings(draggable);
@@ -206,24 +251,35 @@ class PositionsState extends ScriptedMusicBeatSubState {
 
                     saveSpriteSettings(draggable);
                 }
-                if (spriteSettingsText != null) spriteSettingsText.text = "Offset: " + draggable.sprite.getPosition() + "\nScale: " + draggable.sprite.scale + "\nRotation: " + draggable.sprite.angle;
+                updateText(draggable);
             }
         }
 
-        if (FlxG.keys.justPressed.TAB) {
-            noteStyleIndex = (noteStyleIndex + 1) % noteStylesArray.length;
-            noteStyle = noteStylesArray[noteStyleIndex];
-            // Reinit Sprites
-            initStrumline();
-            for (sprite in draggableSprites) remove(sprite.sprite);
-            draggableSprites = [];
-            initDraggableSprites();
+        if (FlxG.keys.justPressed.TAB && !isToolboxVisible) {
+            showToolbox("BadHUD Toolbox",
+            "Testing position has been saved.\nNoteStyle: "
+            );
         }
 
+        toolboxTextField.onTextChange.add((text, change) -> {
+            if (change == "input") {
+                var styleIds = NoteStyleRegistry.instance.listEntryIds();
+                if (styleIds.contains(text)) {
+                    noteStyle = NoteStyleRegistry.instance.fetchEntry(text);
+                    // Reinit Sprites
+                    initStrumline();
+                    for (draggable in draggableSprites) remove(draggable.sprite);
+                    draggableSprites = [];
+                    initDraggableSprites();
+                }
+            }
+        });
+
+        handleToolbox();
         handleCursor(hoveredSprite);
 
         // Exit to OptionsState (Doesn't work with Pause Options)
-        if (controls.BACK) FlxG.switchState(() -> new OptionsState());
+        if (controls.BACK && !toolboxTextField.hasFocus) FlxG.switchState(() -> new OptionsState());
 
         super.update(elapsed);
     }
@@ -280,7 +336,121 @@ class PositionsState extends ScriptedMusicBeatSubState {
         add(comboSprite);
     }
 
+    function initToolboxSprite() {
+        // Main window container
+        toolboxSprite = new FunkinSprite(0, 0);
+        toolboxSprite.makeGraphic(300, 200, 0xFF2C2F30);
+        toolboxSprite.screenCenter();
+        toolboxSprite.visible = false;
+
+        // Title bar
+        toolboxTitleBar = new FunkinSprite(toolboxSprite.x + 100, toolboxSprite.y + 2);
+        toolboxTitleBar.makeGraphic(294, 30, 0xFF3D3F41);
+        toolboxTitleBar.visible = false;
+
+        // Title text
+        toolboxTitleText = new FlxText(toolboxTitleBar.x + 5, toolboxSprite.y + 5, 290, "");
+        toolboxTitleText.setFormat(Paths.font("vcr.ttf"), 16, 0xFFFFFFFF, "left");
+        toolboxTitleText.visible = false;
+
+        // Content text
+        toolboxContentText = new FlxText(toolboxSprite.x + 10, toolboxSprite.y + 40, 280, "");
+        toolboxContentText.setFormat(Paths.font("vcr.ttf"), 14, 0xFFFFFFFF, "left");
+        toolboxContentText.visible = false;
+
+        // Text Field
+        toolboxTextField = new FlxInputText(toolboxSprite.x + 10, toolboxSprite.y + 120, 280, "", 14, 0xFFFFFFFF, 0xFF000000);
+        toolboxTextField.font = Paths.font("vcr.ttf");
+        toolboxTextField.visible = false;
+
+        // Close button
+        toolboxCloseButton = new FunkinSprite(toolboxSprite.x + toolboxSprite.width - 25, toolboxSprite.y + 5);
+        toolboxCloseButton.makeGraphic(20, 20, 0xFFFF4040);
+        toolboxCloseButton.visible = false;
+
+        add(toolboxSprite);
+        add(toolboxTitleBar);
+        add(toolboxTitleText);
+        add(toolboxContentText);
+        add(toolboxTextField);
+        add(toolboxCloseButton);
+    }
+
+    // Toolbox Methods
+    function handleToolbox() {
+        if (isToolboxVisible) {
+            // Check for close button click
+            var mouseX = FlxG.mouse.x;
+            var mouseY = FlxG.mouse.y;
+            var isOverCloseButton = mouseX >= toolboxCloseButton.x &&
+            mouseX <= toolboxCloseButton.x + toolboxCloseButton.width &&
+            mouseY >= toolboxCloseButton.y &&
+            mouseY <= toolboxCloseButton.y + toolboxCloseButton.height;
+
+            if (isOverCloseButton) {
+                toolboxCloseButton.color = 0xFFAA4040; // Highlight on hover
+
+                if (FlxG.mouse.justPressed) {
+                    closeToolbox();
+                    FunkinSound.playOnce(Paths.sound("cancelMenu"));
+                }
+            } else {
+                toolboxCloseButton.color = 0xFFFF4040; // Normal color
+            }
+        }
+    }
+
+    function moveToolbox(newX:Float, newY:Float) {
+        toolboxSprite.setPosition(newX, newY);
+        toolboxTitleBar.setPosition(newX, newY);
+        toolboxTitleText.setPosition(newX + 5, newY + 5);
+        toolboxContentText.setPosition(newX + 10, newY + 40);
+        toolboxTextField.setPosition(newX + 10, newY + 120);
+        toolboxCloseButton.setPosition(newX + toolboxSprite.width - 25, newY + 5);
+    }
+
+    function showToolbox(title:String, content:String) {
+        toolboxTitleText.text = title;
+        toolboxContentText.text = content;
+
+        // Center the window
+        toolboxSprite.screenCenter();
+        toolboxTitleBar.setPosition(toolboxSprite.x + 3, toolboxSprite.y + 3);
+        toolboxTitleText.setPosition(toolboxTitleBar.x + 5, toolboxSprite.y + 5);
+        toolboxContentText.setPosition(toolboxSprite.x + 10, toolboxSprite.y + 40);
+        toolboxTextField.setPosition(toolboxSprite.x + 10, toolboxSprite.y + 120);
+        toolboxCloseButton.setPosition(toolboxSprite.x + toolboxSprite.width - 25, toolboxSprite.y + 5);
+
+        // Make visible
+        toolboxSprite.visible = true;
+        toolboxTitleBar.visible = true;
+        toolboxTitleText.visible = true;
+        toolboxContentText.visible = true;
+        toolboxTextField.visible = true;
+        toolboxCloseButton.visible = true;
+
+        isToolboxVisible = true;
+
+        // Play sound
+        FunkinSound.playOnce(Paths.sound("confirmMenu"));
+    }
+
+    function closeToolbox() {
+        isToolboxVisible = false;
+        toolboxSprite.visible = false;
+        toolboxTitleBar.visible = false;
+        toolboxTitleText.visible = false;
+        toolboxContentText.visible = false;
+        toolboxTextField.visible = false;
+        toolboxCloseButton.visible = false;
+        isToolboxDragging = false;
+    }
+
     // Helper Methods
+    function updateText(draggable:DraggableSprite) {
+        if (spriteSettingsText != null) spriteSettingsText.text = "NoteSkin: " + noteStyle.id + "\nOffsets: " + draggable.sprite.getPosition() + "\nScale: " + draggable.sprite.scale + "\nRotation: " + draggable.sprite.angle;
+    }
+
     function saveSpriteSettings(draggable:DraggableSprite) {
         var originalScaleX = draggable.spriteType == "judgement" ? noteStyle.buildJudgementSprite("sick").scale.x : noteStyle.buildComboNumSprite(0).scale.x;
         var originalScaleY = draggable.spriteType == "judgement" ? noteStyle.buildJudgementSprite("sick").scale.y : noteStyle.buildComboNumSprite(0).scale.y;
@@ -341,6 +511,7 @@ class PositionsState extends ScriptedMusicBeatSubState {
         Cursor.hide();
         if (welcomeMusic != null) welcomeMusic.destroy();
         if (FlxG.sound.music != null) FlxG.sound.music.resume();
+        FlxG.state.persistentUpdate = prevPersistentUpdate;
     }
 }
 
