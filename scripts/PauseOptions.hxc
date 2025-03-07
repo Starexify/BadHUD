@@ -41,8 +41,8 @@ class PauseOptions extends ScriptedModule {
             var exit = options.items.members[options.items.length - 1];
             exit.y += 200;
             options.items.remove(exit);
-            var positionOffsets = options.items.createItem(0, options.items.length * 100, "HUD MANAGER", "bold", () -> FlxG.state.openSubState(ScriptedMusicBeatSubState.init("ui.options.HUDManagerState")));
-            positionOffsets.x = (FlxG.width - positionOffsets.width) / 2;
+            var hudManager = options.items.createItem(0, options.items.length * 100, "HUD MANAGER", "bold", () -> FlxG.state.openSubState(ScriptedMusicBeatSubState.init("ui.options.HUDManagerState")));
+            hudManager.x = (FlxG.width - hudManager.width) / 2;
             options.items.add(exit);
 
             if (wasPaused && pauseState != null) pauseState.startPauseMusic();
@@ -51,7 +51,7 @@ class PauseOptions extends ScriptedModule {
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         var state:PolymodScriptClass = event.targetState._asc;
-        if (event.targetState != PlayState.instance && wasPaused && !Std.isOfType(event.targetState, LatencyState) && ReflectUtil.getAnonymousField(ReflectUtil.getAnonymousField(state, "_c"), "name") != "PositionsState") {
+        if (event.targetState != PlayState.instance && wasPaused && !Std.isOfType(event.targetState, LatencyState) && ReflectUtil.getAnonymousField(ReflectUtil.getAnonymousField(state, "_c"), "name") != "HUDManagerState") {
             if (isChartingState) {
                 FlxG.switchState(() -> new ChartEditorState({
                     targetSongId: currentSongId
