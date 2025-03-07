@@ -1,0 +1,514 @@
+package ui.options;
+
+import funkin.Paths;
+import funkin.Preferences;
+import funkin.audio.FunkinSound;
+import funkin.data.notestyle.NoteStyleRegistry;
+import funkin.graphics.FunkinSprite;
+import funkin.input.Cursor;
+import funkin.input.CursorMode;
+import funkin.modding.base.ScriptedFlxSpriteGroup;
+import funkin.modding.base.ScriptedMusicBeatSubState;
+import funkin.modding.module.ModuleHandler;
+import funkin.play.PauseSubState;
+import funkin.play.notes.Strumline;
+import funkin.play.notes.notestyle.NoteStyle;
+import funkin.save.Save;
+import funkin.ui.debug.charting.handlers.ChartEditorThemeHandler;
+import funkin.ui.debug.charting.util.ChartEditorDropdowns;
+import funkin.ui.options.OptionsState;
+import funkin.util.Constants;
+
+import flixel.FlxG;
+import flixel.FlxSprite;
+import flixel.text.FlxText;
+
+import haxe.ui.components.DropDown;
+import haxe.ui.containers.TableView;
+import haxe.ui.containers.windows.Window;
+import haxe.ui.containers.windows.WindowManager;
+import haxe.ui.events.MouseEvent;
+import haxe.ui.events.UIEvent;
+
+class HUDManagerState extends ScriptedMusicBeatSubState {
+    var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
+
+    var welcomeMusic:FunkinSound = new FunkinSound();
+    var strumLine:Strumline;
+    var noteStyle:NoteStyle;
+
+    var ratingsPopUps:RatingPopUps;
+    var comboSprites:Array<FunkinSprite> = [];
+    var draggableSprites:Array<DraggableSprite> = [];
+
+    var spriteSettingsText:FlxText;
+
+    var toolboxWindow:Window;
+    var noteStyleList:DropDown;
+    var keybindsTable:TableView;
+    var isOverToolbox:Bool = false;
+
+    var holdDelayTimer:Float = 0;
+    var isHolding:Bool = false;
+
+    // Prevet OptionsState update
+    var prevPersistentUpdate:Bool;
+
+    override function create() {
+        super.create();
+
+        prevPersistentUpdate = FlxG.state.persistentUpdate;
+        FlxG.state.persistentUpdate = false;
+
+        Cursor.show();
+        setupWelcomeMusic();
+
+        var menuBG = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
+        menuBG.setGraphicSize(Std.int(menuBG.width * 1.1));
+        menuBG.updateHitbox();
+        menuBG.screenCenter();
+        menuBG.scrollFactor.set(0, 0);
+        menuBG.color = ChartEditorThemeHandler.BACKGROUND_COLOR_DARK;
+        add(menuBG);
+
+        noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE);
+
+        initStrumline();
+
+        initDraggableSprites();
+
+        spriteSettingsText = new FlxText(10, FlxG.height * 0.9, 0).setFormat(Paths.font("vcr.ttf"), 20);
+        spriteSettingsText.y -= spriteSettingsText.height;
+        add(spriteSettingsText);
+
+        initToolbox();
+    }
+
+    override function update(elapsed:Float) {
+        var mouseX = FlxG.mouse.x;
+        var mouseY = FlxG.mouse.y;
+        var hoveredSprite = null;
+
+        // Toolbox Events
+        handleToolbox();
+
+        if (!isOverToolbox || toolboxWindow.hidden) {
+            for (i in 0...draggableSprites.length) {
+                var draggable = draggableSprites[draggableSprites.length - 1 - i];
+                var sprite = draggable.sprite;
+
+                var isMouseOver:Bool = mouseX >= sprite.x &&
+                mouseX <= sprite.x + sprite.width &&
+                mouseY >= sprite.y &&
+                mouseY <= sprite.y + sprite.height;
+
+                if (isMouseOver) {
+                    hoveredSprite = draggable;
+                    break;
+                }
+            }
+        }
+
+        if (hoveredSprite != null && FlxG.mouse.justPressed) {
+            for (draggable in draggableSprites) { draggable.isSelected = false; draggable.isDragging = false; }
+            hoveredSprite.isSelected = true;
+            hoveredSprite.isDragging = true;
+            hoveredSprite.dragOffsetX = mouseX - hoveredSprite.sprite.x;
+            hoveredSprite.dragOffsetY = mouseY - hoveredSprite.sprite.y;
+        }
+
+        // Handling the sprite movement
+        for (draggable in draggableSprites) {
+            if (draggable.isDragging) {
+                if (FlxG.mouse.pressed) {
+                    if (FlxG.keys.pressed.ALT) {
+                        var spriteMiddleX = draggable.sprite.x + draggable.sprite.width / 2;
+                        var spriteMiddleY = draggable.sprite.y + draggable.sprite.height / 2;
+                        var angle = Math.atan2(mouseY - spriteMiddleY, mouseX - spriteMiddleX) * 180 / Math.PI;
+                        draggable.sprite.angle = Math.round(angle);
+
+                        // Rotate all combo sprites together
+                        if (draggable.spriteType == "combo") {
+                            for (i in 1...comboSprites.length) {
+                                comboSprites[i].angle = draggable.sprite.angle;
+                            }
+                        }
+                    } else {
+                        var newX = mouseX - draggable.dragOffsetX;
+                        var newY = mouseY - draggable.dragOffsetY;
+
+                        newX = Math.max(0, Math.min(FlxG.width - draggable.sprite.width, newX));
+                        newY = Math.max(0, Math.min(FlxG.height - draggable.sprite.height, newY));
+
+                        var oldX = draggable.sprite.x;
+                        var oldY = draggable.sprite.y;
+
+                        draggable.sprite.setPosition(newX, newY);
+
+                        // Move all combo sprites together
+                        if (draggable.spriteType == "combo") {
+                            var offsetX = newX - oldX;
+                            var offsetY = newY - oldY;
+
+                            for (i in 1...comboSprites.length) {
+                                comboSprites[i].x += offsetX;
+                                comboSprites[i].y += offsetY;
+                            }
+                        }
+                    }
+                    updateText(draggable);
+                } else { // Mouse released
+                    draggable.isDragging = false;
+                    saveSpriteSettings(draggable);
+                }
+            } else if (draggable.isSelected) {
+                var holdDelayThreshold:Float = 0.25;
+                var pressArray:Array<Bool> = [
+                    controls.UI_LEFT_P,
+                    controls.UI_DOWN_P,
+                    controls.UI_UP_P,
+                    controls.UI_RIGHT_P
+                ];
+
+                var holdArray:Array<Bool> = [
+                    controls.UI_LEFT,
+                    controls.UI_DOWN,
+                    controls.UI_UP,
+                    controls.UI_RIGHT
+                ];
+
+                var moveSpeed:Float = 10;
+                if (FlxG.keys.pressed.CONTROL) moveSpeed = 0.5;
+                else if (FlxG.keys.pressed.SHIFT) moveSpeed = 0.25;
+
+                var newX = draggable.sprite.x;
+                var newY = draggable.sprite.y;
+                var oldX = newX;
+                var oldY = newY;
+
+                var anyHold = holdArray.contains(true);
+
+                if (anyHold) {
+                    if (!isHolding) {
+                        // Just started holding
+                        holdDelayTimer = 0;
+                        isHolding = true;
+                    } else {
+                        // Continue holding, increment timer
+                        holdDelayTimer += FlxG.elapsed;
+                    }
+                } else {
+                    isHolding = false;
+                    holdDelayTimer = 0;
+                }
+
+                for (i in 0...pressArray.length) {
+                    if (pressArray[i]) {
+                        // Initial press - move immediately
+                        switch (i) {
+                            case 0: newX -= moveSpeed; // Left
+                            case 1: newY += moveSpeed; // Down
+                            case 2: newY -= moveSpeed; // Up
+                            case 3: newX += moveSpeed; // Right
+                        }
+                    } else if (holdArray[i] && (holdDelayTimer > holdDelayThreshold)) {
+                        // Only apply hold movement after the delay threshold
+                        switch (i) {
+                            case 0: newX -= moveSpeed; // Left
+                            case 1: newY += moveSpeed; // Down
+                            case 2: newY -= moveSpeed; // Up
+                            case 3: newX += moveSpeed; // Right
+                        }
+                    }
+                }
+
+                newX = Math.max(0, Math.min(FlxG.width - draggable.sprite.width, newX));
+                newY = Math.max(0, Math.min(FlxG.height - draggable.sprite.height, newY));
+
+                draggable.sprite.setPosition(newX, newY);
+
+                // Move all combo sprites together when using keyboard
+                if (draggable.spriteType == "combo") {
+                    var offsetX = newX - oldX;
+                    var offsetY = newY - oldY;
+
+                    for (i in 1...comboSprites.length) {
+                        comboSprites[i].x += offsetX;
+                        comboSprites[i].y += offsetY;
+                    }
+                }
+
+                if (controls.UI_DOWN_R || controls.UI_UP_R || controls.UI_LEFT_R || controls.UI_RIGHT_R) saveSpriteSettings(draggable);
+
+                if (FlxG.mouse.wheel != 0) {
+                    var maxScaleX:Float = FlxG.width / draggable.sprite.frameWidth;
+                    var maxScaleY:Float = FlxG.height / draggable.sprite.frameHeight;
+
+                    // Store original center coordinates
+                    var centerX = draggable.sprite.x + draggable.sprite.width / 2;
+                    var centerY = draggable.sprite.y + draggable.sprite.height / 2;
+
+                    var scaleChange = FlxG.mouse.wheel > 0 ? 0.1 : -0.1;
+
+                    if (FlxG.keys.pressed.CONTROL)
+                        draggable.sprite.scale.x = Math.min(
+                            Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10,
+                            maxScaleX
+                        );
+                    else if (FlxG.keys.pressed.SHIFT)
+                        draggable.sprite.scale.y = Math.min(
+                            Math.round((draggable.sprite.scale.y + scaleChange) * 10) / 10,
+                            maxScaleY
+                        );
+                    else {
+                        draggable.sprite.scale.x = Math.min(
+                            Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10,
+                            maxScaleX
+                        );
+                        draggable.sprite.scale.y = Math.min(
+                            Math.round((draggable.sprite.scale.y + scaleChange) * 10) / 10,
+                            maxScaleY
+                        );
+                    }
+                    draggable.sprite.updateHitbox();
+
+                    // Reposition to maintain center
+                    draggable.sprite.x = centerX - draggable.sprite.width / 2;
+                    draggable.sprite.y = centerY - draggable.sprite.height / 2;
+
+                    // Scale all combo sprites together
+                    if (draggable.spriteType == "combo") {
+                        for (i in 1...comboSprites.length) {
+                            var comboSprite = comboSprites[i];
+
+                            // Apply the same scaling
+                            if (FlxG.keys.pressed.CONTROL) {
+                                comboSprite.scale.x = draggable.sprite.scale.x;
+                            } else if (FlxG.keys.pressed.SHIFT) {
+                                comboSprite.scale.y = draggable.sprite.scale.y;
+                            } else {
+                                comboSprite.scale.x = draggable.sprite.scale.x;
+                                comboSprite.scale.y = draggable.sprite.scale.y;
+                            }
+
+                            // Store original center
+                            var comboCenterX = comboSprite.x + comboSprite.width / 2;
+                            var comboCenterY = comboSprite.y + comboSprite.height / 2;
+
+                            comboSprite.updateHitbox();
+
+                            // Reposition to maintain center
+                            comboSprite.x = comboCenterX - comboSprite.width / 2;
+                            comboSprite.y = comboCenterY - comboSprite.height / 2;
+                        }
+                    }
+
+                    saveSpriteSettings(draggable);
+                }
+                updateText(draggable);
+            }
+        }
+
+        handleCursor(hoveredSprite);
+
+        // Exit to OptionsState (Doesn't work with Pause Options)
+        if (controls.BACK) FlxG.switchState(() -> new OptionsState());
+
+        super.update(elapsed);
+    }
+
+    // Init
+    function initStrumline() {
+        if (strumLine != null) remove(strumLine);
+        strumLine = new Strumline(noteStyle, true);
+        strumLine.x = FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET;
+        strumLine.y = Preferences.downscroll ? FlxG.height - strumLine.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
+        if (badOptions.middlescroll) strumLine.screenCenter(0x01);
+        add(strumLine);
+    }
+
+    function initDraggableSprites() {
+        ratingsPopUps = ScriptedFlxSpriteGroup.init("RatingPopUps");
+        ratingsPopUps.scriptSet("noteStyle", noteStyle);
+        ratingsPopUps.zIndex = 900;
+        add(ratingsPopUps);
+
+        var judgementSprite:FunkinSprite = ratingsPopUps.scriptCall("initJudgementSprite", ["sick"]);
+        addDraggableSprite(judgementSprite, "judgement");
+
+        for (sprite in comboSprites) {
+            if (sprite != null) remove(sprite);
+        }
+        comboSprites = [];
+
+        // Create 3 combo sprites with different digits
+        for (i in 0...3) {
+            var comboSprite = ratingsPopUps.scriptCall("initComboSprite", [3 - i, i]);
+            if (comboSprite != null) {
+                comboSprites.push(comboSprite);
+                // Only add the first sprite as draggable
+                if (i == 0) {
+                    addDraggableSprite(comboSprite, "combo");
+                }
+            }
+        }
+    }
+
+    function initToolbox() {
+        WindowManager.instance.reset();
+
+        toolboxWindow = new Window();
+        toolboxWindow.width = 550;
+        toolboxWindow.height = 550;
+        toolboxWindow.x = (FlxG.width - toolboxWindow.width) / 2;
+        toolboxWindow.y = (FlxG.height - toolboxWindow.height) / 2;
+        toolboxWindow.title = "HUD Manager Guide";
+        toolboxWindow.maximizable = false;
+
+        keybindsTable = new TableView();
+        keybindsTable.id = "keybindsTable";
+        keybindsTable.percentWidth = 100;
+        keybindsTable.height = 200;
+
+        // Add Columns
+        var actionColumn = keybindsTable.addColumn("Action");
+        actionColumn.percentWidth = 50;
+        actionColumn.id = "action";
+        var keybindColumn = keybindsTable.addColumn("Keybind");
+        keybindColumn.percentWidth = 50;
+        keybindColumn.id = "keybind";
+
+        var header = keybindsTable.header;
+        if (header != null) header.percentWidth = 100;
+
+        keybindsTable.value = populateKeybindsTable(keybindsTable);
+
+        noteStyleList = new DropDown();
+        noteStyleList.id = "noteStyleList";
+        noteStyleList.value = ChartEditorDropdowns.populateDropdownWithNoteStyles(noteStyleList, noteStyle.id);
+        noteStyleList.percentWidth = 100;
+        noteStyleList.searchable = true;
+
+        toolboxWindow.addComponent(keybindsTable);
+        toolboxWindow.addComponent(noteStyleList);
+
+        WindowManager.instance.addWindow(toolboxWindow);
+    }
+
+    // Helper Methods
+    function handleToolbox() {
+        if (!toolboxWindow.hidden) {
+            toolboxWindow.onMouseOver = (event:MouseEvent) -> {
+                isOverToolbox = true;
+                Cursor.cursorMode = CursorMode.Default;
+            }
+            toolboxWindow.onMouseOut = (event:MouseEvent) -> isOverToolbox = false;
+
+            // Change NoteStyle
+            noteStyleList.onChange = (event:UIEvent) -> {
+                if (event.data?.id == null) return;
+                noteStyle = NoteStyleRegistry.instance.fetchEntry(event.data.id);
+                initStrumline();
+                remove(ratingsPopUps);
+                draggableSprites = [];
+                initDraggableSprites();
+            }
+        }
+        if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) {
+            initToolbox();
+        }
+    }
+
+    function handleCursor(hoveredSprite) {
+        // Mouse sounds
+        if (Cursor.cursorMode != CursorMode.Default || isOverToolbox) {
+            if (FlxG.mouse.justPressed) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickDown"));
+            if (FlxG.mouse.justReleased) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickUp"));
+        }
+
+        // Switch Sprites
+        if (hoveredSprite != null) Cursor.cursorMode = hoveredSprite.isDragging ? CursorMode.Grabbing : CursorMode.Pointer;
+        else Cursor.cursorMode = CursorMode.Default;
+    }
+
+    function addDraggableSprite(sprite:FunkinSprite, type:String) {
+        draggableSprites.push({
+            sprite: sprite,
+            isDragging: false,
+            isSelected: false,
+            dragOffsetX: 0,
+            dragOffsetY: 0,
+            spriteType: type
+        });
+    }
+
+    function updateText(draggable:DraggableSprite) {
+        if (spriteSettingsText != null) spriteSettingsText.text = "NoteSkin: " + noteStyle.id + "\nOffsets: " + draggable.sprite.getPosition() + "\nScale: " + draggable.sprite.scale + "\nRotation: " + draggable.sprite.angle;
+    }
+
+    function saveSpriteSettings(draggable:DraggableSprite) {
+        var originalScaleX = draggable.spriteType == "judgement" ? noteStyle.buildJudgementSprite("sick").scale.x : noteStyle.buildComboNumSprite(0).scale.x;
+        var originalScaleY = draggable.spriteType == "judgement" ? noteStyle.buildJudgementSprite("sick").scale.y : noteStyle.buildComboNumSprite(0).scale.y;
+        var settingsKey = (draggable.spriteType == "judgement") ? "judgementSettings" : (draggable.spriteType == "combo") ? "comboSettings" : null;
+        if (settingsKey != null) Save.instance.modOptions.set(settingsKey, [
+            Std.int(draggable.sprite.x + draggable.sprite.width / 2),
+            Std.int(draggable.sprite.y + draggable.sprite.height / 2),
+            draggable.sprite.scale.x - originalScaleX,
+            draggable.sprite.scale.y - originalScaleY,
+            draggable.sprite.angle]);
+    }
+
+    function populateKeybindsTable(tableView:TableView):Array<KeybindEntry> {
+        tableView.dataSource.clear();
+        var keybinds:Array<KeybindEntry> = [
+            {action: "Show User Guide", keybind: "F1"},
+            {action: "Return to Options", keybind: "BACK/F5"},
+            {action: "Drag Sprite", keybind: "Right Mouse Button"},
+            {action: "Rotate Sprite", keybind: "Alt + Right Mouse Button"},
+            {action: "Precise Sprite Movement", keybind: "W/A/S/D (+10) \nCtrl + W/A/S/D (+0.5)\nShift + W/A/S/D (+0.25)"},
+        ];
+
+        for (keybind in keybinds) tableView.dataSource.add(keybind);
+        return keybinds;
+    }
+
+    function setupWelcomeMusic() {
+        if (FlxG.sound.music != null) FlxG.sound.music.pause();
+        var pauseState:PauseSubState = ModuleHandler.getModule("PauseOptions").scriptGet("pauseState");
+        if (pauseState != null) pauseState.pauseMusic.pause();
+        welcomeMusic = FunkinSound.load(Paths.music('chartEditorLoop/chartEditorLoop'), true, true);
+        welcomeMusic.play(false, FlxG.random.int(0, Std.int(welcomeMusic.length / 2)));
+    }
+
+    // Cleanup
+    override function close() {
+        cleanup();
+        super.close();
+    }
+
+    override function destroy() {
+        cleanup();
+        super.destroy();
+    }
+
+    function cleanup() {
+        Cursor.hide();
+        if (welcomeMusic != null) welcomeMusic.destroy();
+        if (FlxG.sound.music != null) FlxG.sound.music.resume();
+        FlxG.state.persistentUpdate = prevPersistentUpdate;
+    }
+}
+
+typedef DraggableSprite = {
+    sprite:FunkinSprite,
+    isDragging:Bool,
+    isSelected:Bool,
+    dragOffsetX:Float,
+    dragOffsetY:Float,
+    spriteType:String
+}
+
+typedef KeybindEntry = {
+    action:String,
+    keybind:String
+}

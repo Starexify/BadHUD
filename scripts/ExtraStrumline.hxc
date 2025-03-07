@@ -166,7 +166,7 @@ class ExtraStrumline extends ScriptedModule {
     // Helper Methods
     function popUpRatings(judgement:String, ?combo:Int) {
         if (judgement == "miss" || badOptions.popUpType == "off") return;
-        ratingsPopUps.scriptCall("displayJudgements", [judgement]);
+        ratingsPopUps.scriptCall("displayJudgement", [judgement]);
 
         if (combo == null) combo = Highscore.tallies.combo;
         if (combo >= 10) ratingsPopUps.scriptCall("displayCombo", [combo]);

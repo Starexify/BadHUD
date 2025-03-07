@@ -36,12 +36,12 @@ class PauseOptions extends ScriptedModule {
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
         if (Std.isOfType(event.targetState, OptionsState)) {
             DiscordClient.instance.setPresence({ state: "Setting up Options", details: null });
-            // Positions Offsets Entry
+            // HUD Manager Entry
             var options:OptionsMenu = event.targetState.get_currentPage();
             var exit = options.items.members[options.items.length - 1];
             exit.y += 200;
             options.items.remove(exit);
-            var positionOffsets = options.items.createItem(0, options.items.length * 100, "POSITION OFFSETS", "bold", () -> FlxG.state.openSubState(ScriptedMusicBeatSubState.init("ui.options.PositionsState")));
+            var positionOffsets = options.items.createItem(0, options.items.length * 100, "HUD MANAGER", "bold", () -> FlxG.state.openSubState(ScriptedMusicBeatSubState.init("ui.options.HUDManagerState")));
             positionOffsets.x = (FlxG.width - positionOffsets.width) / 2;
             options.items.add(exit);
 
