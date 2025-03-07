@@ -14,7 +14,6 @@ import funkin.play.PauseSubState;
 import funkin.play.notes.Strumline;
 import funkin.play.notes.notestyle.NoteStyle;
 import funkin.save.Save;
-import funkin.ui.debug.charting.handlers.ChartEditorThemeHandler;
 import funkin.ui.debug.charting.util.ChartEditorDropdowns;
 import funkin.ui.options.OptionsState;
 import funkin.util.Constants;
@@ -24,6 +23,8 @@ import flixel.FlxSprite;
 import flixel.text.FlxText;
 
 import haxe.ui.components.DropDown;
+import haxe.ui.components.Label;
+import haxe.ui.containers.HBox;
 import haxe.ui.containers.TableView;
 import haxe.ui.containers.windows.Window;
 import haxe.ui.containers.windows.WindowManager;
@@ -44,8 +45,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var spriteSettingsText:FlxText;
 
     var toolboxWindow:Window;
-    var noteStyleList:DropDown;
-    var keybindsTable:TableView;
     var isOverToolbox:Bool = false;
 
     var holdDelayTimer:Float = 0;
@@ -68,7 +67,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         menuBG.updateHitbox();
         menuBG.screenCenter();
         menuBG.scrollFactor.set(0, 0);
-        menuBG.color = ChartEditorThemeHandler.BACKGROUND_COLOR_DARK;
+        menuBG.color = 0xFF550011;
         add(menuBG);
 
         noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE);
@@ -77,7 +76,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         initDraggableSprites();
 
-        spriteSettingsText = new FlxText(10, FlxG.height * 0.9, 0).setFormat(Paths.font("vcr.ttf"), 20);
+        spriteSettingsText = new FlxText(10, FlxG.height * 0.95, 0).setFormat(Paths.font("vcr.ttf"), 20);
         spriteSettingsText.y -= spriteSettingsText.height;
         add(spriteSettingsText);
 
@@ -88,9 +87,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var mouseX = FlxG.mouse.x;
         var mouseY = FlxG.mouse.y;
         var hoveredSprite = null;
-
-        // Toolbox Events
-        handleToolbox();
 
         if (!isOverToolbox || toolboxWindow.hidden) {
             for (i in 0...draggableSprites.length) {
@@ -280,7 +276,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                     if (draggable.spriteType == "combo") {
                         for (i in 1...comboSprites.length) {
                             var comboSprite = comboSprites[i];
-
+                            var originalWidth = comboSprite.width;
                             // Apply the same scaling
                             if (FlxG.keys.pressed.CONTROL) {
                                 comboSprite.scale.x = draggable.sprite.scale.x;
@@ -298,7 +294,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                             comboSprite.updateHitbox();
 
                             // Reposition to maintain center
-                            comboSprite.x = comboCenterX - comboSprite.width / 2;
+                            comboSprite.x = comboCenterX - comboSprite.width / 2 + ((originalWidth - comboSprite.width) * i);
                             comboSprite.y = comboCenterY - comboSprite.height / 2;
                         }
                     }
@@ -310,6 +306,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         }
 
         handleCursor(hoveredSprite);
+
+        if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
 
         // Exit to OptionsState (Doesn't work with Pause Options)
         if (controls.BACK) FlxG.switchState(() -> new OptionsState());
@@ -336,20 +334,14 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var judgementSprite:FunkinSprite = ratingsPopUps.scriptCall("initJudgementSprite", ["sick"]);
         addDraggableSprite(judgementSprite, "judgement");
 
-        for (sprite in comboSprites) {
-            if (sprite != null) remove(sprite);
-        }
+        for (sprite in comboSprites) if (sprite != null) remove(sprite);
         comboSprites = [];
 
-        // Create 3 combo sprites with different digits
         for (i in 0...3) {
             var comboSprite = ratingsPopUps.scriptCall("initComboSprite", [3 - i, i]);
             if (comboSprite != null) {
                 comboSprites.push(comboSprite);
-                // Only add the first sprite as draggable
-                if (i == 0) {
-                    addDraggableSprite(comboSprite, "combo");
-                }
+                if (i == 0) addDraggableSprite(comboSprite, "combo");
             }
         }
     }
@@ -358,17 +350,24 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         WindowManager.instance.reset();
 
         toolboxWindow = new Window();
-        toolboxWindow.width = 550;
-        toolboxWindow.height = 550;
-        toolboxWindow.x = (FlxG.width - toolboxWindow.width) / 2;
+        toolboxWindow.width = 420;
+        toolboxWindow.height = 300;
+        toolboxWindow.x = 10;
         toolboxWindow.y = (FlxG.height - toolboxWindow.height) / 2;
         toolboxWindow.title = "HUD Manager Guide";
         toolboxWindow.maximizable = false;
+        toolboxWindow.maximized = true;
 
-        keybindsTable = new TableView();
+        toolboxWindow.onMouseOver = (event:MouseEvent) -> {
+            isOverToolbox = true;
+            Cursor.cursorMode = CursorMode.Default;
+        }
+        toolboxWindow.onMouseOut = (event:MouseEvent) -> isOverToolbox = false;
+
+        var keybindsTable:TableView = new TableView();
         keybindsTable.id = "keybindsTable";
         keybindsTable.percentWidth = 100;
-        keybindsTable.height = 200;
+        keybindsTable.height = 196;
 
         // Add Columns
         var actionColumn = keybindsTable.addColumn("Action");
@@ -383,42 +382,40 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         keybindsTable.value = populateKeybindsTable(keybindsTable);
 
-        noteStyleList = new DropDown();
+        var hBox = new HBox();
+        hBox.percentWidth = 100;
+
+        var label = new Label();
+        label.text = "Note Style:";
+        label.percentWidth = 20;
+        label.verticalAlign = "center";
+        label.textAlign = "right";
+
+        var noteStyleList:DropDown = new DropDown();
         noteStyleList.id = "noteStyleList";
         noteStyleList.value = ChartEditorDropdowns.populateDropdownWithNoteStyles(noteStyleList, noteStyle.id);
-        noteStyleList.percentWidth = 100;
+        noteStyleList.percentWidth = 80;
         noteStyleList.searchable = true;
+        // Change NoteStyle
+        noteStyleList.onChange = (event:UIEvent) -> {
+            if (event.data?.id == null) return;
+            noteStyle = NoteStyleRegistry.instance.fetchEntry(event.data.id);
+            initStrumline();
+            remove(ratingsPopUps);
+            draggableSprites = [];
+            initDraggableSprites();
+        }
+
+        hBox.addComponent(label);
+        hBox.addComponent(noteStyleList);
 
         toolboxWindow.addComponent(keybindsTable);
-        toolboxWindow.addComponent(noteStyleList);
+        toolboxWindow.addComponent(hBox);
 
         WindowManager.instance.addWindow(toolboxWindow);
     }
 
     // Helper Methods
-    function handleToolbox() {
-        if (!toolboxWindow.hidden) {
-            toolboxWindow.onMouseOver = (event:MouseEvent) -> {
-                isOverToolbox = true;
-                Cursor.cursorMode = CursorMode.Default;
-            }
-            toolboxWindow.onMouseOut = (event:MouseEvent) -> isOverToolbox = false;
-
-            // Change NoteStyle
-            noteStyleList.onChange = (event:UIEvent) -> {
-                if (event.data?.id == null) return;
-                noteStyle = NoteStyleRegistry.instance.fetchEntry(event.data.id);
-                initStrumline();
-                remove(ratingsPopUps);
-                draggableSprites = [];
-                initDraggableSprites();
-            }
-        }
-        if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) {
-            initToolbox();
-        }
-    }
-
     function handleCursor(hoveredSprite) {
         // Mouse sounds
         if (Cursor.cursorMode != CursorMode.Default || isOverToolbox) {
@@ -443,7 +440,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function updateText(draggable:DraggableSprite) {
-        if (spriteSettingsText != null) spriteSettingsText.text = "NoteSkin: " + noteStyle.id + "\nOffsets: " + draggable.sprite.getPosition() + "\nScale: " + draggable.sprite.scale + "\nRotation: " + draggable.sprite.angle;
+        if (spriteSettingsText != null) spriteSettingsText.text = "Offsets: " + draggable.sprite.getPosition() + "\nScale: " + draggable.sprite.scale + "\nRotation: " + draggable.sprite.angle;
     }
 
     function saveSpriteSettings(draggable:DraggableSprite) {
@@ -461,11 +458,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     function populateKeybindsTable(tableView:TableView):Array<KeybindEntry> {
         tableView.dataSource.clear();
         var keybinds:Array<KeybindEntry> = [
-            {action: "Show User Guide", keybind: "F1"},
+            {action: "Show Guide", keybind: "F1"},
             {action: "Return to Options", keybind: "BACK/F5"},
             {action: "Drag Sprite", keybind: "Right Mouse Button"},
             {action: "Rotate Sprite", keybind: "Alt + Right Mouse Button"},
-            {action: "Precise Sprite Movement", keybind: "W/A/S/D (+10) \nCtrl + W/A/S/D (+0.5)\nShift + W/A/S/D (+0.25)"},
+            {action: "Precise Sprite Movement", keybind: "W/A/S/D (+ 10) \nCtrl + W/A/S/D (+ 0.5)\nShift + W/A/S/D (+ 0.25)"},
+            {action: "Precise Sprite Scaling", keybind: "Mouse Wheel (-/+ 0.1) \nCtrl + Mouse Wheel (-/+ 0.1 y-axis)\nShift + W/A/S/D (-/+ 0.1 x-axis)"},
         ];
 
         for (keybind in keybinds) tableView.dataSource.add(keybind);

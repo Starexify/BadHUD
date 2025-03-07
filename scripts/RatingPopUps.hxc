@@ -161,7 +161,7 @@ class RatingPopUps extends ScriptedFlxSpriteGroup {
             numCombo.scale.y += comboSettings[3];
             numCombo.updateHitbox();
             var newWidth = numCombo.width;
-            numCombo.setPosition(comboSettings[0] - numCombo.width / 2 - ((38 - (originalWidth - newWidth)) * (loopIndex - 1)), comboSettings[1] - numCombo.height / 2);
+            numCombo.setPosition(comboSettings[0] - numCombo.width / 2 - ((38 - (originalWidth - newWidth)) * loopIndex), comboSettings[1] - numCombo.height / 2);
         } else {
             numCombo.x = (FlxG.width * 0.507) - (38 * loopIndex) - 65;
             numCombo.y = (FlxG.camera.height * 0.44);
