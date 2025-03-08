@@ -138,7 +138,8 @@ class BadHUDOptions extends Module {
                     "7" => "Karmatic Arcade",
                     "8" => "ModernDOS",
                     "9" => "Euxoi",
-                    "10" => "fbUsv8C5eI"
+                    "10" => "House of Terror",
+                    "11" => "fbUsv8C5eI"
                 ], value -> {
                     badOptions.hudFont = Std.parseInt(value);
                     switchFont();
@@ -234,6 +235,8 @@ class BadHUDOptions extends Module {
             case 9: // px = 32;
                 font = "Euxoi.ttf";
             case 10: // px = ?;
+                font = "House_Of_Terror.ttf";
+            case 11: // px = ?;
                 font = "fbUsv8C5eI.ttf";
         }
     }
