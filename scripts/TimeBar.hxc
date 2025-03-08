@@ -71,19 +71,14 @@ class TimeBar extends ScriptedModule {
         timeText.zIndex = 802;
 
         switch (badOptions.timebarPosition) {
-            case "off":
             case "down":
                 timeText.y = FlxG.height - 34;
                 timeBarBG.y = FlxG.height - 34 + 2;
-                if (badOptions.hudFont == 0) {
-                    timeBarBG.y = timeText.y + 5;
-                }
+                if (badOptions.hudFont == 0) timeBarBG.y = timeText.y + 5;
             case "up":
                 timeText.y = 16;
                 timeBarBG.y = timeText.y + 2;
-                if (badOptions.hudFont == 0) {
-                    timeBarBG.y = timeText.y + 5;
-                }
+                if (badOptions.hudFont == 0) timeBarBG.y = timeText.y + 5;
             case "vertical": // (Right Side)
                 timeText.x = timeBarXPosV;
                 timeText.y = timeBarYPosV;
