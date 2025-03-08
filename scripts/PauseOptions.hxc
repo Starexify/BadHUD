@@ -53,9 +53,7 @@ class PauseOptions extends ScriptedModule {
         var state:PolymodScriptClass = event.targetState._asc;
         if (event.targetState != PlayState.instance && wasPaused && !Std.isOfType(event.targetState, LatencyState) && ReflectUtil.getAnonymousField(ReflectUtil.getAnonymousField(state, "_c"), "name") != "HUDManagerState") {
             if (isChartingState) {
-                FlxG.switchState(() -> new ChartEditorState({
-                    targetSongId: currentSongId
-                }));
+                FlxG.switchState(() -> new ChartEditorState({ targetSongId: currentSongId }));
                 wasPaused = false;
                 isChartingState = false;
             } else {

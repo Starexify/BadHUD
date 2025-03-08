@@ -54,7 +54,7 @@ class BadHUDOptions extends Module {
         else updatetypetext();
         Save.instance.flush();
 
-        if (Preferences.debugDisplay) changeDebugDisplay(font);
+        changeDebugDisplay(font);
     }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
@@ -190,7 +190,7 @@ class BadHUDOptions extends Module {
     }
 
     function changeDebugDisplay(font:String) {
-        if (Assets.exists(Paths.font(font))) {
+        if (Preferences.debugDisplay && Assets.exists(Paths.font(font))) {
             Main.fpsCounter.set_defaultTextFormat(new TextFormat(Assets.getPath(Paths.font(font))));
             Main.memoryCounter.set_defaultTextFormat(new TextFormat(Assets.getPath(Paths.font(font))));
         }
@@ -214,30 +214,18 @@ class BadHUDOptions extends Module {
 
     function switchFont() {
         switch (badOptions.hudFont) {
-            case 0: // px = 21;
-                font = "vcr.ttf";
-            case 1: // px = 16;
-                font = "VCRosdNEUE.ttf";
-            case 2: // px = 16;
-                font = "Minecraft.ttf";
-            case 3: // px = 11;
-                font = "Retro Gaming.ttf";
-            case 4: // px = ?;
-                font = "RobloxFont-Regular.ttf";
-            case 5: // px = ?;
-                font = "Super Mario 64.ttf";
-            case 6: // px = ?;
-                font = "New Super Mario Font U.ttf";
-            case 7: // px = ?;
-                font = "ka1.ttf";
-            case 8: // px = 16;
-                font = "ModernDOS.ttf";
-            case 9: // px = 32;
-                font = "Euxoi.ttf";
-            case 10: // px = ?;
-                font = "House_Of_Terror.ttf";
-            case 11: // px = ?;
-                font = "fbUsv8C5eI.ttf";
+            case 0: font = "vcr.ttf"; // px = 21
+            case 1: font = "VCRosdNEUE.ttf"; // px = 16
+            case 2: font = "Minecraft.ttf"; // px = 16
+            case 3: font = "Retro Gaming.ttf"; // px = 11
+            case 4: font = "RobloxFont-Regular.ttf"; // px = ?
+            case 5: font = "Super Mario 64.ttf"; // px = ?
+            case 6: font = "New Super Mario Font U.ttf"; // px = ?
+            case 7: font = "ka1.ttf"; // px = ?
+            case 8: font = "ModernDOS.ttf"; // px = 16
+            case 9: font = "Euxoi.ttf"; // px = 32
+            case 10: font = "House_Of_Terror.ttf"; // px = ?
+            case 11: font = "fbUsv8C5eI.ttf"; // px = ?;
         }
     }
 }

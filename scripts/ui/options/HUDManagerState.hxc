@@ -21,6 +21,8 @@ import funkin.util.Constants;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.text.FlxText;
+import flixel.ui.FlxBar;
+import flixel.ui.FlxBarFillDirection;
 
 import haxe.ui.components.DropDown;
 import haxe.ui.components.Label;
@@ -42,6 +44,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var comboSprites:Array<FunkinSprite> = [];
     var draggableSprites:Array<DraggableSprite> = [];
 
+    var highlightOutline:FunkinSprite;
+
     var spriteSettingsText:FlxText;
 
     var toolboxWindow:Window;
@@ -62,7 +66,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         Cursor.show();
         setupWelcomeMusic();
 
-        var menuBG = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
+        var menuBG = new FlxSprite().loadGraphic(Paths.image("menuDesat"));
         menuBG.setGraphicSize(Std.int(menuBG.width * 1.1));
         menuBG.updateHitbox();
         menuBG.screenCenter();
@@ -75,6 +79,11 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         initStrumline();
 
         initDraggableSprites();
+
+        highlightOutline = new FunkinSprite();
+        highlightOutline.makeGraphic(0, 0, 0x00000000);
+        highlightOutline.visible = false;
+        add(highlightOutline);
 
         spriteSettingsText = new FlxText(10, FlxG.height * 0.95, 0).setFormat(Paths.font("vcr.ttf"), 20);
         spriteSettingsText.y -= spriteSettingsText.height;
@@ -93,10 +102,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 var draggable = draggableSprites[draggableSprites.length - 1 - i];
                 var sprite = draggable.sprite;
 
-                var isMouseOver:Bool = mouseX >= sprite.x &&
-                mouseX <= sprite.x + sprite.width &&
-                mouseY >= sprite.y &&
-                mouseY <= sprite.y + sprite.height;
+                var isMouseOver:Bool = isPointInsideRotatedSprite(mouseX, mouseY, sprite);
 
                 if (isMouseOver) {
                     hoveredSprite = draggable;
@@ -123,18 +129,43 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                         var angle = Math.atan2(mouseY - spriteMiddleY, mouseX - spriteMiddleX) * 180 / Math.PI;
                         draggable.sprite.angle = Math.round(angle);
 
-                        // Rotate all combo sprites together
-                        if (draggable.spriteType == "combo") {
-                            for (i in 1...comboSprites.length) {
-                                comboSprites[i].angle = draggable.sprite.angle;
-                            }
-                        }
+                        // Rotate linked/combo sprites together
+                        if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) for (linked in draggable.linkedSprites) linked.sprite.angle = draggable.sprite.angle;
+                        if (draggable.spriteType == "combo") for (i in 1...comboSprites.length)comboSprites[i].angle = draggable.sprite.angle;
                     } else {
                         var newX = mouseX - draggable.dragOffsetX;
                         var newY = mouseY - draggable.dragOffsetY;
 
-                        newX = Math.max(0, Math.min(FlxG.width - draggable.sprite.width, newX));
-                        newY = Math.max(0, Math.min(FlxG.height - draggable.sprite.height, newY));
+                        // Calculate movement limits considering rotation
+                        if (draggable.sprite.angle % 360 != 0) {
+                            // Calculate rotated bounds
+                            var corners = getRotatedCorners(draggable.sprite);
+
+                            // Find min/max bounds of rotated sprite
+                            var minX = Math.POSITIVE_INFINITY, minY = Math.POSITIVE_INFINITY;
+                            var maxX = Math.NEGATIVE_INFINITY, maxY = Math.NEGATIVE_INFINITY;
+
+                            for (corner in corners) {
+                                minX = Math.min(minX, corner.x);
+                                minY = Math.min(minY, corner.y);
+                                maxX = Math.max(maxX, corner.x);
+                                maxY = Math.max(maxY, corner.y);
+                            }
+
+                            // Calculate offsets from sprite's top-left to rotated bounds
+                            var leftOffset = draggable.sprite.x - minX;
+                            var topOffset = draggable.sprite.y - minY;
+                            var rightOffset = maxX - draggable.sprite.x - draggable.sprite.width;
+                            var bottomOffset = maxY - draggable.sprite.y - draggable.sprite.height;
+
+                            // Apply boundary constraints with rotated dimensions
+                            newX = Math.max(leftOffset, Math.min(FlxG.width - draggable.sprite.width - rightOffset, newX));
+                            newY = Math.max(topOffset, Math.min(FlxG.height - draggable.sprite.height - bottomOffset, newY));
+                        } else {
+                            // Non-rotated sprite uses standard bounds
+                            newX = Math.max(0, Math.min(FlxG.width - draggable.sprite.width, newX));
+                            newY = Math.max(0, Math.min(FlxG.height - draggable.sprite.height, newY));
+                        }
 
                         var oldX = draggable.sprite.x;
                         var oldY = draggable.sprite.y;
@@ -151,6 +182,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                                 comboSprites[i].y += offsetY;
                             }
                         }
+                        if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) for (linked in draggable.linkedSprites) linked.sprite.setPosition(newX + linked.offsetX, newY + linked.offsetY);
                     }
                     updateText(draggable);
                 } else { // Mouse released
@@ -158,21 +190,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                     saveSpriteSettings(draggable);
                 }
             } else if (draggable.isSelected) {
+                var pressArray:Array<Bool> = [controls.UI_LEFT_P, controls.UI_DOWN_P, controls.UI_UP_P, controls.UI_RIGHT_P];
+                var holdArray:Array<Bool> = [controls.UI_LEFT, controls.UI_DOWN, controls.UI_UP, controls.UI_RIGHT];
+
                 var holdDelayThreshold:Float = 0.25;
-                var pressArray:Array<Bool> = [
-                    controls.UI_LEFT_P,
-                    controls.UI_DOWN_P,
-                    controls.UI_UP_P,
-                    controls.UI_RIGHT_P
-                ];
-
-                var holdArray:Array<Bool> = [
-                    controls.UI_LEFT,
-                    controls.UI_DOWN,
-                    controls.UI_UP,
-                    controls.UI_RIGHT
-                ];
-
                 var moveSpeed:Float = 10;
                 if (FlxG.keys.pressed.CONTROL) moveSpeed = 0.5;
                 else if (FlxG.keys.pressed.SHIFT) moveSpeed = 0.25;
@@ -218,12 +239,46 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                     }
                 }
 
-                newX = Math.max(0, Math.min(FlxG.width - draggable.sprite.width, newX));
-                newY = Math.max(0, Math.min(FlxG.height - draggable.sprite.height, newY));
+                // Calculate movement limits considering rotation
+                if (draggable.sprite.angle % 360 != 0) {
+                    // Store original position to calculate rotated corners
+                    var origX = draggable.sprite.x;
+                    var origY = draggable.sprite.y;
+
+                    // Temporarily set position to new position to calculate rotated bounds
+                    draggable.sprite.setPosition(newX, newY);
+
+                    // Calculate rotated bounds at new position
+                    var corners = getRotatedCorners(draggable.sprite);
+
+                    // Restore original position
+                    draggable.sprite.setPosition(origX, origY);
+
+                    // Find min/max bounds of rotated sprite
+                    var minX = Math.POSITIVE_INFINITY, minY = Math.POSITIVE_INFINITY;
+                    var maxX = Math.NEGATIVE_INFINITY, maxY = Math.NEGATIVE_INFINITY;
+
+                    for (corner in corners) {
+                        minX = Math.min(minX, corner.x);
+                        minY = Math.min(minY, corner.y);
+                        maxX = Math.max(maxX, corner.x);
+                        maxY = Math.max(maxY, corner.y);
+                    }
+
+                    // Check bounds and adjust if needed
+                    if (minX < 0) newX += (0 - minX);
+                    if (minY < 0) newY += (0 - minY);
+                    if (maxX > FlxG.width) newX -= (maxX - FlxG.width);
+                    if (maxY > FlxG.height) newY -= (maxY - FlxG.height);
+                } else {
+                    // Non-rotated sprite uses standard bounds
+                    newX = Math.max(0, Math.min(FlxG.width - draggable.sprite.width, newX));
+                    newY = Math.max(0, Math.min(FlxG.height - draggable.sprite.height, newY));
+                }
 
                 draggable.sprite.setPosition(newX, newY);
 
-                // Move all combo sprites together when using keyboard
+                // Move all linked/combo sprites together
                 if (draggable.spriteType == "combo") {
                     var offsetX = newX - oldX;
                     var offsetY = newY - oldY;
@@ -246,16 +301,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
                     var scaleChange = FlxG.mouse.wheel > 0 ? 0.1 : -0.1;
 
-                    if (FlxG.keys.pressed.CONTROL)
-                        draggable.sprite.scale.x = Math.min(
-                            Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10,
-                            maxScaleX
-                        );
-                    else if (FlxG.keys.pressed.SHIFT)
-                        draggable.sprite.scale.y = Math.min(
-                            Math.round((draggable.sprite.scale.y + scaleChange) * 10) / 10,
-                            maxScaleY
-                        );
+                    if (FlxG.keys.pressed.CONTROL) draggable.sprite.scale.x = Math.min(Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10, maxScaleX);
+                    else if (FlxG.keys.pressed.SHIFT) draggable.sprite.scale.y = Math.min(Math.round((draggable.sprite.scale.y + scaleChange) * 10) / 10, maxScaleY);
                     else {
                         draggable.sprite.scale.x = Math.min(
                             Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10,
@@ -269,20 +316,17 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                     draggable.sprite.updateHitbox();
 
                     // Reposition to maintain center
-                    draggable.sprite.x = centerX - draggable.sprite.width / 2;
-                    draggable.sprite.y = centerY - draggable.sprite.height / 2;
+                    draggable.sprite.setPosition(centerX - draggable.sprite.width / 2, centerY - draggable.sprite.height / 2);
 
-                    // Scale all combo sprites together
+                    // Scale linked/combo sprites together
                     if (draggable.spriteType == "combo") {
                         for (i in 1...comboSprites.length) {
                             var comboSprite = comboSprites[i];
                             var originalWidth = comboSprite.width;
                             // Apply the same scaling
-                            if (FlxG.keys.pressed.CONTROL) {
-                                comboSprite.scale.x = draggable.sprite.scale.x;
-                            } else if (FlxG.keys.pressed.SHIFT) {
-                                comboSprite.scale.y = draggable.sprite.scale.y;
-                            } else {
+                            if (FlxG.keys.pressed.CONTROL) comboSprite.scale.x = draggable.sprite.scale.x;
+                            else if (FlxG.keys.pressed.SHIFT) comboSprite.scale.y = draggable.sprite.scale.y;
+                            else {
                                 comboSprite.scale.x = draggable.sprite.scale.x;
                                 comboSprite.scale.y = draggable.sprite.scale.y;
                             }
@@ -298,11 +342,27 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                             comboSprite.y = comboCenterY - comboSprite.height / 2;
                         }
                     }
+                    if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) {
+                        for (linked in draggable.linkedSprites) {
+                            linked.sprite.scale = draggable.sprite.scale;
+                            linked.sprite.updateHitbox();
+                            trace(linked.sprite.width);
+                        }
+                    }
 
                     saveSpriteSettings(draggable);
+                } else {
+                    if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) {
+                        for (linked in draggable.linkedSprites) {
+                            linked.sprite.setPosition(draggable.sprite.x + (draggable.sprite.width / 2) - (linked.sprite.width / 2), draggable.sprite.y + (draggable.sprite.height / 2) - (linked.sprite.height / 2));
+                        }
+                    }
                 }
+
                 updateText(draggable);
             }
+
+            if (draggable.isSelected || draggable.isDragging) updateHighlight(draggable);
         }
 
         handleCursor(hoveredSprite);
@@ -344,6 +404,37 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 if (i == 0) addDraggableSprite(comboSprite, "combo");
             }
         }
+
+        var healthBarBG:FunkinSprite = initHealthBarSprite();
+        var draggableHealthBar = addDraggableSprite(healthBarBG, "healthBar");
+
+        var healthBar:FlxBar = new FlxBar(0, 0, FlxBarFillDirection.RIGHT_TO_LEFT, Std.int(healthBarBG.width - 8));
+        trace(healthBar.width);
+        trace(healthBarBG.width);
+        healthBar.createFilledBar(Constants.COLOR_HEALTH_BAR_RED, Constants.COLOR_HEALTH_BAR_GREEN);
+        healthBar.percent = 50;
+        healthBar.zIndex = 801;
+        add(healthBar);
+        linkSpriteToTarget(draggableHealthBar, healthBar);
+    }
+
+    function initHealthBarSprite():FunkinSprite {
+        var healthBarBG:FunkinSprite = new FunkinSprite();
+        healthBarBG.loadTexture("healthBar");
+        var healthBarSettings = Save.instance.modOptions.get("healthBarSettings");
+        if (healthBarSettings != null) {
+            healthBarBG.angle = healthBarSettings[4];
+            healthBarBG.scale.x = healthBarSettings[2];
+            healthBarBG.scale.y = healthBarSettings[3];
+            healthBarBG.updateHitbox();
+            healthBarBG.setPosition(healthBarSettings[0] - healthBarBG.width / 2, healthBarSettings[1] - healthBarBG.height / 2);
+        } else {
+            healthBarBG.height = Preferences.downscroll ? FlxG.height * 0.1 : FlxG.height * 0.9;
+        }
+        healthBarBG.zIndex = 800;
+        add(healthBarBG);
+
+        return healthBarBG;
     }
 
     function initToolbox() {
@@ -402,6 +493,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             noteStyle = NoteStyleRegistry.instance.fetchEntry(event.data.id);
             initStrumline();
             remove(ratingsPopUps);
+            for (draggable in draggableSprites) {
+                remove(draggable.sprite);
+                for (linked in draggable.linkedSprites) remove(linked.sprite);
+            }
             draggableSprites = [];
             initDraggableSprites();
         }
@@ -416,6 +511,149 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     // Helper Methods
+    function isPointInsideRotatedSprite(pointX:Float, pointY:Float, sprite:FlxSprite):Bool {
+        // Get the sprite's center
+        var centerX:Float = sprite.x + sprite.width / 2;
+        var centerY:Float = sprite.y + sprite.height / 2;
+
+        // If sprite isn't rotated, use simple bounding box check
+        if (sprite.angle % 360 == 0) {
+            return pointX >= sprite.x &&
+            pointX <= sprite.x + sprite.width &&
+            pointY >= sprite.y &&
+            pointY <= sprite.y + sprite.height;
+        }
+
+        // Calculate the four corners of the sprite
+        var halfWidth:Float = sprite.width / 2;
+        var halfHeight:Float = sprite.height / 2;
+
+        // Get rotation in radians
+        var angleRad:Float = sprite.angle * Math.PI / 180;
+        var cos:Float = Math.cos(angleRad);
+        var sin:Float = Math.sin(angleRad);
+
+        // Calculate corner positions (relative to center)
+        var corners:Array<{x:Float, y:Float}> = [
+            { x: -halfWidth, y: -halfHeight }, // Top-left
+            { x: halfWidth, y: -halfHeight }, // Top-right
+            { x: halfWidth, y: halfHeight }, // Bottom-right
+            { x: -halfWidth, y: halfHeight } // Bottom-left
+        ];
+
+        // Rotate corners and translate to world position
+        for (i in 0...corners.length) {
+            var rotX:Float = corners[i].x * cos - corners[i].y * sin;
+            var rotY:Float = corners[i].x * sin + corners[i].y * cos;
+            corners[i].x = rotX + centerX;
+            corners[i].y = rotY + centerY;
+        }
+
+        // Check if point is inside the rotated rectangle using point-in-polygon test
+        return isPointInPolygon(pointX, pointY, corners);
+    }
+
+    function isPointInPolygon(pointX:Float, pointY:Float, vertices:Array<{x:Float, y:Float}>):Bool {
+        var inside:Bool = false;
+        var j:Int = vertices.length - 1;
+
+        for (i in 0...vertices.length) {
+            if (((vertices[i].y > pointY) != (vertices[j].y > pointY)) &&
+            (pointX < (vertices[j].x - vertices[i].x) * (pointY - vertices[i].y) /
+            (vertices[j].y - vertices[i].y) + vertices[i].x)) {
+                inside = !inside;
+            }
+            j = i;
+        }
+
+        return inside;
+    }
+
+    function getRotatedCorners(sprite:FlxSprite):Array<{x:Float, y:Float}> {
+        var centerX = sprite.x + sprite.width / 2;
+        var centerY = sprite.y + sprite.height / 2;
+        var halfWidth = sprite.width / 2;
+        var halfHeight = sprite.height / 2;
+
+        // Get rotation in radians
+        var angleRad = sprite.angle * Math.PI / 180;
+        var cos = Math.cos(angleRad);
+        var sin = Math.sin(angleRad);
+
+        // Calculate corner positions (relative to center)
+        var corners:Array<{x:Float, y:Float}> = [
+            { x: -halfWidth, y: -halfHeight }, // Top-left
+            { x: halfWidth, y: -halfHeight },  // Top-right
+            { x: halfWidth, y: halfHeight },   // Bottom-right
+            { x: -halfWidth, y: halfHeight }   // Bottom-left
+        ];
+
+        // Rotate corners and translate to world position
+        for (i in 0...corners.length) {
+            var rotX = corners[i].x * cos - corners[i].y * sin;
+            var rotY = corners[i].x * sin + corners[i].y * cos;
+            corners[i].x = rotX + centerX;
+            corners[i].y = rotY + centerY;
+        }
+
+        return corners;
+    }
+
+    function updateHighlight(selectedSprite:DraggableSprite) {
+        if (selectedSprite != null) {
+            updateHighlightOutline(selectedSprite.sprite);
+            highlightOutline.visible = true;
+        } else highlightOutline.visible = false;
+    }
+
+    function updateHighlightOutline(sprite:FlxSprite) {
+        var padding = 2;
+        var width = Std.int(sprite.width + padding * 2);
+        var height = Std.int(sprite.height + padding * 2);
+
+        // Only remake the graphic if the size has changed
+        if (highlightOutline.width != width || highlightOutline.height != height) {
+            highlightOutline.makeGraphic(width, height, 0x00000000);
+
+            var lineThickness:Int = 2;
+            var highlightColor:Int = 0xFF339933;
+
+            // Draw border lines
+            var outline = highlightOutline.pixels;
+            outline.lock();
+
+            // Top and bottom lines
+            for (i in 0...width) {
+                for (t in 0...lineThickness) {
+                    outline.setPixel32(i, t, highlightColor);
+                    outline.setPixel32(i, height - 1 - t, highlightColor);
+                }
+            }
+
+            // Left and right lines
+            for (i in 0...height) {
+                for (t in 0...lineThickness) {
+                    outline.setPixel32(t, i, highlightColor);
+                    outline.setPixel32(width - 1 - t, i, highlightColor);
+                }
+            }
+
+            outline.unlock();
+            highlightOutline.dirty = true;
+        }
+
+        // Get sprite center coordinates
+        var spriteCenterX = sprite.x + sprite.width / 2;
+        var spriteCenterY = sprite.y + sprite.height / 2;
+
+        // Position the highlight from center
+        highlightOutline.x = spriteCenterX - highlightOutline.width / 2;
+        highlightOutline.y = spriteCenterY - highlightOutline.height / 2;
+        highlightOutline.angle = sprite.angle;
+
+        highlightOutline.origin.set(highlightOutline.width / 2, highlightOutline.height / 2);
+    }
+
     function handleCursor(hoveredSprite) {
         // Mouse sounds
         if (Cursor.cursorMode != CursorMode.Default || isOverToolbox) {
@@ -428,14 +666,37 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         else Cursor.cursorMode = CursorMode.Default;
     }
 
-    function addDraggableSprite(sprite:FunkinSprite, type:String) {
-        draggableSprites.push({
+    function addDraggableSprite(sprite:FunkinSprite, type:String):DraggableSprite {
+        var draggable:DraggableSprite = {
             sprite: sprite,
             isDragging: false,
             isSelected: false,
             dragOffsetX: 0,
             dragOffsetY: 0,
-            spriteType: type
+            spriteType: type,
+            linkedSprites: []
+        };
+
+        draggableSprites.push(draggable);
+        return draggable;
+    }
+
+    function linkSpriteToTarget(targetDraggable:DraggableSprite, sprite:FlxSprite) {
+        // Calculate initial offset
+        sprite.angle = targetDraggable.sprite.angle;
+        sprite.scale = targetDraggable.sprite.scale;
+        sprite.updateHitbox();
+
+        var targetCenterX = targetDraggable.sprite.x + targetDraggable.sprite.width / 2;
+        var targetCenterY = targetDraggable.sprite.y + targetDraggable.sprite.height / 2;
+        sprite.setPosition(targetCenterX - sprite.width / 2, targetCenterY - sprite.height / 2);
+
+        var offsetX = sprite.x - targetDraggable.sprite.x;
+        var offsetY = sprite.y - targetDraggable.sprite.y;
+        targetDraggable.linkedSprites.push({
+            sprite: sprite,
+            offsetX: offsetX,
+            offsetY: offsetY
         });
     }
 
@@ -444,9 +705,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function saveSpriteSettings(draggable:DraggableSprite) {
-        var originalScaleX = draggable.spriteType == "judgement" ? noteStyle.buildJudgementSprite("sick").scale.x : noteStyle.buildComboNumSprite(0).scale.x;
-        var originalScaleY = draggable.spriteType == "judgement" ? noteStyle.buildJudgementSprite("sick").scale.y : noteStyle.buildComboNumSprite(0).scale.y;
-        var settingsKey = (draggable.spriteType == "judgement") ? "judgementSettings" : (draggable.spriteType == "combo") ? "comboSettings" : null;
+        var originalScaleX = draggable.spriteType == "judgement" ? noteStyle.buildJudgementSprite("sick").scale.x : draggable.spriteType == "combo" ? noteStyle.buildComboNumSprite(0).scale.x : 0;
+        var originalScaleY = draggable.spriteType == "judgement" ? noteStyle.buildJudgementSprite("sick").scale.y : draggable.spriteType == "combo" ? noteStyle.buildComboNumSprite(0).scale.y : 0;
+
+        var settingsKey = (draggable.spriteType == "judgement") ? "judgementSettings" :
+        (draggable.spriteType == "combo") ? "comboSettings" :
+        (draggable.spriteType == "healthBar") ? "healthBarSettings" : null;
         if (settingsKey != null) Save.instance.modOptions.set(settingsKey, [
             Std.int(draggable.sprite.x + draggable.sprite.width / 2),
             Std.int(draggable.sprite.y + draggable.sprite.height / 2),
@@ -474,7 +738,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (FlxG.sound.music != null) FlxG.sound.music.pause();
         var pauseState:PauseSubState = ModuleHandler.getModule("PauseOptions").scriptGet("pauseState");
         if (pauseState != null) pauseState.pauseMusic.pause();
-        welcomeMusic = FunkinSound.load(Paths.music('chartEditorLoop/chartEditorLoop'), true, true);
+        welcomeMusic = FunkinSound.load(Paths.music("chartEditorLoop/chartEditorLoop"), true, true);
         welcomeMusic.play(false, FlxG.random.int(0, Std.int(welcomeMusic.length / 2)));
     }
 
@@ -503,7 +767,8 @@ typedef DraggableSprite = {
     isSelected:Bool,
     dragOffsetX:Float,
     dragOffsetY:Float,
-    spriteType:String
+    spriteType:String,
+    linkedSprites:Array<{sprite:FlxSprite, offsetX:Float, offsetY:Float}>
 }
 
 typedef KeybindEntry = {
