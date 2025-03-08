@@ -139,7 +139,7 @@ class BadHUDOptions extends Module {
                     "8" => "ModernDOS",
                     "9" => "Euxoi",
                     "10" => "House of Terror",
-                    "11" => "Pixel Operator",
+                    "11" => "Determination",
                     "12" => "fbUsv8C5eI"
                 ], value -> {
                     badOptions.hudFont = Std.parseInt(value);
@@ -226,7 +226,7 @@ class BadHUDOptions extends Module {
             case 8: font = "ModernDOS.ttf"; // 16px
             case 9: font = "Euxoi.ttf"; // 32px
             case 10: font = "House_Of_Terror.ttf"; // ?px
-            case 11: font = "PixelOperator-Bold.ttf"; // 16px
+            case 11: font = "determination-regular.ttf"; // 16px
             case 12: font = "fbUsv8C5eI.ttf"; // ?px
         }
     }
