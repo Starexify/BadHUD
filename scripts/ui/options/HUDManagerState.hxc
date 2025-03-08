@@ -408,9 +408,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var healthBarBG:FunkinSprite = initHealthBarSprite();
         var draggableHealthBar = addDraggableSprite(healthBarBG, "healthBar");
 
-        var healthBar:FlxBar = new FlxBar(0, 0, FlxBarFillDirection.RIGHT_TO_LEFT, Std.int(healthBarBG.width - 8));
-        trace(healthBar.width);
-        trace(healthBarBG.width);
+        var healthBarSettings = Save.instance.modOptions.get("healthBarSettings");
+        var barWidth:Int = (healthBarSettings != null) ? Std.int(healthBarSettings[5] - 8) : Std.int(healthBarBG.width - 8);
+
+        var healthBar:FlxBar = new FlxBar(0, 0, FlxBarFillDirection.RIGHT_TO_LEFT, barWidth);
         healthBar.createFilledBar(Constants.COLOR_HEALTH_BAR_RED, Constants.COLOR_HEALTH_BAR_GREEN);
         healthBar.percent = 50;
         healthBar.zIndex = 801;
@@ -583,9 +584,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         // Calculate corner positions (relative to center)
         var corners:Array<{x:Float, y:Float}> = [
             { x: -halfWidth, y: -halfHeight }, // Top-left
-            { x: halfWidth, y: -halfHeight },  // Top-right
-            { x: halfWidth, y: halfHeight },   // Bottom-right
-            { x: -halfWidth, y: halfHeight }   // Bottom-left
+            { x: halfWidth, y: -halfHeight }, // Top-right
+            { x: halfWidth, y: halfHeight }, // Bottom-right
+            { x: -halfWidth, y: halfHeight } // Bottom-left
         ];
 
         // Rotate corners and translate to world position
@@ -716,7 +717,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             Std.int(draggable.sprite.y + draggable.sprite.height / 2),
             draggable.sprite.scale.x - originalScaleX,
             draggable.sprite.scale.y - originalScaleY,
-            draggable.sprite.angle]);
+            draggable.sprite.angle,
+            draggable.spriteType == "healthBar" ? draggable.sprite.width : 0]);
     }
 
     function populateKeybindsTable(tableView:TableView):Array<KeybindEntry> {

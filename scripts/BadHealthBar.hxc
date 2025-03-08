@@ -1,3 +1,4 @@
+import funkin.graphics.FunkinSprite;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
 import funkin.modding.module.ScriptedModule;
@@ -6,9 +7,9 @@ import funkin.play.components.HealthIcon;
 import funkin.util.Constants;
 import funkin.save.Save;
 
-import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.math.FlxMath;
+import flixel.ui.FlxBar;
 
 import Std;
 
@@ -16,8 +17,12 @@ class BadHealthBar extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var state:PlayState;
 
+    var healthBarBG:FunkinSprite;
+    var healthBar:FlxBar;
     var iconP1:HealthIcon;
     var iconP2:HealthIcon;
+
+    var iconSpacing:Float = 50;
 
     function new() {
         super("BadHealthBar");
@@ -28,68 +33,87 @@ class BadHealthBar extends ScriptedModule {
         if (badHooks != null) state = badHooks.scriptGet("state");
         if (state == null) return;
         if (new BadHooks().healthBarExcluded.indexOf(state.currentChart.songName) != -1) return;
+        healthBarBG = state.healthBarBG;
+        healthBar = state.healthBar;
         iconP1 = state.iconP1;
         iconP2 = state.iconP2;
 
-        if (badOptions.smoothBars) state.healthBar.numDivisions = Std.int(state.healthBarBG.width / 1.2);
-
         // Health Bar
-        if (badOptions.healthBarPosition != "off") {
-            if (badOptions.healthBarPosition == "vertical") {
-                // Vertical HP Bar
-                state.healthBar.x = FlxG.width * 0.7;
-                state.healthBar.y = FlxG.height * 0.5;
-                state.healthBar.angle = 90;
-                state.healthBarBG.angle = 90;
+        if (badOptions.healthBar) {
+            var healthBarSettings = Save.instance.modOptions.get("healthBarSettings");
+            if (healthBarSettings != null) {
+                healthBarBG.angle = healthBar.angle = healthBarSettings[4];
+                healthBarBG.scale.x = healthBar.scale.x = healthBarSettings[2];
+                healthBarBG.scale.y = healthBar.scale.y = healthBarSettings[3];
+                healthBarBG.updateHitbox();
+                healthBarBG.setPosition(healthBarSettings[0] - healthBarBG.width / 2, healthBarSettings[1] - healthBarBG.height / 2);
+                healthBar.setPosition(state.healthBarBG.x + (state.healthBarBG.width / 2) - (state.healthBar.width / 2), state.healthBarBG.y + (state.healthBarBG.height / 2) - (state.healthBar.height / 2));
 
                 if (!state.isMinimalMode) {
                     if (iconP1 != null) iconP1.autoUpdate = false;
                     if (iconP2 != null) iconP2.autoUpdate = false;
                 }
             }
-            state.healthBarBG.setPosition(state.healthBar.x - 4, state.healthBar.y - 4);
-            if (!state.isMinimalMode) {
-                if (iconP1 != null) iconP1.alpha = badOptions.hudOpacity / 100;
-                if (iconP2 != null) iconP2.alpha = badOptions.hudOpacity / 100;
-            }
+
             state.healthBar.alpha = badOptions.hudOpacity / 100;
             state.healthBarBG.alpha = badOptions.hudOpacity / 100;
         } else {
-            state.healthBar.visible = false;
-            state.healthBarBG.visible = false;
-            if (!state.isMinimalMode) {
-                if (iconP1 != null) iconP1.visible = false;
-                if (iconP2 != null) iconP2.visible = false;
-            }
+            state.remove(healthBar);
+            state.remove(healthBarBG);
         }
+
+        if (badOptions.smoothBars) state.healthBar.numDivisions = Std.int(state.healthBarBG.width / 1.3);
 
         // Health Icon Positions
         if (!state.isMinimalMode) {
             switch (badOptions.healthIconPosition) {
                 case "off":
-                    if (iconP1 != null) iconP1.visible = false;
-                    if (iconP2 != null) iconP2.visible = false;
-                case "vanilla":
+                    state.remove(iconP1);
+                    state.remove(iconP2);
                 case "flipped":
                     if (iconP1 != null) iconP1.flipX = false;
                     if (iconP2 != null) iconP2.flipX = true;
+                case "centered":
+                    var healthBarX:Float = healthBar.x;
+                    var healthBarY:Float = healthBar.y;
+                    var healthBarWidth:Float = healthBar.width;
+                    var healthBarHeight:Float = healthBar.height;
+                    var centerX:Float = healthBarX + (healthBarWidth / 2);
+                    var centerY:Float = healthBarY + (healthBarHeight / 2);
+
+                    var angleRad:Float = healthBar.angle * (Math.PI / 180);
+
+                    var offsetX:Float = Math.cos(angleRad) * iconSpacing;
+                    var offsetY:Float = -Math.sin(angleRad) * iconSpacing;
+
+                    if (iconP1 != null) {
+                        iconP1.x = centerX + offsetX - (iconP1.width / 2);
+                        iconP1.y = centerY - offsetY - (iconP1.height / 2);
+                    }
+                    if (iconP2 != null) {
+                        iconP2.x = centerX - offsetX - (iconP2.width / 2);
+                        iconP2.y = centerY + offsetY - (iconP2.height / 2);
+                    }
                 case "ends":
-                    var healthBarX:Float = state.healthBar.x;
-                    var healthBarY:Float = state.healthBar.y;
-                    var healthBarWidth:Float = state.healthBar.width;
-                    if (iconP1 != null) iconP1.autoUpdate = false;
-                    if (iconP2 != null) iconP2.autoUpdate = false;
-                    if (badOptions.healthBarPosition == "vertical") {
-                        if (iconP1 != null) iconP1.y = healthBarY + (healthBarWidth / 2) - (state.iconP1.width / 2);
-                        if (iconP2 != null) iconP2.y = healthBarY - (healthBarWidth / 2) - (state.iconP2.width / 2);
-                        if (iconP1 != null) iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
-                        if (iconP2 != null) iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2);
-                    } else {
-                        // Center icons vertically relative to the health bar
-                        if (iconP1 != null) iconP1.y = healthBarY - (iconP1.height / 2);
-                        if (iconP2 != null) iconP2.y = healthBarY - (iconP2.height / 2);
-                        if (iconP1 != null) iconP1.x = healthBarX + healthBarWidth - (iconP1.width / 2);
-                        if (iconP2 != null) iconP2.x = healthBarX - (iconP2.width / 2);
+                    var healthBarX:Float = healthBar.x;
+                    var healthBarY:Float = healthBar.y;
+                    var healthBarWidth:Float = healthBar.width;
+                    var halfBarLength:Float = healthBarWidth / 2;
+                    var centerX:Float = healthBarX + halfBarLength;
+                    var centerY:Float = healthBarY + healthBar.height / 2;
+
+                    var angleRad:Float = healthBar.angle * (Math.PI / 180);
+
+                    var offsetX:Float = Math.cos(angleRad) * halfBarLength;
+                    var offsetY:Float = -Math.sin(angleRad) * halfBarLength;
+
+                    if (iconP1 != null) {
+                        iconP1.x = centerX + offsetX - (iconP1.width / 2);
+                        iconP1.y = centerY - offsetY - (iconP1.height / 2);
+                    }
+                    if (iconP2 != null) {
+                        iconP2.x = centerX - offsetX - (iconP2.width / 2);
+                        iconP2.y = centerY + offsetY - (iconP2.height / 2);
                     }
             }
         }
@@ -98,15 +122,22 @@ class BadHealthBar extends ScriptedModule {
         if (badOptions.iconColors) {
             var bfHealthColor = getDominantColor(iconP1);
             var opponentHealthColor = getDominantColor(iconP2);
-            state.healthBar.createFilledBar(opponentHealthColor, bfHealthColor);
-            state.healthBar.updateBar();
+            healthBar.createFilledBar(opponentHealthColor, bfHealthColor);
+            healthBar.updateBar();
         }
+
+        if (!state.isMinimalMode) {
+            if (iconP1 != null) iconP1.alpha = badOptions.hudOpacity / 100;
+            if (iconP2 != null) iconP2.alpha = badOptions.hudOpacity / 100;
+        }
+
+        if (!state.isMinimalMode) updateIconsPosition();
     }
 
     // bop for icons, I think onBeatHit is better than onUpdate and fixes it ?
-    override function onBeatHit(event:SongTimeScriptEvent) { if (state != null && iconP1 != null && !state.isMinimalMode) updateIconsPosition(); }
+    override function onBeatHit(event:SongTimeScriptEvent) { if (state != null && !state.isMinimalMode) updateIconsPosition(); }
 
-    override function onUpdate(event:UpdateScriptEvent) { if (state != null && iconP1 != null && !state.isMinimalMode && event.healthChange != 0) updateIconsPosition(); }
+    override function onUpdate(event:UpdateScriptEvent) { if (state != null && !state.isMinimalMode) updateIconsPosition(); }
 
     // Helper Methods
     function getDominantColor(sprite:FlxSprite) {
@@ -149,30 +180,37 @@ class BadHealthBar extends ScriptedModule {
     }
 
     function updateIconsPosition() {
-        // Vertical Health Icons (WORKING SOMEHOW)
-        if (badOptions.healthBarPosition == "vertical" && (badOptions.healthIconPosition == "vanilla" || badOptions.healthIconPosition == "flipped")) {
-            var healthBarX:Float = state.healthBar.x;
-            var healthBarY:Float = state.healthBar.y;
-            var healthBarWidth:Float = state.healthBar.width;
-            var yCentering:Float = healthBarWidth / 2 - 15;
-            var gapReduction:Float = 5;
+        if (iconP1 == null || iconP2 == null || Save.instance.modOptions.get("healthBarSettings") == null) return;
 
-            // Move icons horizontally relative to health bar
-            iconP1.y = healthBarY
-            + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering
-            - HealthIcon.POSITION_OFFSET);
-            iconP2.y = healthBarY
-            + (healthBarWidth * (FlxMath.remapToRange(state.healthBar.value, 0, 2, 100, 0) * 0.01) - yCentering + gapReduction)
-            - (iconP2.height - HealthIcon.POSITION_OFFSET);
+        // Rotate and move icons according to the Modified Bar !
+        if (badOptions.healthIconPosition != "ends" && badOptions.healthIconPosition != "centered") {
+            var healthBarX:Float = healthBar.x;
+            var healthBarY:Float = healthBar.y;
+            var healthBarWidth:Float = healthBar.width;
+            var healthBarHeight:Float = healthBar.height;
+            var centerX:Float = healthBarX + (healthBarWidth / 2);
+            var centerY:Float = healthBarY + (healthBarHeight / 2);
+            var missingHealthPercentage:Float = FlxMath.remapToRange(healthBar.value, 0, 2, 100, 0) / 100;
 
-            // Center icons vertically relative to the health bar
-            iconP1.x = healthBarX + (healthBarWidth / 2) - (state.iconP1.width / 2);
-            iconP2.x = healthBarX + (healthBarWidth / 2) - (state.iconP2.width / 2);
+            var iconSpacing:Float = 50;
+
+            var angleRad:Float = healthBar.angle * (Math.PI / 180);
+            var distanceFromCenter:Float = (missingHealthPercentage - 0.5) * healthBarWidth;
+
+            var offsetX:Float = Math.cos(angleRad) * distanceFromCenter;
+            var offsetY:Float = -Math.sin(angleRad) * distanceFromCenter;
+
+            var spacingOffsetX:Float = Math.cos(angleRad) * iconSpacing;
+            var spacingOffsetY:Float = -Math.sin(angleRad) * iconSpacing;
+
+            iconP1.x = centerX + offsetX + spacingOffsetX - (iconP1.width / 2);
+            iconP1.y = centerY - offsetY - spacingOffsetY - (iconP1.height / 2);
+            iconP2.x = centerX + offsetX - spacingOffsetX - (iconP2.width / 2);
+            iconP2.y = centerY - offsetY + spacingOffsetY - (iconP2.height / 2);
         }
-        if (badOptions.healthIconPosition == "vanilla" || badOptions.healthIconPosition == "flipped") {
-            updateHealthIcon(iconP1, state.health);
-            updateHealthIcon(iconP2, Constants.HEALTH_MAX - state.health);
-        }
+
+        updateHealthIcon(iconP1, state.health);
+        updateHealthIcon(iconP2, Constants.HEALTH_MAX - state.health);
     }
 
     function updateHealthIcon(icon:HealthIcon, health:Float) { if (icon != null) icon.playAnimation(health < HealthIcon.LOSING_THRESHOLD ? "losing" : health > HealthIcon.WINNING_THRESHOLD ? "winning" : "idle"); }

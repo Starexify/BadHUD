@@ -24,7 +24,7 @@ class BadHUDOptions extends Module {
     var saveObject:BadSaveData = {
         middlescroll: false,
         opponentNoteOpacity: 100,
-        healthBarPosition: "vanilla",
+        healthBar: true,
         healthIconPosition: "vanilla",
         timebarPosition: "down",
         timebarType: "left",
@@ -69,16 +69,13 @@ class BadHUDOptions extends Module {
 
                 // Bars
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Bars :", "bold");
-                preferences.createPrefItemEnum("Health Bar Position", "Choose what the position of the Health Bar.", [
-                    "off" => "Off",
-                    "vanilla" => "Vanilla",
-                    "vertical" => "Vertical"
-                ], value -> badOptions.healthBarPosition = value, badOptions.healthBarPosition);
+                preferences.createPrefItemCheckbox("Enable Health Bar", "If enabled, the health bar will be visible.", value -> badOptions.healthBar = value, badOptions.healthBar);
 
                 preferences.createPrefItemEnum("Health Icons Position", "Select the position of the Health Icons.", [
                     "off" => "Off",
                     "vanilla" => "Vanilla",
                     "flipped" => "Flipped",
+                    "centered" => "Centered",
                     "ends" => "Ends"
                 ], value -> badOptions.healthIconPosition = value, badOptions.healthIconPosition);
 
@@ -235,7 +232,7 @@ class BadHUDOptions extends Module {
 typedef BadSaveData = {
     middlescroll:Bool,
     opponentNoteOpacity:Int,
-    healthBarPosition:String,
+    healthBar:Bool,
     healthIconPosition:String,
     timebarPosition:String,
     timebarType:String,
