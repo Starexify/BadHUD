@@ -51,17 +51,20 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var spriteSettingsText:FlxText;
 
     var toolboxWindow:Window;
+    var noteStyleList:DropDown;
+    var oppNotes:CheckBox;
+    var playerNotes:CheckBox;
     var isOverToolbox:Bool = false;
 
     var holdDelayTimer:Float = 0;
     var isHolding:Bool = false;
 
-    // Prevet OptionsState update
     var prevPersistentUpdate:Bool;
 
     override function create() {
         super.create();
 
+        // Prevent OptionsState update
         prevPersistentUpdate = FlxG.state.persistentUpdate;
         FlxG.state.persistentUpdate = false;
 
@@ -78,7 +81,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE);
 
-        initStrumline();
+        initToolbox();
+
+        initStrumlines();
 
         initDraggableSprites();
 
@@ -90,8 +95,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         spriteSettingsText = new FlxText(10, 0, 0).setFormat(Paths.font("vcr.ttf"), 20);
         spriteSettingsText.y = Preferences.downscroll ? 20 : FlxG.height * 0.95 - spriteSettingsText.height;
         add(spriteSettingsText);
-
-        initToolbox();
     }
 
     override function update(elapsed:Float) {
@@ -366,16 +369,17 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
 
         // Exit to OptionsState (Doesn't work with Pause Options)
-        if (controls.BACK) FlxG.switchState(() -> new OptionsState());
+        if (controls.BACK && !noteStyleList.selected) FlxG.switchState(() -> new OptionsState());
 
         super.update(elapsed);
     }
 
     // Init
-    function initStrumline() {
+    function initStrumlines() {
         if (playerStrumline != null) remove(playerStrumline);
         playerStrumline = new Strumline(noteStyle, true);
         playerStrumline.y = Preferences.downscroll ? FlxG.height - playerStrumline.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
+        playerStrumline.visible = playerNotes.selected;
         if (badOptions.middlescroll) playerStrumline.screenCenter(0x01);
         else playerStrumline.x = FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET;
         add(playerStrumline);
@@ -386,6 +390,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             opponentStrumline.x = Constants.STRUMLINE_X_OFFSET;
             opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
             opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
+            opponentStrumline.visible = oppNotes.selected;
             if (badOptions.middlescroll) {
                 var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
                 for (i in 2...4) {
@@ -453,9 +458,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         toolboxWindow = new Window();
         toolboxWindow.width = 420;
-        toolboxWindow.height = 400;
+        toolboxWindow.autoHeight = true;
         toolboxWindow.x = 10;
-        toolboxWindow.y = (FlxG.height - toolboxWindow.height) / 2;
+        toolboxWindow.y = FlxG.height / 4;
         toolboxWindow.title = "HUD Manager Guide";
         toolboxWindow.maximizable = false;
         toolboxWindow.maximized = true;
@@ -469,7 +474,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var keybindsTable:TableView = new TableView();
         keybindsTable.id = "keybindsTable";
         keybindsTable.percentWidth = 100;
-        keybindsTable.height = 196;
+        keybindsTable.autoHeight = true;
 
         // Add Columns
         var actionColumn = keybindsTable.addColumn("Action");
@@ -493,7 +498,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         label.verticalAlign = "center";
         label.textAlign = "right";
 
-        var noteStyleList:DropDown = new DropDown();
+        noteStyleList = new DropDown();
         noteStyleList.id = "noteStyleList";
         noteStyleList.value = ChartEditorDropdowns.populateDropdownWithNoteStyles(noteStyleList, noteStyle.id);
         noteStyleList.percentWidth = 80;
@@ -502,7 +507,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         noteStyleList.onChange = (event:UIEvent) -> {
             if (event.data?.id == null) return;
             noteStyle = NoteStyleRegistry.instance.fetchEntry(event.data.id);
-            initStrumline();
+            initStrumlines();
             remove(ratingsPopUps);
             for (draggable in draggableSprites) {
                 remove(draggable.sprite);
@@ -518,13 +523,13 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var checkboxBox = new HBox();
         checkboxBox.percentWidth = 100;
 
-        var oppNotes:CheckBox = new CheckBox();
+        oppNotes = new CheckBox();
         oppNotes.text = "Enable Opponent Strumline";
         oppNotes.selected = true;
         oppNotes.percentWidth = 50;
         oppNotes.onChange = (event:UIEvent) -> opponentStrumline.visible = oppNotes.selected;
 
-        var playerNotes:CheckBox = new CheckBox();
+        playerNotes = new CheckBox();
         playerNotes.text = "Enable Player Strumline";
         playerNotes.selected = true;
         playerNotes.percentWidth = 50;
