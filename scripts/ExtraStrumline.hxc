@@ -55,19 +55,18 @@ class ExtraStrumline extends ScriptedModule {
         if (badOptions.middlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) {
             state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
 
-            // Opponent Strumline
+            // Place last 2 opponent notes on right side
             if (badOptions.opponentNoteOpacity != 0) {
-                var rightXOffset = badOptions.healthBarPosition == "vertical" ? -Constants.STRUMLINE_X_OFFSET : -150;
-
-                // Place last 2 notes on right side
+                var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
                 for (i in 2...4) {
                     var note = state.opponentStrumline.strumlineNotes.members[i];
-                    note.x = FlxG.width - state.opponentStrumline.width - rightXOffset + Strumline.NOTE_SPACING * (i - 2);
+                    note.x = FlxG.width - state.opponentStrumline.width + rightXOffset + Strumline.NOTE_SPACING * (i - 2);
                 }
             }
         }
 
         if (badOptions.opponentNoteOpacity > 0) state.opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
+        else state.remove(state.opponentStrumline);
 
         // Note Underlay
         if (badOptions.underlayOpacity > 0) {

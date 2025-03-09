@@ -24,6 +24,7 @@ import flixel.text.FlxText;
 import flixel.ui.FlxBar;
 import flixel.ui.FlxBarFillDirection;
 
+import haxe.ui.components.CheckBox;
 import haxe.ui.components.DropDown;
 import haxe.ui.components.Label;
 import haxe.ui.containers.HBox;
@@ -37,7 +38,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
 
     var welcomeMusic:FunkinSound = new FunkinSound();
-    var strumLine:Strumline;
+    var playerStrumline:Strumline;
+    var opponentStrumline:Strumline;
     var noteStyle:NoteStyle;
 
     var ratingsPopUps:RatingPopUps;
@@ -85,8 +87,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         highlightOutline.visible = false;
         add(highlightOutline);
 
-        spriteSettingsText = new FlxText(10, FlxG.height * 0.95, 0).setFormat(Paths.font("vcr.ttf"), 20);
-        spriteSettingsText.y -= spriteSettingsText.height;
+        spriteSettingsText = new FlxText(10, 0, 0).setFormat(Paths.font("vcr.ttf"), 20);
+        spriteSettingsText.y = Preferences.downscroll ? 20 : FlxG.height * 0.95 - spriteSettingsText.height;
         add(spriteSettingsText);
 
         initToolbox();
@@ -203,17 +205,11 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 var oldX = newX;
                 var oldY = newY;
 
-                var anyHold = holdArray.contains(true);
-
-                if (anyHold) {
+                if (holdArray.contains(true)) {
                     if (!isHolding) {
-                        // Just started holding
                         holdDelayTimer = 0;
                         isHolding = true;
-                    } else {
-                        // Continue holding, increment timer
-                        holdDelayTimer += FlxG.elapsed;
-                    }
+                    } else holdDelayTimer += FlxG.elapsed;
                 } else {
                     isHolding = false;
                     holdDelayTimer = 0;
@@ -346,7 +342,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                         for (linked in draggable.linkedSprites) {
                             linked.sprite.scale = draggable.sprite.scale;
                             linked.sprite.updateHitbox();
-                            trace(linked.sprite.width);
+                            linked.sprite.setPosition(draggable.sprite.x + (draggable.sprite.width / 2) - (linked.sprite.width / 2), draggable.sprite.y + (draggable.sprite.height / 2) - (linked.sprite.height / 2));
                         }
                     }
 
@@ -377,12 +373,28 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     // Init
     function initStrumline() {
-        if (strumLine != null) remove(strumLine);
-        strumLine = new Strumline(noteStyle, true);
-        strumLine.x = FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET;
-        strumLine.y = Preferences.downscroll ? FlxG.height - strumLine.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
-        if (badOptions.middlescroll) strumLine.screenCenter(0x01);
-        add(strumLine);
+        if (playerStrumline != null) remove(playerStrumline);
+        playerStrumline = new Strumline(noteStyle, true);
+        playerStrumline.y = Preferences.downscroll ? FlxG.height - playerStrumline.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
+        if (badOptions.middlescroll) playerStrumline.screenCenter(0x01);
+        else playerStrumline.x = FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET;
+        add(playerStrumline);
+
+        if (badOptions.opponentNoteOpacity > 0) {
+            if (opponentStrumline != null) remove(opponentStrumline);
+            opponentStrumline = new Strumline(noteStyle, true);
+            opponentStrumline.x = Constants.STRUMLINE_X_OFFSET;
+            opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
+            opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
+            if (badOptions.middlescroll) {
+                var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
+                for (i in 2...4) {
+                    var note = opponentStrumline.strumlineNotes.members[i];
+                    note.x = FlxG.width - opponentStrumline.width + rightXOffset + Strumline.NOTE_SPACING * (i - 2);
+                }
+            }
+            add(opponentStrumline);
+        }
     }
 
     function initDraggableSprites() {
@@ -406,17 +418,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         }
 
         var healthBarBG:FunkinSprite = initHealthBarSprite();
-        var draggableHealthBar = addDraggableSprite(healthBarBG, "healthBar");
-
-        var healthBarSettings = Save.instance.modOptions.get("healthBarSettings");
-        var barWidth:Int = (healthBarSettings != null) ? Std.int(healthBarSettings[5] - 8) : Std.int(healthBarBG.width - 8);
-
-        var healthBar:FlxBar = new FlxBar(0, 0, FlxBarFillDirection.RIGHT_TO_LEFT, barWidth);
-        healthBar.createFilledBar(Constants.COLOR_HEALTH_BAR_RED, Constants.COLOR_HEALTH_BAR_GREEN);
-        healthBar.percent = 50;
-        healthBar.zIndex = 801;
-        add(healthBar);
-        linkSpriteToTarget(draggableHealthBar, healthBar);
     }
 
     function initHealthBarSprite():FunkinSprite {
@@ -435,6 +436,15 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         healthBarBG.zIndex = 800;
         add(healthBarBG);
 
+        var draggableHealthBar = addDraggableSprite(healthBarBG, "healthBar");
+
+        var healthBar:FlxBar = new FlxBar(0, 0, FlxBarFillDirection.RIGHT_TO_LEFT, Std.int(healthBarBG.width - 8));
+        healthBar.createFilledBar(Constants.COLOR_HEALTH_BAR_RED, Constants.COLOR_HEALTH_BAR_GREEN);
+        healthBar.percent = 50;
+        healthBar.zIndex = 801;
+        add(healthBar);
+        linkSpriteToTarget(draggableHealthBar, healthBar);
+
         return healthBarBG;
     }
 
@@ -443,7 +453,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         toolboxWindow = new Window();
         toolboxWindow.width = 420;
-        toolboxWindow.height = 300;
+        toolboxWindow.height = 400;
         toolboxWindow.x = 10;
         toolboxWindow.y = (FlxG.height - toolboxWindow.height) / 2;
         toolboxWindow.title = "HUD Manager Guide";
@@ -474,8 +484,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         keybindsTable.value = populateKeybindsTable(keybindsTable);
 
-        var hBox = new HBox();
-        hBox.percentWidth = 100;
+        var noteStyleBox = new HBox();
+        noteStyleBox.percentWidth = 100;
 
         var label = new Label();
         label.text = "Note Style:";
@@ -502,11 +512,30 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             initDraggableSprites();
         }
 
-        hBox.addComponent(label);
-        hBox.addComponent(noteStyleList);
+        noteStyleBox.addComponent(label);
+        noteStyleBox.addComponent(noteStyleList);
+
+        var checkboxBox = new HBox();
+        checkboxBox.percentWidth = 100;
+
+        var oppNotes:CheckBox = new CheckBox();
+        oppNotes.text = "Enable Opponent Strumline";
+        oppNotes.selected = true;
+        oppNotes.percentWidth = 50;
+        oppNotes.onChange = (event:UIEvent) -> opponentStrumline.visible = oppNotes.selected;
+
+        var playerNotes:CheckBox = new CheckBox();
+        playerNotes.text = "Enable Player Strumline";
+        playerNotes.selected = true;
+        playerNotes.percentWidth = 50;
+        playerNotes.onChange = (event:UIEvent) -> playerStrumline.visible = playerNotes.selected;
+
+        checkboxBox.addComponent(oppNotes);
+        checkboxBox.addComponent(playerNotes);
 
         toolboxWindow.addComponent(keybindsTable);
-        toolboxWindow.addComponent(hBox);
+        toolboxWindow.addComponent(noteStyleBox);
+        toolboxWindow.addComponent(checkboxBox);
 
         WindowManager.instance.addWindow(toolboxWindow);
     }
@@ -713,12 +742,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         (draggable.spriteType == "combo") ? "comboSettings" :
         (draggable.spriteType == "healthBar") ? "healthBarSettings" : null;
         if (settingsKey != null) Save.instance.modOptions.set(settingsKey, [
-            Std.int(draggable.sprite.x + draggable.sprite.width / 2),
-            Std.int(draggable.sprite.y + draggable.sprite.height / 2),
-            draggable.sprite.scale.x - originalScaleX,
-            draggable.sprite.scale.y - originalScaleY,
-            draggable.sprite.angle,
-            draggable.spriteType == "healthBar" ? draggable.sprite.width : 0]);
+            Std.int(draggable.sprite.x + draggable.sprite.width / 2), Std.int(draggable.sprite.y + draggable.sprite.height / 2),
+            draggable.sprite.scale.x - originalScaleX, draggable.sprite.scale.y - originalScaleY,
+            draggable.sprite.angle]);
     }
 
     function populateKeybindsTable(tableView:TableView):Array<KeybindEntry> {
