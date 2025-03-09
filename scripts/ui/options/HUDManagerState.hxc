@@ -27,38 +27,44 @@ import flixel.ui.FlxBarFillDirection;
 import haxe.ui.components.CheckBox;
 import haxe.ui.components.DropDown;
 import haxe.ui.components.Label;
+import haxe.ui.components.OptionStepper;
 import haxe.ui.containers.HBox;
 import haxe.ui.containers.TableView;
+import haxe.ui.containers.menus.Menu;
 import haxe.ui.containers.windows.Window;
 import haxe.ui.containers.windows.WindowManager;
+import haxe.ui.core.Screen;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.events.UIEvent;
+import haxe.ui.data.ArrayDataSource;
 
 class HUDManagerState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
 
     var welcomeMusic:FunkinSound = new FunkinSound();
+    var spriteSettingsText:FlxText;
+    var highlightOutline:FunkinSprite;
+    var noteStyle:NoteStyle;
+
     var playerStrumline:Strumline;
     var opponentStrumline:Strumline;
-    var noteStyle:NoteStyle;
 
     var ratingsPopUps:RatingPopUps;
     var comboSprites:Array<FunkinSprite> = [];
     var draggableSprites:Array<DraggableSprite> = [];
 
-    var highlightOutline:FunkinSprite;
-
-    var spriteSettingsText:FlxText;
-
     var toolboxWindow:Window;
-    var noteStyleList:DropDown;
     var oppNotes:CheckBox;
     var playerNotes:CheckBox;
     var isOverToolbox:Bool = false;
 
+    var contextMenu:Menu;
+    var isSearching:Bool = false;
+
     var holdDelayTimer:Float = 0;
     var isHolding:Bool = false;
 
+    var prevAlpha:Float;
     var prevPersistentUpdate:Bool;
 
     override function create() {
@@ -82,9 +88,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE);
 
         initToolbox();
-
         initStrumlines();
-
         initDraggableSprites();
 
         highlightOutline = new FunkinSprite();
@@ -93,7 +97,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         add(highlightOutline);
 
         spriteSettingsText = new FlxText(10, 0, 0).setFormat(Paths.font("vcr.ttf"), 20);
-        spriteSettingsText.y = Preferences.downscroll ? 20 : FlxG.height * 0.95 - spriteSettingsText.height;
+        spriteSettingsText.y = Preferences.downscroll ? 25 : FlxG.height * 0.95 - spriteSettingsText.height;
         add(spriteSettingsText);
     }
 
@@ -122,7 +126,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             hoveredSprite.isDragging = true;
             hoveredSprite.dragOffsetX = mouseX - hoveredSprite.sprite.x;
             hoveredSprite.dragOffsetY = mouseY - hoveredSprite.sprite.y;
+            prevAlpha = hoveredSprite.sprite.alpha;
         }
+
+        if (hoveredSprite != null && hoveredSprite.isSelected && FlxG.mouse.justPressedRight) showContextMenu(mouseX, mouseY, hoveredSprite);
 
         // Handling the sprite movement
         for (draggable in draggableSprites) {
@@ -138,6 +145,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                         if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) for (linked in draggable.linkedSprites) linked.sprite.angle = draggable.sprite.angle;
                         if (draggable.spriteType == "combo") for (i in 1...comboSprites.length)comboSprites[i].angle = draggable.sprite.angle;
                     } else {
+                        draggable.sprite.alpha = 0.4;
                         var newX = mouseX - draggable.dragOffsetX;
                         var newY = mouseY - draggable.dragOffsetY;
 
@@ -187,11 +195,16 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                                 comboSprites[i].y += offsetY;
                             }
                         }
-                        if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) for (linked in draggable.linkedSprites) linked.sprite.setPosition(newX + linked.offsetX, newY + linked.offsetY);
+                        if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) for (linked in draggable.linkedSprites) {
+                            linked.sprite.alpha = 0.4;
+                            linked.sprite.setPosition(newX + linked.offsetX, newY + linked.offsetY);
+                        }
                     }
                     updateText(draggable);
                 } else { // Mouse released
                     draggable.isDragging = false;
+                    draggable.sprite.alpha = prevAlpha;
+                    if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) for (linked in draggable.linkedSprites) linked.sprite.alpha = prevAlpha;
                     saveSpriteSettings(draggable);
                 }
             } else if (draggable.isSelected) {
@@ -351,11 +364,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
                     saveSpriteSettings(draggable);
                 } else {
-                    if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) {
-                        for (linked in draggable.linkedSprites) {
-                            linked.sprite.setPosition(draggable.sprite.x + (draggable.sprite.width / 2) - (linked.sprite.width / 2), draggable.sprite.y + (draggable.sprite.height / 2) - (linked.sprite.height / 2));
-                        }
-                    }
+                    if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) for (linked in draggable.linkedSprites) linked.sprite.setPosition(draggable.sprite.x + (draggable.sprite.width / 2) - (linked.sprite.width / 2), draggable.sprite.y + (draggable.sprite.height / 2) - (linked.sprite.height / 2));
                 }
 
                 updateText(draggable);
@@ -369,7 +378,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
 
         // Exit to OptionsState (Doesn't work with Pause Options)
-        if (controls.BACK && !noteStyleList.selected) FlxG.switchState(() -> new OptionsState());
+        if (controls.BACK && !isSearching) FlxG.switchState(() -> new OptionsState());
 
         super.update(elapsed);
     }
@@ -458,7 +467,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         toolboxWindow = new Window();
         toolboxWindow.width = 420;
-        toolboxWindow.autoHeight = true;
         toolboxWindow.x = 10;
         toolboxWindow.y = FlxG.height / 4;
         toolboxWindow.title = "HUD Manager Guide";
@@ -474,7 +482,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var keybindsTable:TableView = new TableView();
         keybindsTable.id = "keybindsTable";
         keybindsTable.percentWidth = 100;
-        keybindsTable.autoHeight = true;
 
         // Add Columns
         var actionColumn = keybindsTable.addColumn("Action");
@@ -489,37 +496,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         keybindsTable.value = populateKeybindsTable(keybindsTable);
 
-        var noteStyleBox = new HBox();
-        noteStyleBox.percentWidth = 100;
-
-        var label = new Label();
-        label.text = "Note Style:";
-        label.percentWidth = 20;
-        label.verticalAlign = "center";
-        label.textAlign = "right";
-
-        noteStyleList = new DropDown();
-        noteStyleList.id = "noteStyleList";
-        noteStyleList.value = ChartEditorDropdowns.populateDropdownWithNoteStyles(noteStyleList, noteStyle.id);
-        noteStyleList.percentWidth = 80;
-        noteStyleList.searchable = true;
-        // Change NoteStyle
-        noteStyleList.onChange = (event:UIEvent) -> {
-            if (event.data?.id == null) return;
-            noteStyle = NoteStyleRegistry.instance.fetchEntry(event.data.id);
-            initStrumlines();
-            remove(ratingsPopUps);
-            for (draggable in draggableSprites) {
-                remove(draggable.sprite);
-                for (linked in draggable.linkedSprites) remove(linked.sprite);
-            }
-            draggableSprites = [];
-            initDraggableSprites();
-        }
-
-        noteStyleBox.addComponent(label);
-        noteStyleBox.addComponent(noteStyleList);
-
         var checkboxBox = new HBox();
         checkboxBox.percentWidth = 100;
 
@@ -527,22 +503,142 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         oppNotes.text = "Enable Opponent Strumline";
         oppNotes.selected = true;
         oppNotes.percentWidth = 50;
-        oppNotes.onChange = (event:UIEvent) -> opponentStrumline.visible = oppNotes.selected;
+        oppNotes.onChange = (event:UIEvent) -> if (opponentStrumline != null) opponentStrumline.visible = oppNotes.selected;
 
         playerNotes = new CheckBox();
         playerNotes.text = "Enable Player Strumline";
         playerNotes.selected = true;
         playerNotes.percentWidth = 50;
-        playerNotes.onChange = (event:UIEvent) -> playerStrumline.visible = playerNotes.selected;
+        playerNotes.onChange = (event:UIEvent) -> if (playerStrumline != null) playerStrumline.visible = playerNotes.selected;
 
         checkboxBox.addComponent(oppNotes);
         checkboxBox.addComponent(playerNotes);
 
         toolboxWindow.addComponent(keybindsTable);
-        toolboxWindow.addComponent(noteStyleBox);
         toolboxWindow.addComponent(checkboxBox);
 
         WindowManager.instance.addWindow(toolboxWindow);
+    }
+
+    function showContextMenu(mouseX:Float, mouseY:Float, draggable:DraggableSprite) {
+        Screen.instance.removeComponent(contextMenu);
+
+        contextMenu = new Menu();
+        contextMenu.width = 250;
+        contextMenu.x = Math.max(0, Math.min(mouseX, FlxG.width - contextMenu.width));
+        contextMenu.y = mouseY;
+
+        // For Judgement/Combo sprites opens NoteStyle
+        if (draggable.spriteType == "judgement" || draggable.spriteType == "combo") {
+            contextMenu.height = 52;
+            var noteStyleBox = new HBox();
+            noteStyleBox.percentWidth = 100;
+
+            var label = new Label();
+            label.text = "Note Style:";
+            label.percentWidth = 30;
+            label.verticalAlign = "center";
+            label.textAlign = "right";
+
+            var noteStyleList:DropDown = new DropDown();
+            noteStyleList.id = "noteStyleList";
+            noteStyleList.value = ChartEditorDropdowns.populateDropdownWithNoteStyles(noteStyleList, noteStyle.id);
+            noteStyleList.percentWidth = 70;
+            noteStyleList.searchable = true;
+            // Change NoteStyle and update the Draggable
+            noteStyleList.onChange = (event:UIEvent) -> {
+                if (event.data?.id == null && !noteStyleList.selected) return;
+                noteStyle = NoteStyleRegistry.instance.fetchEntry(event.data.id);
+                initStrumlines();
+                remove(ratingsPopUps);
+
+                var selectedDraggableType:String = null;
+                for (draggable in draggableSprites) {
+                    if (draggable.isSelected) selectedDraggableType = draggable.spriteType;
+                    remove(draggable.sprite);
+                    for (linked in draggable.linkedSprites) remove(linked.sprite);
+                }
+                draggableSprites = [];
+                initDraggableSprites();
+                if (selectedDraggableType != null) {
+                    for (draggable in draggableSprites) {
+                        if (draggable.spriteType == selectedDraggableType) {
+                            draggable.isSelected = true;
+                            updateHighlight(draggable);
+                            updateText(draggable);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            noteStyleList.searchField.onClick = (event:MouseEvent) -> isSearching = true;
+            noteStyleList.registerEvent(UIEvent.CLOSE, (event:UIEvent) -> isSearching = false);
+
+            Screen.instance.registerEvent(MouseEvent.MOUSE_DOWN, (event:MouseEvent) -> {
+                var components = Screen.instance.findComponentsUnderPoint(event.screenX, event.screenY);
+                for (c in components) {
+                    if (c.hasClass("popup")) {
+                        event.cancel();
+                        break;
+                    }
+                }
+            });
+
+            noteStyleBox.addComponent(label);
+            noteStyleBox.addComponent(noteStyleList);
+
+            contextMenu.addComponent(noteStyleBox);
+        }
+
+        if (draggable.spriteType == "healthBar") {
+            var iconsBox = new HBox();
+            iconsBox.percentWidth = 100;
+
+            var label = new Label();
+            label.text = "Health Icons Position:";
+            label.percentWidth = 30;
+            label.verticalAlign = "center";
+            label.textAlign = "right";
+
+            var iconOptions:OptionStepper = new OptionStepper();
+            iconOptions.percentWidth = 70;
+            populateListWithPositions(iconOptions);
+            var selectedIndex = 0;
+            for (i in 0...iconOptions.dataSource.size) {
+                if (iconOptions.dataSource.get(i).id == badOptions.healthIconPosition) {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+            iconOptions.selectedIndex = selectedIndex;
+            iconOptions.onChange = (event:UIEvent) -> badOptions.healthIconPosition = iconOptions.value.id;
+
+            iconsBox.addComponent(label);
+            iconsBox.addComponent(iconOptions);
+
+            contextMenu.addComponent(iconsBox);
+        }
+
+        Screen.instance.addComponent(contextMenu);
+    }
+
+    function populateListWithPositions(stepper:OptionStepper) {
+        if (stepper.dataSource == null) {
+            stepper.dataSource = new ArrayDataSource();
+        } else stepper.dataSource.clear();
+
+        var positions:Array<BasicEntry> = [
+            {id: "off", text: "Off"},
+            {id: "vanilla", text: "Vanilla"},
+            {id: "flipped", text: "Flipped"},
+            {id: "centered", text: "Centered"},
+            {id: "ends", text: "Ends"}
+        ];
+
+        for (position in positions) {
+            stepper.dataSource.add(position);
+        }
     }
 
     // Helper Methods
@@ -807,4 +903,9 @@ typedef DraggableSprite = {
 typedef KeybindEntry = {
     action:String,
     keybind:String
+}
+
+typedef BasicEntry = {
+    id:String,
+    text:String
 }

@@ -71,14 +71,6 @@ class BadHUDOptions extends Module {
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Bars :", "bold");
                 preferences.createPrefItemCheckbox("Enable Health Bar", "If enabled, the health bar will be visible.", value -> badOptions.healthBar = value, badOptions.healthBar);
 
-                preferences.createPrefItemEnum("Health Icons Position", "Select the position of the Health Icons.", [
-                    "off" => "Off",
-                    "vanilla" => "Vanilla",
-                    "flipped" => "Flipped",
-                    "centered" => "Centered",
-                    "ends" => "Ends"
-                ], value -> badOptions.healthIconPosition = value, badOptions.healthIconPosition);
-
                 preferences.createPrefItemEnum("Time Bar Position", "Select the position of the Time Bar.", [
                     "off" => "Off",
                     "down" => "Down",
