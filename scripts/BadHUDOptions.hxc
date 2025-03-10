@@ -18,7 +18,6 @@ class BadHUDOptions extends Module {
 
     // Hooks or smth like that for other classes
     var font;
-    var timeBarBGStyle;
     var timeTextSize;
 
     var saveObject:BadSaveData = {
@@ -26,8 +25,8 @@ class BadHUDOptions extends Module {
         opponentNoteOpacity: 100,
         healthBar: true,
         healthIconPosition: "vanilla",
-        timebarPosition: "down",
-        timebarType: "left",
+        timeBar: true,
+        timeBarType: "left",
         timeBarStyle: "timeBarPsychEngine",
         restBar: "off",
         smoothBars: true,
@@ -71,12 +70,7 @@ class BadHUDOptions extends Module {
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Bars :", "bold");
                 preferences.createPrefItemCheckbox("Enable Health Bar", "If enabled, the health bar will be visible.", value -> badOptions.healthBar = value, badOptions.healthBar);
 
-                preferences.createPrefItemEnum("Time Bar Position", "Select the position of the Time Bar.", [
-                    "off" => "Off",
-                    "down" => "Down",
-                    "up" => "Up",
-                    "vertical" => "Vertical"
-                ], value -> badOptions.timebarPosition = value, badOptions.timebarPosition);
+                preferences.createPrefItemCheckbox("Enable Time Bar", "If enabled, the time bar will be visible.", value -> badOptions.timeBar = value, badOptions.timeBar);
 
                 preferences.createPrefItemEnum("Rest Bar Display", "Choose how to display the Rest Bar.", [
                     "off" => "Off",
@@ -194,8 +188,8 @@ typedef BadSaveData = {
     opponentNoteOpacity:Int,
     healthBar:Bool,
     healthIconPosition:String,
-    timebarPosition:String,
-    timebarType:String,
+    timeBar:Bool,
+    timeBarType:String,
     timeBarStyle:String,
     restBar:String,
     smoothBars:Bool,

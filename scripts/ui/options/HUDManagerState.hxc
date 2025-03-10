@@ -35,9 +35,9 @@ import haxe.ui.containers.menus.Menu;
 import haxe.ui.containers.windows.Window;
 import haxe.ui.containers.windows.WindowManager;
 import haxe.ui.core.Screen;
+import haxe.ui.data.ArrayDataSource;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.events.UIEvent;
-import haxe.ui.data.ArrayDataSource;
 
 class HUDManagerState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -51,6 +51,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var opponentStrumline:Strumline;
 
     var ratingsPopUps:RatingPopUps;
+
     var comboSprites:Array<FunkinSprite> = [];
     var draggableSprites:Array<DraggableSprite> = [];
 
@@ -421,6 +422,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function initPopUps() {
+        if (ratingsPopUps != null) remove(ratingsPopUps);
         ratingsPopUps = ScriptedFlxSpriteGroup.init("RatingPopUps");
         ratingsPopUps.scriptSet("noteStyle", noteStyle);
         add(ratingsPopUps);
@@ -468,32 +470,36 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         // Binding with BadHUDOptions
         var badHUDOptions = new BadHUDOptions();
 
-        timeBarBG = new FunkinSprite();
-        timeBarBG.loadTexture(badOptions.timeBarStyle);
-        var timeBarSettings = Save.instance.modOptions.get("timeBarSettings");
-        if (timeBarSettings != null) {
-            timeBarBG.angle = timeBarSettings[4];
-            timeBarBG.scale.x = timeBarSettings[2];
-            timeBarBG.scale.y = timeBarSettings[3];
-            timeBarBG.updateHitbox();
-            timeBarBG.setPosition(timeBarSettings[0] - timeBarBG.width / 2, timeBarSettings[1] - timeBarBG.height / 2);
-        } else {
-            timeBarBG.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;
-        }
-
-        var draggableTimeBar = addDraggableSprite(timeBarBG, "timeBar");
-
-        var timeBar:FlxBar = new FlxBar(0, 0, null, Std.int(timeBarBG.width - 5), Std.int(timeBarBG.height - 4));
-        timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
-        timeBar.percent = 50;
-        linkSpriteToTarget(draggableTimeBar, timeBar);
-
-        var timeText = new FlxText();
+        var timeText:FlxText = new FlxText();
         timeText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
         timeText.text = "0:00 / 99:99";
         timeText.size = 21;
         timeText.borderSize = 1.75;
-        linkSpriteToTarget(draggableTimeBar, timeText);
+
+        var draggableTimeBar = addDraggableSprite(timeText, "timeBar");
+        timeBarBG = new FunkinSprite();
+        timeBarBG.loadTexture(badOptions.timeBarStyle);
+
+        timeText.fieldWidth = timeBarBG.width;
+        var timeBarSettings = Save.instance.modOptions.get("timeBarSettings");
+        if (timeBarSettings != null) {
+            timeText.angle = timeBarSettings[4];
+            timeText.scale.x = timeBarSettings[2];
+            timeText.scale.y = timeBarSettings[3];
+            timeText.updateHitbox();
+            timeText.setPosition(timeBarSettings[0] - timeText.width / 2, timeBarSettings[1] - timeText.height / 2);
+        } else {
+            timeText.screenCenter(0x01);
+            timeText.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;
+        }
+
+        var timeBarHeight = badOptions.timeBarStyle == "timeBarMinimalRounded" ? 4 : 6;
+        var timeBar:FlxBar = new FlxBar(0, 0, null, Std.int(timeBarBG.width - 5), Std.int(timeBarBG.height - timeBarHeight));
+        timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
+        timeBar.percent = 50;
+
+        linkSpriteToTarget(draggableTimeBar, timeBar);
+        linkSpriteToTarget(draggableTimeBar, timeBarBG);
 
         if (badOptions.timeBarStyle == "timeBarMinimalRounded") {
             add(timeBar);
@@ -593,19 +599,16 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 if (event.data?.id == null && !noteStyleList.selected) return;
                 noteStyle = NoteStyleRegistry.instance.fetchEntry(event.data.id);
                 initStrumlines();
-                remove(ratingsPopUps);
-
                 var selectedDraggableType:String = null;
                 for (draggable in draggableSprites) if (draggable.isSelected) selectedDraggableType = draggable.spriteType;
+                draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "judgement" && draggable.spriteType != "combo");
                 initPopUps();
-                if (selectedDraggableType != null) {
-                    for (draggable in draggableSprites) {
-                        if (draggable.spriteType == selectedDraggableType) {
-                            draggable.isSelected = true;
-                            updateHighlight(draggable);
-                            updateText(draggable);
-                            break;
-                        }
+                if (selectedDraggableType != null) for (draggable in draggableSprites) {
+                    if (draggable.spriteType == selectedDraggableType) {
+                        draggable.isSelected = true;
+                        updateHighlight(draggable);
+                        updateText(draggable);
+                        break;
                     }
                 }
             }
@@ -630,32 +633,25 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         }
 
         if (draggable.spriteType == "healthBar") {
-            var iconsBox = new HBox();
-            iconsBox.percentWidth = 100;
+            var iconPositions:Array<BasicEntry> = [
+                {id: "off", text: "Off"},
+                {id: "vanilla", text: "Vanilla"},
+                {id: "flipped", text: "Flipped"},
+                {id: "centered", text: "Centered"},
+                {id: "ends", text: "Ends"}
+            ];
 
-            var label = new Label();
-            label.text = "Health Icons Position:";
-            label.percentWidth = 30;
-            label.verticalAlign = "center";
-            label.textAlign = "right";
-
-            var iconOptions:OptionStepper = new OptionStepper();
-            iconOptions.percentWidth = 70;
-            populateListWithPositions(iconOptions);
-            var selectedIndex = 0;
-            for (i in 0...iconOptions.dataSource.size) {
-                if (iconOptions.dataSource.get(i).id == badOptions.healthIconPosition) {
-                    selectedIndex = i;
-                    break;
+            var iconsPositionBox = createOptionBox(
+                "Health Icons Position:",
+                badOptions.healthIconPosition,
+                iconPositions,
+                value -> {
+                    badOptions.healthIconPosition = value;
+                    timeBarBG.loadTexture(value);
                 }
-            }
-            iconOptions.selectedIndex = selectedIndex;
-            iconOptions.onChange = (event:UIEvent) -> badOptions.healthIconPosition = iconOptions.value.id;
+            );
 
-            iconsBox.addComponent(label);
-            iconsBox.addComponent(iconOptions);
-
-            contextMenu.addComponent(iconsBox);
+            contextMenu.addComponent(iconsPositionBox);
         }
 
         if (draggable.spriteType == "timeBar") {
@@ -677,10 +673,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
             var displayBox = createOptionBox(
                 "Text Display:",
-                badOptions.timebarType,
+                badOptions.timeBarType,
                 displayStyles,
-                (value) -> {
-                    badOptions.timebarType = value;
+                value -> {
+                    badOptions.timeBarType = value;
                     timeBarBG.loadTexture(value);
                 }
             );
@@ -689,7 +685,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 "Bar Style:",
                 badOptions.timeBarStyle,
                 barStyles,
-                (value) -> {
+                value -> {
                     badOptions.timeBarStyle = value;
                     timeBarBG.loadTexture(value);
                 }
@@ -706,24 +702,18 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var box = new HBox();
         box.percentWidth = 100;
 
-        // Create and configure label
         var label = new Label();
         label.text = labelText;
         label.percentWidth = 30;
         label.verticalAlign = "center";
         label.textAlign = "right";
 
-        // Create and configure stepper
         var stepper:OptionStepper = new OptionStepper();
         stepper.percentWidth = 70;
 
-        // Set data source
         stepper.dataSource = new ArrayDataSource();
-        for (option in options) {
-            stepper.dataSource.add(option);
-        }
+        for (option in options) stepper.dataSource.add(option);
 
-        // Set initial selected value
         var selectedIndex = 0;
         for (i in 0...stepper.dataSource.size) {
             if (stepper.dataSource.get(i).id == currentValue) {
@@ -733,37 +723,13 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         }
         stepper.selectedIndex = selectedIndex;
 
-        // Store the callback reference in a local variable
         var callback_persist = onChangeHandler;
+        stepper.onChange = (event:UIEvent) -> callback_persist(stepper.value.id);
 
-        // Set change handler
-        stepper.onChange = (event:UIEvent) -> {
-            callback_persist(stepper.value.id);
-        }
-
-        // Add components to box
         box.addComponent(label);
         box.addComponent(stepper);
 
         return box;
-    }
-
-    function populateListWithPositions(stepper:OptionStepper) {
-        if (stepper.dataSource == null) {
-            stepper.dataSource = new ArrayDataSource();
-        } else stepper.dataSource.clear();
-
-        var positions:Array<BasicEntry> = [
-            {id: "off", text: "Off"},
-            {id: "vanilla", text: "Vanilla"},
-            {id: "flipped", text: "Flipped"},
-            {id: "centered", text: "Centered"},
-            {id: "ends", text: "Ends"}
-        ];
-
-        for (position in positions) {
-            stepper.dataSource.add(position);
-        }
     }
 
     // Helper Methods
@@ -922,7 +888,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         else Cursor.cursorMode = CursorMode.Default;
     }
 
-    function addDraggableSprite(sprite:FunkinSprite, type:String):DraggableSprite {
+    function addDraggableSprite(sprite:FlxSprite, type:String):DraggableSprite {
         var draggable:DraggableSprite = {
             sprite: sprite,
             isDragging: false,
@@ -1017,7 +983,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 }
 
 typedef DraggableSprite = {
-    sprite:FunkinSprite,
+    sprite:FlxSprite,
     isDragging:Bool,
     isSelected:Bool,
     dragOffsetX:Float,
