@@ -39,8 +39,8 @@ class BadHealthBar extends ScriptedModule {
         iconP2 = state.iconP2;
 
         // Health Bar
+        var healthBarSettings = Save.instance.modOptions.get("healthBarSettings");
         if (badOptions.healthBar) {
-            var healthBarSettings = Save.instance.modOptions.get("healthBarSettings");
             if (healthBarSettings != null) {
                 healthBarBG.angle = healthBar.angle = healthBarSettings[4];
                 healthBarBG.scale.x = healthBar.scale.x = healthBarSettings[2];
@@ -180,7 +180,7 @@ class BadHealthBar extends ScriptedModule {
     }
 
     function updateIconsPosition() {
-        if (iconP1 == null || iconP2 == null || Save.instance.modOptions.get("healthBarSettings") == null) return;
+        if (iconP1 == null || iconP2 == null) return;
 
         // Rotate and move icons according to the Modified Bar !
         if (badOptions.healthIconPosition != "ends" && badOptions.healthIconPosition != "centered") {
@@ -207,6 +207,12 @@ class BadHealthBar extends ScriptedModule {
             iconP1.y = centerY - offsetY - spacingOffsetY - (iconP1.height / 2);
             iconP2.x = centerX + offsetX - spacingOffsetX - (iconP2.width / 2);
             iconP2.y = centerY - offsetY + spacingOffsetY - (iconP2.height / 2);
+
+            var healthBarSettings = Save.instance.modOptions.get("healthBarSettings");
+            if (badOptions.healthIconPosition == "rotated" && healthBarSettings != null) {
+                if (iconP1 != null) iconP1.angle = healthBarSettings[4];
+                if (iconP2 != null) iconP2.angle = healthBarSettings[4];
+            }
         }
 
         updateHealthIcon(iconP1, state.health);

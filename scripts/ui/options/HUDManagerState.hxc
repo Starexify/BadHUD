@@ -638,6 +638,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             var iconPositions:Array<BasicEntry> = [
                 {id: "off", text: "Off"},
                 {id: "vanilla", text: "Vanilla"},
+                {id: "rotated", text: "Rotated"},
                 {id: "flipped", text: "Flipped"},
                 {id: "centered", text: "Centered"},
                 {id: "ends", text: "Ends"}
@@ -649,7 +650,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 iconPositions,
                 value -> {
                     badOptions.healthIconPosition = value;
-                    timeBarBG.loadTexture(value);
                 }
             );
 
