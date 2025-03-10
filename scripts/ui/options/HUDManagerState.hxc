@@ -24,6 +24,7 @@ import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
 import flixel.ui.FlxBar;
 import flixel.ui.FlxBarFillDirection;
+import flixel.util.FlxSpriteUtil;
 
 import haxe.ui.components.CheckBox;
 import haxe.ui.components.DropDown;
@@ -41,6 +42,7 @@ import haxe.ui.events.UIEvent;
 
 class HUDManagerState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
+    var badHUDOptions = new BadHUDOptions();
 
     var welcomeMusic:FunkinSound = new FunkinSound();
     var spriteSettingsText:FlxText;
@@ -419,6 +421,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         initPopUps();
         initHealthBarSprite();
         initTimeBarSprite();
+        initRestBarSprite();
     }
 
     function initPopUps() {
@@ -467,16 +470,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function initTimeBarSprite() {
-        // Binding with BadHUDOptions
-        var badHUDOptions = new BadHUDOptions();
         if (timeText != null) remove(timeText);
         timeText = new FlxText();
-        timeText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        timeText.setFormat(Paths.font(badHUDOptions.font), 21, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
         timeText.text = "0:00 / 99:99";
-        timeText.size = 21;
         timeText.borderSize = 1.75;
 
-        var draggableTimeBar = addDraggableSprite(timeText, "timeBar");
         var timeBarBG:FunkinSprite = new FunkinSprite();
         timeBarBG.loadTexture(badOptions.timeBarStyle);
 
@@ -492,6 +491,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             timeText.screenCenter(0x01);
             timeText.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;
         }
+
+        var draggableTimeBar = addDraggableSprite(timeText, "timeBar");
 
         var timeBarHeight = badOptions.timeBarStyle == "timeBarMinimalRounded" ? 4 : 6;
         var timeBar:FlxBar = new FlxBar(0, 0, null, Std.int(timeBarBG.width - 5), Std.int(timeBarBG.height - timeBarHeight));
@@ -511,6 +512,43 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             }
         }
         add(timeText);
+    }
+
+    function initRestBarSprite() {
+        var restBarBG:FunkinSprite = new FunkinSprite();
+        restBarBG.loadTexture("restBackground");
+
+        var restText:FlxText = new FlxText();
+        restText.setFormat(Paths.font(badHUDOptions.font), 21, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        restText.text = "999";
+        restText.borderSize = 1.75;
+        restText.fieldWidth = restBarBG.width;
+        restText.fieldHeight = restBarBG.height;
+
+        var restBarSettings = Save.instance.modOptions.get("restBarSettings");
+        if (restBarSettings != null) {
+            restText.angle = restBarSettings[4];
+            restText.scale.x = restBarSettings[2];
+            restText.scale.y = restBarSettings[3];
+            restText.updateHitbox();
+            restText.setPosition(restBarSettings[0] - restText.width / 2, restBarSettings[1] - restText.height / 2);
+        }
+
+        var draggableRestBar = addDraggableSprite(restText, "restBar");
+
+        var restBarThickness:Int = 13;
+        var restBarRadius = restBarBG.width / 2.5;
+        var restBarWidth = Std.int((restBarRadius + restBarThickness) * 2);
+        var restBar:FunkinSprite = new FunkinSprite();
+        restBar.makeGraphic(restBarWidth, restBarWidth, 0x00000000, true);
+
+        drawArc(restBar, restBarRadius, restBarThickness, -Math.PI / 2, -Math.PI / 2 + Math.PI);
+
+        add(restBarBG);
+        add(restBar);
+        add(restText);
+        linkSpriteToTarget(draggableRestBar, restBarBG);
+        linkSpriteToTarget(draggableRestBar, restBar);
     }
 
     function initToolbox() {
@@ -550,17 +588,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var checkboxBox = new HBox();
         checkboxBox.percentWidth = 100;
 
-        oppNotes = new CheckBox();
-        oppNotes.text = "Enable Opponent Strumline";
-        oppNotes.selected = true;
-        oppNotes.percentWidth = 50;
-        oppNotes.onChange = (event:UIEvent) -> if (opponentStrumline != null) opponentStrumline.visible = oppNotes.selected;
-
-        playerNotes = new CheckBox();
-        playerNotes.text = "Enable Player Strumline";
-        playerNotes.selected = true;
-        playerNotes.percentWidth = 50;
-        playerNotes.onChange = (event:UIEvent) -> if (playerStrumline != null) playerStrumline.visible = playerNotes.selected;
+        oppNotes = createCheckBox("Enable Opponent Strumline", true, 50, (event:UIEvent) -> if (opponentStrumline != null) opponentStrumline.visible = oppNotes.selected);
+        playerNotes = createCheckBox("Enable Player Strumline", true, 50, (event:UIEvent) -> if (playerStrumline != null) playerStrumline.visible = playerNotes.selected);
 
         checkboxBox.addComponent(oppNotes);
         checkboxBox.addComponent(playerNotes);
@@ -711,10 +740,35 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             contextMenu.addComponent(styleBox);
         }
 
+        if (draggable.spriteType == "restBar") {
+            var displayTypes:Array<BasicEntry> = [
+                {id: "countdown", text: "Countdown"},
+                {id: "countup", text: "Countup"},
+            ];
+
+            var displayBox = createOptionBox(
+                "Display Type:",
+                badOptions.restBarType,
+                displayTypes,
+                value -> badOptions.restBarType = value
+            );
+
+            contextMenu.addComponent(displayBox);
+        }
+
         Screen.instance.addComponent(contextMenu);
     }
 
     // Helper Methods
+    function createCheckBox(text:String, isSelected:Bool, width:Float, changeHandler:UIEvent -> Void):CheckBox {
+        var checkbox = new CheckBox();
+        checkbox.text = text;
+        checkbox.selected = isSelected;
+        checkbox.percentWidth = width;
+        checkbox.onChange = changeHandler;
+        return checkbox;
+    }
+
     function createOptionBox(labelText:String, currentValue:String, options:Array<BasicEntry>, onChangeHandler:(value:String) -> Void):HBox {
         var box = new HBox();
         box.percentWidth = 100;
@@ -943,17 +997,48 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function saveSpriteSettings(draggable:DraggableSprite) {
-        var originalScaleX = draggable.spriteType == "judgement" ? noteStyle.buildJudgementSprite("sick").scale.x : draggable.spriteType == "combo" ? noteStyle.buildComboNumSprite(0).scale.x : 0;
-        var originalScaleY = draggable.spriteType == "judgement" ? noteStyle.buildJudgementSprite("sick").scale.y : draggable.spriteType == "combo" ? noteStyle.buildComboNumSprite(0).scale.y : 0;
+        var originalScale = {x: 0.0, y: 0.0};
+        if (draggable.spriteType == "judgement") originalScale = noteStyle.buildJudgementSprite("sick").scale;
+        else if (draggable.spriteType == "combo") originalScale = noteStyle.buildComboNumSprite(0).scale;
 
-        var settingsKey = (draggable.spriteType == "judgement") ? "judgementSettings" :
-        (draggable.spriteType == "combo") ? "comboSettings" :
-        (draggable.spriteType == "healthBar") ? "healthBarSettings" :
-        (draggable.spriteType == "timeBar") ? "timeBarSettings" : null;
-        if (settingsKey != null) Save.instance.modOptions.set(settingsKey, [
+        var settingsKey = draggable.spriteType + "Settings";
+        Save.instance.modOptions.set(settingsKey, [
             Std.int(draggable.sprite.x + draggable.sprite.width / 2), Std.int(draggable.sprite.y + draggable.sprite.height / 2),
-            draggable.sprite.scale.x - originalScaleX, draggable.sprite.scale.y - originalScaleY,
-            draggable.sprite.angle]);
+            draggable.sprite.scale.x - originalScale.x, draggable.sprite.scale.y - originalScale.y,
+            draggable.sprite.angle
+        ]);
+    }
+
+    function drawArc(sprite:FlxSprite, radius:Float, thickness:Int, startAngle:Float, endAngle:Float) {
+        try {
+            FlxSpriteUtil.beginDraw(0x00000000, {
+                thickness: thickness,
+                color: 0xFFFFFFFF,
+                capsStyle: 0
+            });
+
+            var centerX = radius + thickness;
+            var centerY = radius + thickness;
+            var flashGfx = FlxSpriteUtil.flashGfx;
+
+            // Move to start point
+            var startX = centerX + radius * Math.cos(startAngle);
+            var startY = centerY + radius * Math.sin(startAngle);
+            flashGfx.moveTo(startX, startY);
+
+            // Draw arc segments
+            var segments = Math.ceil(Math.abs(endAngle - startAngle) / (Math.PI / 36));
+            for (i in 1...segments + 1) {
+                var angle = startAngle + (endAngle - startAngle) * (i / segments);
+                var x = centerX + radius * Math.cos(angle);
+                var y = centerY + radius * Math.sin(angle);
+                flashGfx.lineTo(x, y);
+            }
+
+            FlxSpriteUtil.endDraw(sprite);
+        } catch (e:Dynamic) {
+            trace("[BadHUD] Error in static restBar drawing: " + e);
+        }
     }
 
     function populateKeybindsTable(tableView:TableView):Array<KeybindEntry> {

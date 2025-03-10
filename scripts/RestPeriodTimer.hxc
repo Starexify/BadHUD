@@ -16,6 +16,7 @@ import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 
 class RestPeriodTimer extends ScriptedModule {
+    var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var state:PlayState;
 
     var restBarBG:FunkinSprite;
@@ -35,7 +36,7 @@ class RestPeriodTimer extends ScriptedModule {
     }
 
     override function onSongStart(event:ScriptEvent) {
-        if (Save.instance.modOptions.get("badOptions").restBar == "off") return;
+        if (badOptions.restBar == "off") return;
         var badHooks = ModuleHandler.getModule("BadHooks");
         if (badHooks != null) state = badHooks.scriptGet("state");
         if (state == null) return;
@@ -43,7 +44,7 @@ class RestPeriodTimer extends ScriptedModule {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null || Save.instance.modOptions.get("badOptions").restBar == "off" || restText == null) return;
+        if (state == null || badOptions.restBar == "off" || restText == null) return;
         var restBarFadeOut = 1000 ; // 1s
         var restBarMinimum = 5000 ; // 5s
         var songPosition = state.conductorInUse.songPosition;
@@ -57,7 +58,7 @@ class RestPeriodTimer extends ScriptedModule {
             for (sprite in restBarSprites) if (!sprite.visible) sprite.visible = true;
 
             // Fade out the rest bar when time is less than 1.5s
-            if (restTime <= 1500) for (sprites in restBarSprites) FlxTween.tween(sprites, { alpha: 0 }, 0.5, { ease: FlxEase.expoOut, onComplete: tween -> { sprites.visible = false; sprites.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;} });
+            if (restTime <= 1500) for (sprites in restBarSprites) FlxTween.tween(sprites, { alpha: 0 }, 0.5, { ease: FlxEase.expoOut, onComplete: tween -> { sprites.visible = false; sprites.alpha = badOptions.hudOpacity / 100;} });
         }
     }
 
@@ -77,7 +78,7 @@ class RestPeriodTimer extends ScriptedModule {
         // Clear previous drawing
         restBar.graphic.bitmap.fillRect(restBar.graphic.bitmap.rect, 0x00000000);
         var percentage;
-        switch (Save.instance.modOptions.get("badOptions").restBar) {
+        switch (badOptions.restBar) {
             case "countdown":
                 percentage = currentRestTime / totalRestTime;
             case "countup":
@@ -130,18 +131,17 @@ class RestPeriodTimer extends ScriptedModule {
     }
 
     function initRestBar() {
-        // Binding with BadHUDOptions
         var badHUDOptions = new BadHUDOptions();
-
-        restBar = new FlxSprite();
-        restBar.scrollFactor.set(0, 0);
-        restBar.zIndex = 801;
 
         restBarBG = FunkinSprite.create(0, 0, "restBackground");
         restBarBG.scrollFactor.set(0, 0);
         restBarBG.zIndex = 800;
         restBarBG.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restBarBG.width / 2;
         restBarBG.y = Preferences.downscroll ? state.playerStrumline.y - restBarBG.height : state.playerStrumline.y + restBarBG.height * 1.75;
+
+        restBar = new FlxSprite();
+        restBar.scrollFactor.set(0, 0);
+        restBar.zIndex = 801;
 
         restBarRadius = restBarBG.width / 2.5;
         var restBarWidth = Std.int((restBarRadius + restBarThickness) * 2);
@@ -150,7 +150,7 @@ class RestPeriodTimer extends ScriptedModule {
         restBar.y = restBarBG.y;
 
         restText = new FlxText(0, 0, 400, "", 32);
-        restText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        restText.setFormat(Paths.font(badHUDOptions.font), 21, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         restText.borderSize = 1.75;
         restText.scrollFactor.set();
         restText.zIndex = 802;
@@ -163,7 +163,7 @@ class RestPeriodTimer extends ScriptedModule {
         for (sprite in restBarSprites) if (sprite != null) {
             sprite.cameras = [state.camHUD];
             sprite.visible = false;
-            sprite.alpha = Save.instance.modOptions.get("badOptions").hudOpacity / 100;
+            sprite.alpha = badOptions.hudOpacity / 100;
             state.add(sprite);
         }
     }

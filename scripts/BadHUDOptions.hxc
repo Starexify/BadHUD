@@ -18,7 +18,6 @@ class BadHUDOptions extends Module {
 
     // Hooks or smth like that for other classes
     var font;
-    var timeTextSize;
 
     var saveObject:BadSaveData = {
         middlescroll: false,
@@ -28,7 +27,9 @@ class BadHUDOptions extends Module {
         timeBar: true,
         timeBarType: "left",
         timeBarStyle: "timeBarPsychEngine",
-        restBar: "off",
+        restBar: false,
+        restBarType: "countdown",
+        restBarText: true,
         smoothBars: true,
         iconColors: true,
         leftPos: "judgements",
@@ -72,11 +73,7 @@ class BadHUDOptions extends Module {
 
                 preferences.createPrefItemCheckbox("Enable Time Bar", "If enabled, the time bar will be visible.", value -> badOptions.timeBar = value, badOptions.timeBar);
 
-                preferences.createPrefItemEnum("Rest Bar Display", "Choose how to display the Rest Bar.", [
-                    "off" => "Off",
-                    "countdown" => "Countdown",
-                    "countup" => "Countup"
-                ], value -> badOptions.restBar = value, badOptions.restBar);
+                preferences.createPrefItemCheckbox("Enable Rest Bar", "If enabled, the rest bar will be visible.", value -> badOptions.restBar = value, badOptions.restBar);
 
                 preferences.createPrefItemCheckbox("Smooth Bars", "If enabled, bars will fill smoothly with fluid animation. (May reduce performance!)", value -> badOptions.smoothBars = value, badOptions.smoothBars);
 
@@ -191,7 +188,9 @@ typedef BadSaveData = {
     timeBar:Bool,
     timeBarType:String,
     timeBarStyle:String,
-    restBar:String,
+    restBar:Bool,
+    restBarType:String,
+    restBarText:Bool,
     smoothBars:Bool,
     iconColors:Bool,
     leftPos:String,

@@ -42,10 +42,8 @@ class TimeBar extends ScriptedModule {
     }
 
     function initTimeBar() {
-        var badHUDOptions = new BadHUDOptions();
-
         timeText = new FlxText();
-        timeText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        timeText.setFormat(Paths.font(new BadHUDOptions().font), 21, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
         timeText.size = 21;
         timeText.borderSize = 1.75;
         timeText.scrollFactor.set();
