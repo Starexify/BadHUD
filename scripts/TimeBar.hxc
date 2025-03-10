@@ -87,8 +87,13 @@ class TimeBar extends ScriptedModule {
         for (sprite in timeBarSprites) if (sprite != null) {
             sprite.alpha = 0;
             sprite.cameras = [state.camHUD];
-            state.add(sprite);
         }
+
+        if (badOptions.timeBarStyle != "off") {
+            state.add(timeBarBG);
+            state.add(timeBar);
+        }
+        state.add(timeText);
     }
 
     override function onSongStart(event:ScriptEvent) {
@@ -102,14 +107,14 @@ class TimeBar extends ScriptedModule {
         if (timeBar != null && timeBar.visible) {
             timeBar.value = (state.conductorInUse.songPosition / state.currentSongLengthMs) * 100;
             timeBar.updateBar();
-            switch (badOptions.timeBarType) {
-                case "left": timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
-                case "left-total": timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
-                case "elapsed": timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false);
-                case "elapsed-total": timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
-                case "elapsed-left": timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
-                case "name": timeText.text = state.currentChart.songName;
-            }
+        }
+        if (timeText != null) switch (badOptions.timeBarType) {
+            case "left": timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
+            case "left-total": timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
+            case "elapsed": timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false);
+            case "elapsed-total": timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
+            case "elapsed-left": timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
+            case "name": timeText.text = state.currentChart.songName;
         }
     }
 
