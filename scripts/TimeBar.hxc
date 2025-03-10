@@ -68,7 +68,7 @@ class TimeBar extends ScriptedModule {
         timeText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
         timeText.borderSize = 1.75;
         timeText.scrollFactor.set();
-        timeText.zIndex = 802;
+        if (!state.isMinimalMode) timeText.zIndex = state.iconP1.zIndex + 1;
 
         switch (badOptions.timebarPosition) {
             case "down":
@@ -85,7 +85,7 @@ class TimeBar extends ScriptedModule {
                 timeBarBG.x = timeBarXPosV + (timeText.height / 5);
                 timeBarBG.y = timeBarYPosV;
                 timeText.angle = timeBarBG.angle = timeBar.angle = 90;
-                if (!state.isMinimalMode) timeText.zIndex = state.iconP1.zIndex + 1;
+
         }
 
         timeBar.x = timeBarBG.x + 3;

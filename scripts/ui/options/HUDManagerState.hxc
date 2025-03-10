@@ -21,6 +21,7 @@ import funkin.util.Constants;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.text.FlxText;
+import flixel.text.FlxTextBorderStyle;
 import flixel.ui.FlxBar;
 import flixel.ui.FlxBarFillDirection;
 
@@ -66,6 +67,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     var prevAlpha:Float;
     var prevPersistentUpdate:Bool;
+
+    var timeBarBG:FunkinSprite;
 
     override function create() {
         super.create();
@@ -412,9 +415,14 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function initDraggableSprites() {
+        initPopUps();
+        initHealthBarSprite();
+        initTimeBarSprite();
+    }
+
+    function initPopUps() {
         ratingsPopUps = ScriptedFlxSpriteGroup.init("RatingPopUps");
         ratingsPopUps.scriptSet("noteStyle", noteStyle);
-        ratingsPopUps.zIndex = 900;
         add(ratingsPopUps);
 
         var judgementSprite:FunkinSprite = ratingsPopUps.scriptCall("initJudgementSprite", ["sick"]);
@@ -430,11 +438,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 if (i == 0) addDraggableSprite(comboSprite, "combo");
             }
         }
-
-        var healthBarBG:FunkinSprite = initHealthBarSprite();
     }
 
-    function initHealthBarSprite():FunkinSprite {
+    function initHealthBarSprite() {
         var healthBarBG:FunkinSprite = new FunkinSprite();
         healthBarBG.loadTexture("healthBar");
         var healthBarSettings = Save.instance.modOptions.get("healthBarSettings");
@@ -445,9 +451,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             healthBarBG.updateHitbox();
             healthBarBG.setPosition(healthBarSettings[0] - healthBarBG.width / 2, healthBarSettings[1] - healthBarBG.height / 2);
         } else {
-            healthBarBG.height = Preferences.downscroll ? FlxG.height * 0.1 : FlxG.height * 0.9;
+            healthBarBG.y = Preferences.downscroll ? FlxG.height * 0.1 : FlxG.height * 0.9;
         }
-        healthBarBG.zIndex = 800;
         add(healthBarBG);
 
         var draggableHealthBar = addDraggableSprite(healthBarBG, "healthBar");
@@ -455,11 +460,49 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var healthBar:FlxBar = new FlxBar(0, 0, FlxBarFillDirection.RIGHT_TO_LEFT, Std.int(healthBarBG.width - 8));
         healthBar.createFilledBar(Constants.COLOR_HEALTH_BAR_RED, Constants.COLOR_HEALTH_BAR_GREEN);
         healthBar.percent = 50;
-        healthBar.zIndex = 801;
         add(healthBar);
         linkSpriteToTarget(draggableHealthBar, healthBar);
+    }
 
-        return healthBarBG;
+    function initTimeBarSprite() {
+        // Binding with BadHUDOptions
+        var badHUDOptions = new BadHUDOptions();
+
+        timeBarBG = new FunkinSprite();
+        timeBarBG.loadTexture(badOptions.timeBarStyle);
+        var timeBarSettings = Save.instance.modOptions.get("timeBarSettings");
+        if (timeBarSettings != null) {
+            timeBarBG.angle = timeBarSettings[4];
+            timeBarBG.scale.x = timeBarSettings[2];
+            timeBarBG.scale.y = timeBarSettings[3];
+            timeBarBG.updateHitbox();
+            timeBarBG.setPosition(timeBarSettings[0] - timeBarBG.width / 2, timeBarSettings[1] - timeBarBG.height / 2);
+        } else {
+            timeBarBG.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;
+        }
+
+        var draggableTimeBar = addDraggableSprite(timeBarBG, "timeBar");
+
+        var timeBar:FlxBar = new FlxBar(0, 0, null, Std.int(timeBarBG.width - 5), Std.int(timeBarBG.height - 4));
+        timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
+        timeBar.percent = 50;
+        linkSpriteToTarget(draggableTimeBar, timeBar);
+
+        var timeText = new FlxText();
+        timeText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.timeTextSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        timeText.text = "0:00 / 99:99";
+        timeText.size = 21;
+        timeText.borderSize = 1.75;
+        linkSpriteToTarget(draggableTimeBar, timeText);
+
+        if (badOptions.timeBarStyle == "timeBarMinimalRounded") {
+            add(timeBar);
+            add(timeBarBG);
+        } else {
+            add(timeBarBG);
+            add(timeBar);
+        }
+        add(timeText);
     }
 
     function initToolbox() {
@@ -553,13 +596,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 remove(ratingsPopUps);
 
                 var selectedDraggableType:String = null;
-                for (draggable in draggableSprites) {
-                    if (draggable.isSelected) selectedDraggableType = draggable.spriteType;
-                    remove(draggable.sprite);
-                    for (linked in draggable.linkedSprites) remove(linked.sprite);
-                }
-                draggableSprites = [];
-                initDraggableSprites();
+                for (draggable in draggableSprites) if (draggable.isSelected) selectedDraggableType = draggable.spriteType;
+                initPopUps();
                 if (selectedDraggableType != null) {
                     for (draggable in draggableSprites) {
                         if (draggable.spriteType == selectedDraggableType) {
@@ -620,7 +658,94 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             contextMenu.addComponent(iconsBox);
         }
 
+        if (draggable.spriteType == "timeBar") {
+            var displayStyles:Array<BasicEntry> = [
+                {id: "off", text: "Off"},
+                {id: "left", text: "Time Left"},
+                {id: "left-total", text: "Time Left / Total"},
+                {id: "elapsed", text: "Elapsed"},
+                {id: "elapsed-total", text: "Elapsed / Total"},
+                {id: "elapsed-left", text: "Elapsed / Time Left"},
+                {id: "name", text: "Song Name"},
+            ];
+
+            var barStyles:Array<BasicEntry> = [
+                {id: "timeBarPsychEngine", text: "Psych Engine"},
+                {id: "timeBarMinimal", text: "Minimal"},
+                {id: "timeBarMinimalRounded", text: "Minimal Rounded"},
+            ];
+
+            var displayBox = createOptionBox(
+                "Text Display:",
+                badOptions.timebarType,
+                displayStyles,
+                (value) -> {
+                    badOptions.timebarType = value;
+                    timeBarBG.loadTexture(value);
+                }
+            );
+
+            var styleBox = createOptionBox(
+                "Bar Style:",
+                badOptions.timeBarStyle,
+                barStyles,
+                (value) -> {
+                    badOptions.timeBarStyle = value;
+                    timeBarBG.loadTexture(value);
+                }
+            );
+
+            contextMenu.addComponent(displayBox);
+            contextMenu.addComponent(styleBox);
+        }
+
         Screen.instance.addComponent(contextMenu);
+    }
+
+    function createOptionBox(labelText:String, currentValue:String, options:Array<BasicEntry>, onChangeHandler:(value:String) -> Void):HBox {
+        var box = new HBox();
+        box.percentWidth = 100;
+
+        // Create and configure label
+        var label = new Label();
+        label.text = labelText;
+        label.percentWidth = 30;
+        label.verticalAlign = "center";
+        label.textAlign = "right";
+
+        // Create and configure stepper
+        var stepper:OptionStepper = new OptionStepper();
+        stepper.percentWidth = 70;
+
+        // Set data source
+        stepper.dataSource = new ArrayDataSource();
+        for (option in options) {
+            stepper.dataSource.add(option);
+        }
+
+        // Set initial selected value
+        var selectedIndex = 0;
+        for (i in 0...stepper.dataSource.size) {
+            if (stepper.dataSource.get(i).id == currentValue) {
+                selectedIndex = i;
+                break;
+            }
+        }
+        stepper.selectedIndex = selectedIndex;
+
+        // Store the callback reference in a local variable
+        var callback_persist = onChangeHandler;
+
+        // Set change handler
+        stepper.onChange = (event:UIEvent) -> {
+            callback_persist(stepper.value.id);
+        }
+
+        // Add components to box
+        box.addComponent(label);
+        box.addComponent(stepper);
+
+        return box;
     }
 
     function populateListWithPositions(stepper:OptionStepper) {
@@ -788,8 +913,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     function handleCursor(hoveredSprite) {
         // Mouse sounds
         if (Cursor.cursorMode != CursorMode.Default || isOverToolbox) {
-            if (FlxG.mouse.justPressed) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickDown"));
-            if (FlxG.mouse.justReleased) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickUp"));
+            if (FlxG.mouse.justPressed || FlxG.mouse.justPressedRight) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickDown"));
+            if (FlxG.mouse.justReleased || FlxG.mouse.justReleasedRight) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickUp"));
         }
 
         // Switch Sprites
@@ -841,7 +966,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         var settingsKey = (draggable.spriteType == "judgement") ? "judgementSettings" :
         (draggable.spriteType == "combo") ? "comboSettings" :
-        (draggable.spriteType == "healthBar") ? "healthBarSettings" : null;
+        (draggable.spriteType == "healthBar") ? "healthBarSettings" :
+        (draggable.spriteType == "timeBar") ? "timeBarSettings" : null;
         if (settingsKey != null) Save.instance.modOptions.set(settingsKey, [
             Std.int(draggable.sprite.x + draggable.sprite.width / 2), Std.int(draggable.sprite.y + draggable.sprite.height / 2),
             draggable.sprite.scale.x - originalScaleX, draggable.sprite.scale.y - originalScaleY,

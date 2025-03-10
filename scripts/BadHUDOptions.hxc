@@ -28,7 +28,7 @@ class BadHUDOptions extends Module {
         healthIconPosition: "vanilla",
         timebarPosition: "down",
         timebarType: "left",
-        timebarStyle: "psych",
+        timeBarStyle: "timeBarPsychEngine",
         restBar: "off",
         smoothBars: true,
         iconColors: true,
@@ -51,7 +51,7 @@ class BadHUDOptions extends Module {
         super("BadHUDOptions", 1);
         // Default Options (First Start)
         if (!Save.instance.modOptions.exists("badOptions")) Save.instance.modOptions.set("badOptions", saveObject);
-        else updatetypetext();
+        else switchFont();
         Save.instance.flush();
 
         changeDebugDisplay(font);
@@ -61,7 +61,7 @@ class BadHUDOptions extends Module {
         if (Std.isOfType(event.targetState, OptionsState)) {
             var preferences:PreferencesMenu = event.targetState.pages.get("preferences");
             if (preferences != null) {
-                updatetypetext();
+                switchFont();
                 Save.instance.flush();
 
                 preferences.createPrefItemCheckbox("Middlescroll", "If enabled, player notes will be centerd on the screen, and opponent's notes will be split.", value -> badOptions.middlescroll = value, badOptions.middlescroll);
@@ -77,22 +77,6 @@ class BadHUDOptions extends Module {
                     "up" => "Up",
                     "vertical" => "Vertical"
                 ], value -> badOptions.timebarPosition = value, badOptions.timebarPosition);
-
-                preferences.createPrefItemEnum("Time Bar Display", "Choose how to display the Time Bar's text.", [
-                    "off" => "Off",
-                    "left" => "Time Left",
-                    "left-total" => "Time Left / Total",
-                    "elapsed" => "Elapsed",
-                    "elapsed-total" => "Elapsed / Total",
-                    "elapsed-left" => "Elapsed / Time Left",
-                    "name" => "Song Name"
-                ], value -> badOptions.timebarType = value, badOptions.timebarType);
-
-                preferences.createPrefItemEnum("Time Bar Style", "Select the style of the Time Bar texture.", [
-                    "psych" => "Psych Engine",
-                    "minimal" => "Minimal",
-                    "minimal-rounded" => "Minimal Rounded"
-                ], value -> badOptions.timebarStyle = value, badOptions.timebarStyle);
 
                 preferences.createPrefItemEnum("Rest Bar Display", "Choose how to display the Rest Bar.", [
                     "off" => "Off",
@@ -186,22 +170,6 @@ class BadHUDOptions extends Module {
         }
     }
 
-    function updatetypetext() {
-        switch (badOptions.timebarStyle) {
-            case "psych":
-                timeBarBGStyle = "timeBarPsychEngine";
-                timeTextSize = 26;
-            case "minimal":
-                timeBarBGStyle = "timeBarMinimal";
-                timeTextSize = 20;
-            case "minimal-rounded":
-                timeBarBGStyle = "timeBarMinimalRounded";
-                timeTextSize = 24;
-        }
-
-        switchFont();
-    }
-
     function switchFont() {
         switch (badOptions.hudFont) {
             case 0: font = "vcr.ttf"; // 21px
@@ -228,7 +196,7 @@ typedef BadSaveData = {
     healthIconPosition:String,
     timebarPosition:String,
     timebarType:String,
-    timebarStyle:String,
+    timeBarStyle:String,
     restBar:String,
     smoothBars:Bool,
     iconColors:Bool,
