@@ -47,6 +47,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var welcomeMusic:FunkinSound = new FunkinSound();
     var spriteSettingsText:FlxText;
     var highlightOutline:FunkinSprite;
+    var highlightInitialized:Bool = false;
     var noteStyle:NoteStyle;
 
     var playerStrumline:Strumline;
@@ -891,59 +892,29 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return corners;
     }
 
-    function updateHighlight(selectedSprite:DraggableSprite) {
-        if (selectedSprite != null) {
-            updateHighlightOutline(selectedSprite.sprite);
-            highlightOutline.visible = true;
-        } else highlightOutline.visible = false;
-    }
-
-    function updateHighlightOutline(sprite:FlxSprite) {
-        var padding = 2;
-        var width = Std.int(sprite.width + padding * 2);
-        var height = Std.int(sprite.height + padding * 2);
-
-        // Only remake the graphic if the size has changed
-        if (highlightOutline.width != width || highlightOutline.height != height) {
-            highlightOutline.makeGraphic(width, height, 0x00000000);
-
-            var lineThickness:Int = 2;
-            var highlightColor:Int = 0xFF339933;
-
-            // Draw border lines
-            var outline = highlightOutline.pixels;
-            outline.lock();
-
-            // Top and bottom lines
-            for (i in 0...width) {
-                for (t in 0...lineThickness) {
-                    outline.setPixel32(i, t, highlightColor);
-                    outline.setPixel32(i, height - 1 - t, highlightColor);
-                }
-            }
-
-            // Left and right lines
-            for (i in 0...height) {
-                for (t in 0...lineThickness) {
-                    outline.setPixel32(t, i, highlightColor);
-                    outline.setPixel32(width - 1 - t, i, highlightColor);
-                }
-            }
-
-            outline.unlock();
-            highlightOutline.dirty = true;
+    function updateHighlight(draggable:DraggableSprite) {
+        if (draggable == null || !draggable.isSelected) {
+            highlightOutline.visible = false;
+            return;
         }
 
-        // Get sprite center coordinates
-        var spriteCenterX = sprite.x + sprite.width / 2;
-        var spriteCenterY = sprite.y + sprite.height / 2;
+        // Only create/recreate the graphic when needed
+        var targetWidth = Std.int(draggable.sprite.width + (5 * 2));
+        var targetHeight = Std.int(draggable.sprite.height + (5 * 2));
 
-        // Position the highlight from center
-        highlightOutline.x = spriteCenterX - highlightOutline.width / 2;
-        highlightOutline.y = spriteCenterY - highlightOutline.height / 2;
-        highlightOutline.angle = sprite.angle;
+        // Only recreate when dimensions change
+        if (!highlightInitialized || highlightOutline.width != targetWidth || highlightOutline.height != targetHeight) {
+            highlightOutline.makeGraphic(targetWidth, targetHeight, 0x00000000, true);
+            FlxSpriteUtil.drawRect(highlightOutline, 0, 0, highlightOutline.width, highlightOutline.height, 0x00000000,
+            {color: 0xFF339933, thickness: 2});
+            highlightInitialized = true;
+        }
 
-        highlightOutline.origin.set(highlightOutline.width / 2, highlightOutline.height / 2);
+        // Just reposition the outline
+        highlightOutline.x = draggable.sprite.x - 5;
+        highlightOutline.y = draggable.sprite.y - 5;
+        highlightOutline.angle = draggable.sprite.angle;
+        highlightOutline.visible = true;
     }
 
     function handleCursor(hoveredSprite) {
