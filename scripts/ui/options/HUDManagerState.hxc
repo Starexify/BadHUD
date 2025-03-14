@@ -385,7 +385,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             var comboSprite:FunkinSprite = ratingsPopUps.scriptCall("initComboSprite", [3 - i, i]);
             if (comboSprite != null) {
                 if (i == 0) draggableCombo = addDraggableSprite(comboSprite, "combo");
-                else linkSpriteToTarget(draggableCombo, comboSprite, 0, 0, i);
+                else linkSpriteToTarget(draggableCombo, comboSprite, i);
             }
         }
     }
@@ -425,11 +425,17 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         if (timeText != null) remove(timeText);
         timeText = new FlxText();
-        timeText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.fontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        var fontSize = badOptions.timeBarStyle == "timeBarPsychEngine" ? 32 : badHUDOptions.fontSize;
+        timeText.setFormat(Paths.font(badHUDOptions.font), fontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
         timeText.text = "0:00 / 99:99";
-        timeText.borderSize = 1.75;
+        timeText.borderSize = badOptions.timeBarStyle == "timeBarPsychEngine" ? 2 : 1.75;
 
         positionUIElement(timeBarBG, "timeBarSettings", null, sprite -> {
+            sprite.screenCenter(0x01);
+            sprite.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;
+        });
+
+        positionUIElement(timeText, "timeBarSettings", null, sprite -> {
             sprite.screenCenter(0x01);
             sprite.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;
         });
@@ -445,12 +451,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
             linkSpriteToTarget(draggableTimeBar, timeText);
             linkSpriteToTarget(draggableTimeBar, timeBar);
-            if (badOptions.timeBarStyle == "timeBarMinimalRounded") {
-                if (timeBarVisible) add(timeBar);
+            if (badOptions.timeBarStyle == "timeBarPsychEngine") {
                 add(timeBarBG);
+                if (timeBarVisible) add(timeBar);
             } else {
-                add(timeBarBG);
                 if (timeBarVisible) add(timeBar);
+                add(timeBarBG);
             }
         }
 
@@ -880,11 +886,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return draggable;
     }
 
-    function linkSpriteToTarget(targetDraggable:DraggableSprite, sprite:FlxSprite, xOffset:Float = 0, yOffset:Float = 0, index:Int = 1) {
+    function linkSpriteToTarget(targetDraggable:DraggableSprite, sprite:FlxSprite, index:Int = 1) {
         var linked:LinkedSprite = {
             sprite: sprite,
-            xOffset: xOffset,
-            yOffset: yOffset,
             index: index
         };
         targetDraggable.linkedSprites.push(linked);
@@ -1030,8 +1034,6 @@ typedef DraggableSprite = {
 
 typedef LinkedSprite = {
     sprite:FlxSprite,
-    xOffset:Float,
-    yOffset:Float,
     index:Int
 }
 
