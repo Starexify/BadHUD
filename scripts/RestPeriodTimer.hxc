@@ -21,7 +21,7 @@ class RestPeriodTimer extends ScriptedModule {
 
     var restBarBG:FunkinSprite;
 
-    var restBar:FlxSprite;
+    var restBar:FunkinSprite;
     var restBarThickness:Int = 13;
     var restBarRadius:Float;
 
@@ -69,39 +69,29 @@ class RestPeriodTimer extends ScriptedModule {
     // Helper Methods
     function drawCurvedBar(currentRestTime:Float, totalRestTime:Float) {
         if (restBar == null) return;
-
-        if (restBar.graphic == null) {
-            var restBarWidth = Std.int((restBarRadius + restBarThickness) * 2);
-            restBar.makeGraphic(restBarWidth, restBarWidth, 0x00000000, true);
-        }
-
         // Clear previous drawing
         restBar.graphic.bitmap.fillRect(restBar.graphic.bitmap.rect, 0x00000000);
-        var percentage;
-        switch (badOptions.restBar) {
-            case "countdown":
-                percentage = currentRestTime / totalRestTime;
-            case "countup":
-                percentage = 1 - (currentRestTime / totalRestTime);
-        }
 
+        var percentage = (badOptions.restBar == "countdown") ? currentRestTime / totalRestTime : 1 - (currentRestTime / totalRestTime);
         var startAngle = -Math.PI / 2;
         var endAngle = startAngle + (percentage * Math.PI * 2);
 
-        // Center is now the middle of the sprite
-        var centerX = restBarRadius + restBarThickness;
-        var centerY = restBarRadius + restBarThickness;
-        centerY = centerY - 3;
+        drawArc(restBar, restBarRadius, restBarThickness, startAngle, endAngle);
+    }
 
+    function drawArc(sprite:FlxSprite, radius:Float, thickness:Int, startAngle:Float, endAngle:Float) {
         try {
+            // Clear previous drawing
+            sprite.graphic.bitmap.fillRect(sprite.graphic.bitmap.rect, 0x00000000);
+
             FlxSpriteUtil.beginDraw(0x00000000, {
-                thickness: restBarThickness,
+                thickness: thickness,
                 color: 0xFFFFFFFF,
                 capsStyle: 0
             });
 
-            // Draw the arc
-            var radius = restBarRadius;
+            var centerX = radius + thickness;
+            var centerY = radius + thickness;
             var flashGfx = FlxSpriteUtil.flashGfx;
 
             // Move to start point
@@ -118,10 +108,10 @@ class RestPeriodTimer extends ScriptedModule {
                 flashGfx.lineTo(x, y);
             }
 
-            restBar.dirty = true;
-            FlxSpriteUtil.endDraw(restBar);
+            sprite.dirty = true;
+            FlxSpriteUtil.endDraw(sprite);
         } catch (e:Dynamic) {
-            trace("[BadHUD] Error in drawCurvedBar: " + e);
+            trace("[BadHUD] Error in drawArc: " + e);
         }
     }
 
@@ -131,32 +121,40 @@ class RestPeriodTimer extends ScriptedModule {
     }
 
     function initRestBar() {
-        var badHUDOptions = new BadHUDOptions();
-
-        restBarBG = FunkinSprite.create(0, 0, "restBackground");
-        restBarBG.scrollFactor.set(0, 0);
+        restBarBG = new FunkinSprite();
+        restBarBG.loadTexture("restBackground");
         restBarBG.zIndex = 800;
-        restBarBG.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restBarBG.width / 2;
-        restBarBG.y = Preferences.downscroll ? state.playerStrumline.y - restBarBG.height : state.playerStrumline.y + restBarBG.height * 1.75;
-
-        restBar = new FlxSprite();
-        restBar.scrollFactor.set(0, 0);
-        restBar.zIndex = 801;
-
-        restBarRadius = restBarBG.width / 2.5;
-        var restBarWidth = Std.int((restBarRadius + restBarThickness) * 2);
-        restBar.makeGraphic(restBarWidth, restBarWidth, 0x00000000, true);
-        restBar.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restBar.width / 2;
-        restBar.y = restBarBG.y;
 
         restText = new FlxText(0, 0, 400, "", 32);
-        restText.setFormat(Paths.font(badHUDOptions.font), 21, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        restText.setFormat(Paths.font(new BadHUDOptions().font), new BadHUDOptions().fontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         restText.borderSize = 1.75;
         restText.scrollFactor.set();
         restText.zIndex = 802;
 
-        restText.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restText.width / 2;
-        restText.y = Preferences.downscroll ? state.playerStrumline.y - restBarBG.height / 2 - restText.height / 2 + 3 : restBarBG.y + restText.height + 3;
+        restBar = new FunkinSprite();
+        restBar.scrollFactor.set(0, 0);
+        restBar.zIndex = 801;
+        restBarRadius = restBarBG.width / 2.5;
+        var restBarWidth = Std.int((restBarRadius + restBarThickness) * 2);
+        restBar.makeGraphic(restBarWidth, restBarWidth, 0x00000000, true);
+
+        var settings = Save.instance.modOptions.get("restBarSettings");
+        if (settings != null) {
+            restBarBG.angle = restText.angle = restBar.angle = settings[4];
+            restBarBG.scale.x = restText.scale.x = restBar.scale.x = settings[2];
+            restBarBG.scale.y = restText.scale.y = restBar.scale.y = settings[3];
+            restBarBG.updateHitbox();
+            restBarBG.setPosition(settings[0] - restBarBG.width / 2, settings[1] - restBarBG.height / 2);
+        } else {
+            restBarBG.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restBarBG.width / 2;
+            restBarBG.y = Preferences.downscroll ? state.playerStrumline.y - restBarBG.height : state.playerStrumline.y + restBarBG.height * 1.75;
+        }
+
+        var centerX = restBarBG.x + restBarBG.width / 2;
+        var centerY = restBarBG.y + restBarBG.height / 2;
+        restText.setPosition(centerX - restText.width / 2, centerY - restText.height / 2);
+        restBar.setPosition(centerX - restBar.width / 2, centerY - restBar.height / 2);
+
 
         restBarSprites = [restBarBG, restBar, restText];
 

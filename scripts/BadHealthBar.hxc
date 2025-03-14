@@ -39,14 +39,14 @@ class BadHealthBar extends ScriptedModule {
         iconP2 = state.iconP2;
 
         // Health Bar
-        var healthBarSettings = Save.instance.modOptions.get("healthBarSettings");
+        var settings = Save.instance.modOptions.get("healthBarSettings");
         if (badOptions.healthBar) {
-            if (healthBarSettings != null) {
-                healthBarBG.angle = healthBar.angle = healthBarSettings[4];
-                healthBarBG.scale.x = healthBar.scale.x = healthBarSettings[2];
-                healthBarBG.scale.y = healthBar.scale.y = healthBarSettings[3];
+            if (settings != null) {
+                healthBarBG.angle = healthBar.angle = settings[4];
+                healthBarBG.scale.x = healthBar.scale.x = settings[2];
+                healthBarBG.scale.y = healthBar.scale.y = settings[3];
                 healthBarBG.updateHitbox();
-                healthBarBG.setPosition(healthBarSettings[0] - healthBarBG.width / 2, healthBarSettings[1] - healthBarBG.height / 2);
+                healthBarBG.setPosition(settings[0] - healthBarBG.width / 2, settings[1] - healthBarBG.height / 2);
                 healthBar.setPosition(state.healthBarBG.x + (state.healthBarBG.width / 2) - (state.healthBar.width / 2), state.healthBarBG.y + (state.healthBarBG.height / 2) - (state.healthBar.height / 2));
 
                 if (!state.isMinimalMode) {
@@ -208,10 +208,10 @@ class BadHealthBar extends ScriptedModule {
             iconP2.x = centerX + offsetX - spacingOffsetX - (iconP2.width / 2);
             iconP2.y = centerY - offsetY + spacingOffsetY - (iconP2.height / 2);
 
-            var healthBarSettings = Save.instance.modOptions.get("healthBarSettings");
-            if (badOptions.healthIconPosition == "rotated" && healthBarSettings != null) {
-                if (iconP1 != null) iconP1.angle = healthBarSettings[4];
-                if (iconP2 != null) iconP2.angle = healthBarSettings[4];
+            var settings = Save.instance.modOptions.get("healthBarSettings");
+            if (badOptions.healthIconPosition == "rotated" && settings != null) {
+                if (iconP1 != null) iconP1.angle = settings[4];
+                if (iconP2 != null) iconP2.angle = settings[4];
             }
         }
 

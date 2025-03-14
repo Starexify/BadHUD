@@ -60,13 +60,13 @@ class TimeBar extends ScriptedModule {
         timeBar.scrollFactor.set();
         timeBar.zIndex = badOptions.timeBarStyle == "timeBarMinimalRounded" ? 799 : 801;
 
-        var timeBarSettings = Save.instance.modOptions.get("timeBarSettings");
-        if (timeBarSettings != null) {
-            timeText.angle = timeBarBG.angle = timeBar.angle = timeBarSettings[4];
-            timeText.scale.x = timeBarBG.scale.x = timeBar.scale.x = timeBarSettings[2];
-            timeText.scale.y = timeBarBG.scale.y = timeBar.scale.y = timeBarSettings[3];
+        var settings = Save.instance.modOptions.get("timeBarSettings");
+        if (settings != null) {
+            timeText.angle = timeBarBG.angle = timeBar.angle = settings[4];
+            timeText.scale.x = timeBarBG.scale.x = timeBar.scale.x = settings[2];
+            timeText.scale.y = timeBarBG.scale.y = timeBar.scale.y = settings[3];
             timeText.updateHitbox();
-            timeText.setPosition(timeBarSettings[0] - timeText.width / 2, timeBarSettings[1] - timeText.height / 2);
+            timeText.setPosition(settings[0] - timeText.width / 2, settings[1] - timeText.height / 2);
         } else {
             timeText.screenCenter(0x01);
             timeText.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;

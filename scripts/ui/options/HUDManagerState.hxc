@@ -393,26 +393,27 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     function initHealthBarSprite() {
         var healthBarBG:FunkinSprite = new FunkinSprite();
         healthBarBG.loadTexture("healthBar");
-        var healthBarSettings = Save.instance.modOptions.get("healthBarSettings");
-        if (healthBarSettings != null) {
-            healthBarBG.angle = healthBarSettings[4];
-            healthBarBG.scale.x = healthBarSettings[2];
-            healthBarBG.scale.y = healthBarSettings[3];
-            healthBarBG.updateHitbox();
-            healthBarBG.setPosition(healthBarSettings[0] - healthBarBG.width / 2, healthBarSettings[1] - healthBarBG.height / 2);
-        } else {
-            healthBarBG.y = Preferences.downscroll ? FlxG.height * 0.1 : FlxG.height * 0.9;
-        }
-        add(healthBarBG);
 
-        var draggableHealthBar = addDraggableSprite(healthBarBG, "healthBar");
+        var barWidth = Std.int(healthBarBG.width - 8);
+        var barHeight = 1;
 
-        var healthBar:FlxBar = new FlxBar(0, 0, FlxBarFillDirection.RIGHT_TO_LEFT, Std.int(healthBarBG.width - (8 * healthBarSettings[2])));
-        healthBar.height *= healthBarSettings[3];
+        positionUIElement(healthBarBG, "healthBarSettings", settings -> {
+            barWidth = Std.int(healthBarBG.width - (8 * settings[2]));
+            barHeight = settings[3];
+        }, sprite -> {
+            sprite.screenCenter(0x01);
+            sprite.y = Preferences.downscroll ? FlxG.height * 0.1 : FlxG.height * 0.9;
+        });
+
+        var healthBar:FlxBar = new FlxBar(0, 0, FlxBarFillDirection.RIGHT_TO_LEFT, barWidth);
+        healthBar.height *= barHeight;
         healthBar.createFilledBar(Constants.COLOR_HEALTH_BAR_RED, Constants.COLOR_HEALTH_BAR_GREEN);
         healthBar.percent = 50;
-        add(healthBar);
+
+        var draggableHealthBar = addDraggableSprite(healthBarBG, "healthBar");
         linkSpriteToTarget(draggableHealthBar, healthBar);
+        add(healthBarBG);
+        add(healthBar);
     }
 
     function initTimeBarSprite() {
@@ -428,17 +429,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         timeText.text = "0:00 / 99:99";
         timeText.borderSize = 1.75;
 
-        var timeBarSettings = Save.instance.modOptions.get("timeBarSettings");
-        if (timeBarSettings != null) {
-            timeBarBG.angle = timeBarSettings[4];
-            timeBarBG.scale.x = timeBarSettings[2];
-            timeBarBG.scale.y = timeBarSettings[3];
-            timeBarBG.updateHitbox();
-            timeBarBG.setPosition(timeBarSettings[0] - timeBarBG.width / 2, timeBarSettings[1] - timeBarBG.height / 2);
-        } else {
-            timeBarBG.screenCenter(0x01);
-            timeBarBG.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;
-        }
+        positionUIElement(timeBarBG, "timeBarSettings", null, sprite -> {
+            sprite.screenCenter(0x01);
+            sprite.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;
+        });
 
         var draggableSprite = timeBarVisible ? timeBarBG : timeText;
         var draggableTimeBar = addDraggableSprite(draggableSprite, "timeBar");
@@ -472,14 +466,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         restText.text = "999";
         restText.borderSize = 1.75;
 
-        var restBarSettings = Save.instance.modOptions.get("restBarSettings");
-        if (restBarSettings != null) {
-            restBarBG.angle = restBarSettings[4];
-            restBarBG.scale.x = restBarSettings[2];
-            restBarBG.scale.y = restBarSettings[3];
-            restBarBG.updateHitbox();
-            restBarBG.setPosition(restBarSettings[0] - restBarBG.width / 2, restBarSettings[1] - restBarBG.height / 2);
-        }
+        positionUIElement(restBarBG, "restBarSettings", null, sprite -> {
+            sprite.x = playerStrumline.x + playerStrumline.width / 2 - sprite.width / 2;
+            sprite.y = Preferences.downscroll ? playerStrumline.y - sprite.height : playerStrumline.y + sprite.height * 1.75;
+        });
 
         var draggableRestBar = addDraggableSprite(restBarBG, "restBar");
 
@@ -942,6 +932,18 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         ]);
     }
 
+    function positionUIElement(sprite:FlxSprite, settingsKey:String, additionalSettings:String -> Void, defaultPosition:FlxSprite -> Void) {
+        var settings = Save.instance.modOptions.get(settingsKey);
+        if (settings != null) {
+            sprite.angle = settings[4];
+            sprite.scale.x = settings[2];
+            sprite.scale.y = settings[3];
+            sprite.updateHitbox();
+            sprite.setPosition(settings[0] - sprite.width / 2, settings[1] - sprite.height / 2);
+            if (additionalSettings != null) additionalSettings(settings);
+        } else defaultPosition(sprite);
+    }
+
     function drawArc(sprite:FlxSprite, radius:Float, thickness:Int, startAngle:Float, endAngle:Float) {
         try {
             FlxSpriteUtil.beginDraw(0x00000000, {
@@ -970,7 +972,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
             FlxSpriteUtil.endDraw(sprite);
         } catch (e:Dynamic) {
-            trace("[BadHUD] Error in static restBar drawing: " + e);
+            trace("[BadHUD] Error in drawArc: " + e);
         }
     }
 
