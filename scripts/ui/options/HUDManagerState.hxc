@@ -54,9 +54,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var opponentStrumline:Strumline;
 
     var ratingsPopUps:RatingPopUps;
+    var timeBarBG:FunkinSprite;
     var timeText:FlxText;
 
-    var comboSprites:Array<FunkinSprite> = [];
     var draggableSprites:Array<DraggableSprite> = [];
 
     var toolboxWindow:Window;
@@ -149,8 +149,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                         draggable.sprite.angle = Math.round(angle);
 
                         // Rotate linked/combo sprites together
-                        if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) for (linked in draggable.linkedSprites) linked.sprite.angle = draggable.sprite.angle;
-                        if (draggable.spriteType == "combo") for (i in 1...comboSprites.length)comboSprites[i].angle = draggable.sprite.angle;
+                        if (draggable.linkedSprites != null) for (linked in draggable.linkedSprites) linked.sprite.angle = draggable.sprite.angle;
                     } else {
                         draggable.sprite.alpha = 0.4;
                         var newX = mouseX - draggable.dragOffsetX;
@@ -187,24 +186,14 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                             newY = Math.max(0, Math.min(FlxG.height - draggable.sprite.height, newY));
                         }
 
-                        var oldX = draggable.sprite.x;
-                        var oldY = draggable.sprite.y;
-
                         draggable.sprite.setPosition(newX, newY);
 
-                        // Move all combo sprites together
-                        if (draggable.spriteType == "combo") {
-                            var offsetX = newX - oldX;
-                            var offsetY = newY - oldY;
-
-                            for (i in 1...comboSprites.length) {
-                                comboSprites[i].x += offsetX;
-                                comboSprites[i].y += offsetY;
+                        // Move linked sprites
+                        if (draggable.linkedSprites != null) {
+                            for (linked in draggable.linkedSprites) {
+                                linked.sprite.alpha = 0.4;
+                                syncSpriteWithTarget(linked, draggable);
                             }
-                        }
-                        if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) for (linked in draggable.linkedSprites) {
-                            linked.sprite.alpha = 0.4;
-                            linked.sprite.setPosition(newX + linked.offsetX, newY + linked.offsetY);
                         }
                     }
                     updateText(draggable);
@@ -225,8 +214,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
                 var newX = draggable.sprite.x;
                 var newY = draggable.sprite.y;
-                var oldX = newX;
-                var oldY = newY;
 
                 if (holdArray.contains(true)) {
                     if (!isHolding) {
@@ -297,17 +284,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
                 draggable.sprite.setPosition(newX, newY);
 
-                // Move all linked/combo sprites together
-                if (draggable.spriteType == "combo") {
-                    var offsetX = newX - oldX;
-                    var offsetY = newY - oldY;
-
-                    for (i in 1...comboSprites.length) {
-                        comboSprites[i].x += offsetX;
-                        comboSprites[i].y += offsetY;
-                    }
-                }
-
                 if (controls.UI_DOWN_R || controls.UI_UP_R || controls.UI_LEFT_R || controls.UI_RIGHT_R) saveSpriteSettings(draggable);
 
                 if (FlxG.mouse.wheel != 0) {
@@ -323,55 +299,24 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                     if (FlxG.keys.pressed.CONTROL) draggable.sprite.scale.x = Math.min(Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10, maxScaleX);
                     else if (FlxG.keys.pressed.SHIFT) draggable.sprite.scale.y = Math.min(Math.round((draggable.sprite.scale.y + scaleChange) * 10) / 10, maxScaleY);
                     else {
-                        draggable.sprite.scale.x = Math.min(
-                            Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10,
-                            maxScaleX
-                        );
-                        draggable.sprite.scale.y = Math.min(
-                            Math.round((draggable.sprite.scale.y + scaleChange) * 10) / 10,
-                            maxScaleY
-                        );
+                        draggable.sprite.scale.x = Math.min(Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10, maxScaleX);
+                        draggable.sprite.scale.y = Math.min(Math.round((draggable.sprite.scale.y + scaleChange) * 10) / 10, maxScaleY);
                     }
                     draggable.sprite.updateHitbox();
 
                     // Reposition to maintain center
                     draggable.sprite.setPosition(centerX - draggable.sprite.width / 2, centerY - draggable.sprite.height / 2);
 
-                    // Scale linked/combo sprites together
-                    if (draggable.spriteType == "combo") {
-                        for (i in 1...comboSprites.length) {
-                            var comboSprite = comboSprites[i];
-                            var originalWidth = comboSprite.width;
-                            // Apply the same scaling
-                            if (FlxG.keys.pressed.CONTROL) comboSprite.scale.x = draggable.sprite.scale.x;
-                            else if (FlxG.keys.pressed.SHIFT) comboSprite.scale.y = draggable.sprite.scale.y;
-                            else {
-                                comboSprite.scale.x = draggable.sprite.scale.x;
-                                comboSprite.scale.y = draggable.sprite.scale.y;
-                            }
-
-                            // Store original center
-                            var comboCenterX = comboSprite.x + comboSprite.width / 2;
-                            var comboCenterY = comboSprite.y + comboSprite.height / 2;
-
-                            comboSprite.updateHitbox();
-
-                            // Reposition to maintain center
-                            comboSprite.x = comboCenterX - comboSprite.width / 2 + ((originalWidth - comboSprite.width) * i);
-                            comboSprite.y = comboCenterY - comboSprite.height / 2;
-                        }
-                    }
-                    if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) {
-                        for (linked in draggable.linkedSprites) {
-                            linked.sprite.scale = draggable.sprite.scale;
-                            linked.sprite.updateHitbox();
-                            linked.sprite.setPosition(draggable.sprite.x + (draggable.sprite.width / 2) - (linked.sprite.width / 2), draggable.sprite.y + (draggable.sprite.height / 2) - (linked.sprite.height / 2));
-                        }
+                    // Scale linked sprites together
+                    if (draggable.linkedSprites != null) for (linked in draggable.linkedSprites) {
+                        syncSpriteWithTarget(linked, draggable);
+                        linked.sprite.scale = draggable.sprite.scale;
+                        linked.sprite.updateHitbox();
                     }
 
                     saveSpriteSettings(draggable);
                 } else {
-                    if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) for (linked in draggable.linkedSprites) linked.sprite.setPosition(draggable.sprite.x + (draggable.sprite.width / 2) - (linked.sprite.width / 2), draggable.sprite.y + (draggable.sprite.height / 2) - (linked.sprite.height / 2));
+                    if (draggable.linkedSprites != null) for (linked in draggable.linkedSprites) syncSpriteWithTarget(linked, draggable);
                 }
 
                 updateText(draggable);
@@ -434,14 +379,13 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var judgementSprite:FunkinSprite = ratingsPopUps.scriptCall("initJudgementSprite", ["sick"]);
         addDraggableSprite(judgementSprite, "judgement");
 
-        for (sprite in comboSprites) if (sprite != null) remove(sprite);
-        comboSprites = [];
+        var draggableCombo = null;
 
         for (i in 0...3) {
-            var comboSprite = ratingsPopUps.scriptCall("initComboSprite", [3 - i, i]);
+            var comboSprite:FunkinSprite = ratingsPopUps.scriptCall("initComboSprite", [3 - i, i]);
             if (comboSprite != null) {
-                comboSprites.push(comboSprite);
-                if (i == 0) addDraggableSprite(comboSprite, "combo");
+                if (i == 0) draggableCombo = addDraggableSprite(comboSprite, "combo");
+                else linkSpriteToTarget(draggableCombo, comboSprite, 0, 0, i);
             }
         }
     }
@@ -463,7 +407,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         var draggableHealthBar = addDraggableSprite(healthBarBG, "healthBar");
 
-        var healthBar:FlxBar = new FlxBar(0, 0, FlxBarFillDirection.RIGHT_TO_LEFT, Std.int(healthBarBG.width - 8));
+        var healthBar:FlxBar = new FlxBar(0, 0, FlxBarFillDirection.RIGHT_TO_LEFT, Std.int(healthBarBG.width - (8 * healthBarSettings[2])));
+        healthBar.height *= healthBarSettings[3];
         healthBar.createFilledBar(Constants.COLOR_HEALTH_BAR_RED, Constants.COLOR_HEALTH_BAR_GREEN);
         healthBar.percent = 50;
         add(healthBar);
@@ -471,47 +416,50 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function initTimeBarSprite() {
+        if (timeBarBG != null) remove(timeBarBG);
+        timeBarBG = new FunkinSprite();
+        timeBarBG.loadTexture(badOptions.timeBarStyle);
+
+        var timeBarVisible = badOptions.timeBarStyle != "off";
+
         if (timeText != null) remove(timeText);
         timeText = new FlxText();
         timeText.setFormat(Paths.font(badHUDOptions.font), 21, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
         timeText.text = "0:00 / 99:99";
         timeText.borderSize = 1.75;
 
-        var timeBarBG:FunkinSprite = new FunkinSprite();
-        timeBarBG.loadTexture(badOptions.timeBarStyle);
-
-        timeText.fieldWidth = timeBarBG.width;
         var timeBarSettings = Save.instance.modOptions.get("timeBarSettings");
         if (timeBarSettings != null) {
-            timeText.angle = timeBarSettings[4];
-            timeText.scale.x = timeBarSettings[2];
-            timeText.scale.y = timeBarSettings[3];
-            timeText.updateHitbox();
-            timeText.setPosition(timeBarSettings[0] - timeText.width / 2, timeBarSettings[1] - timeText.height / 2);
+            timeBarBG.angle = timeBarSettings[4];
+            timeBarBG.scale.x = timeBarSettings[2];
+            timeBarBG.scale.y = timeBarSettings[3];
+            timeBarBG.updateHitbox();
+            timeBarBG.setPosition(timeBarSettings[0] - timeBarBG.width / 2, timeBarSettings[1] - timeBarBG.height / 2);
         } else {
-            timeText.screenCenter(0x01);
-            timeText.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;
+            timeBarBG.screenCenter(0x01);
+            timeBarBG.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;
         }
 
-        var draggableTimeBar = addDraggableSprite(timeText, "timeBar");
+        var draggableSprite = timeBarVisible ? timeBarBG : timeText;
+        var draggableTimeBar = addDraggableSprite(draggableSprite, "timeBar");
 
-        var timeBarHeight = badOptions.timeBarStyle == "timeBarMinimalRounded" ? 4 : 6;
-        var timeBar:FlxBar = new FlxBar(0, 0, null, Std.int(timeBarBG.width - 5), Std.int(timeBarBG.height - timeBarHeight));
-        timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
-        timeBar.percent = 50;
+        if (timeBarVisible) {
+            var timeBarHeight = badOptions.timeBarStyle == "timeBarMinimalRounded" ? 4 : 6;
+            var timeBar:FlxBar = new FlxBar(0, 0, null, Std.int(timeBarBG.width - 5), Std.int(timeBarBG.height - timeBarHeight));
+            timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
+            timeBar.percent = 50;
 
-        linkSpriteToTarget(draggableTimeBar, timeBar);
-        linkSpriteToTarget(draggableTimeBar, timeBarBG);
-
-        if (badOptions.timeBarStyle != "off") {
+            linkSpriteToTarget(draggableTimeBar, timeText);
+            linkSpriteToTarget(draggableTimeBar, timeBar);
             if (badOptions.timeBarStyle == "timeBarMinimalRounded") {
-                add(timeBar);
+                if (timeBarVisible) add(timeBar);
                 add(timeBarBG);
             } else {
                 add(timeBarBG);
-                add(timeBar);
+                if (timeBarVisible) add(timeBar);
             }
         }
+
         add(timeText);
     }
 
@@ -523,19 +471,17 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         restText.setFormat(Paths.font(badHUDOptions.font), 21, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         restText.text = "999";
         restText.borderSize = 1.75;
-        restText.fieldWidth = restBarBG.width;
-        restText.fieldHeight = restBarBG.height;
 
         var restBarSettings = Save.instance.modOptions.get("restBarSettings");
         if (restBarSettings != null) {
-            restText.angle = restBarSettings[4];
-            restText.scale.x = restBarSettings[2];
-            restText.scale.y = restBarSettings[3];
-            restText.updateHitbox();
-            restText.setPosition(restBarSettings[0] - restText.width / 2, restBarSettings[1] - restText.height / 2);
+            restBarBG.angle = restBarSettings[4];
+            restBarBG.scale.x = restBarSettings[2];
+            restBarBG.scale.y = restBarSettings[3];
+            restBarBG.updateHitbox();
+            restBarBG.setPosition(restBarSettings[0] - restBarBG.width / 2, restBarSettings[1] - restBarBG.height / 2);
         }
 
-        var draggableRestBar = addDraggableSprite(restText, "restBar");
+        var draggableRestBar = addDraggableSprite(restBarBG, "restBar");
 
         var restBarThickness:Int = 13;
         var restBarRadius = restBarBG.width / 2.5;
@@ -548,7 +494,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         add(restBarBG);
         add(restBar);
         add(restText);
-        linkSpriteToTarget(draggableRestBar, restBarBG);
+        linkSpriteToTarget(draggableRestBar, restText);
         linkSpriteToTarget(draggableRestBar, restBar);
     }
 
@@ -944,23 +890,39 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return draggable;
     }
 
-    function linkSpriteToTarget(targetDraggable:DraggableSprite, sprite:FlxSprite) {
-        // Calculate initial offset
-        sprite.angle = targetDraggable.sprite.angle;
-        sprite.scale = targetDraggable.sprite.scale;
-        sprite.updateHitbox();
-
-        var targetCenterX = targetDraggable.sprite.x + targetDraggable.sprite.width / 2;
-        var targetCenterY = targetDraggable.sprite.y + targetDraggable.sprite.height / 2;
-        sprite.setPosition(targetCenterX - sprite.width / 2, targetCenterY - sprite.height / 2);
-
-        var offsetX = sprite.x - targetDraggable.sprite.x;
-        var offsetY = sprite.y - targetDraggable.sprite.y;
-        targetDraggable.linkedSprites.push({
+    function linkSpriteToTarget(targetDraggable:DraggableSprite, sprite:FlxSprite, xOffset:Float = 0, yOffset:Float = 0, index:Int = 1) {
+        var linked:LinkedSprite = {
             sprite: sprite,
-            offsetX: offsetX,
-            offsetY: offsetY
-        });
+            xOffset: xOffset,
+            yOffset: yOffset,
+            index: index
+        };
+        targetDraggable.linkedSprites.push(linked);
+
+        if (targetDraggable.spriteType != "combo") syncSpriteWithTarget(linked, targetDraggable);
+    }
+
+    function syncSpriteWithTarget(linkedSprite:LinkedSprite, targetSprite:DraggableSprite) {
+        linkedSprite.sprite.angle = targetSprite.sprite.angle;
+        if (!Std.isOfType(linkedSprite.sprite, FlxBar) && targetSprite.spriteType != "restBar") linkedSprite.sprite.scale = targetSprite.sprite.scale;
+        linkedSprite.sprite.updateHitbox();
+
+        var targetCenterX = targetSprite.sprite.x + targetSprite.sprite.width / 2;
+        var targetCenterY = targetSprite.sprite.y + targetSprite.sprite.height / 2;
+
+        if (Std.isOfType(linkedSprite.sprite, FlxText)) {
+            var text = Std.downcast(linkedSprite.sprite, FlxText);
+            linkedSprite.sprite.setPosition(
+                targetCenterX - linkedSprite.sprite.width / 2,
+                targetCenterY - text.fieldHeight / 2);
+        } else {
+            var indexOffset = 0.0;
+            if (targetSprite.spriteType == "combo") indexOffset = -((38 - (noteStyle.buildComboNumSprite(3 - linkedSprite.index).width - linkedSprite.sprite.width)) * linkedSprite.index);
+
+            linkedSprite.sprite.setPosition(
+                targetCenterX - linkedSprite.sprite.width / 2 + indexOffset,
+                targetCenterY - linkedSprite.sprite.height / 2);
+        }
     }
 
     function updateText(draggable:DraggableSprite) {
@@ -1061,7 +1023,14 @@ typedef DraggableSprite = {
     dragOffsetX:Float,
     dragOffsetY:Float,
     spriteType:String,
-    linkedSprites:Array<{sprite:FlxSprite, offsetX:Float, offsetY:Float}>
+    linkedSprites:Array<LinkedSprite>
+}
+
+typedef LinkedSprite = {
+    sprite:FlxSprite,
+    xOffset:Float,
+    yOffset:Float,
+    index:Int
 }
 
 typedef KeybindEntry = {
