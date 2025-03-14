@@ -36,7 +36,7 @@ class RestPeriodTimer extends ScriptedModule {
     }
 
     override function onSongStart(event:ScriptEvent) {
-        if (badOptions.restBar == "off") return;
+        if (!badOptions.restBar) return;
         var badHooks = ModuleHandler.getModule("BadHooks");
         if (badHooks != null) state = badHooks.scriptGet("state");
         if (state == null) return;
@@ -44,7 +44,7 @@ class RestPeriodTimer extends ScriptedModule {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null || badOptions.restBar == "off" || restText == null) return;
+        if (state == null || !badOptions.restBar || restText == null) return;
         var restBarFadeOut = 1000; // 1s
         var restBarMinimum = 5000; // 5s
         var songPosition = state.conductorInUse.songPosition;
@@ -72,7 +72,7 @@ class RestPeriodTimer extends ScriptedModule {
         // Clear previous drawing
         restBar.graphic.bitmap.fillRect(restBar.graphic.bitmap.rect, 0x00000000);
 
-        var percentage = (badOptions.restBar == "countdown") ? currentRestTime / totalRestTime : 1 - (currentRestTime / totalRestTime);
+        var percentage = (badOptions.restBarType == "countdown") ? currentRestTime / totalRestTime : 1 - (currentRestTime / totalRestTime);
         var startAngle = -Math.PI / 2;
         var endAngle = startAngle + (percentage * Math.PI * 2);
 

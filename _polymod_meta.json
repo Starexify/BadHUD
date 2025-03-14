@@ -1,6 +1,6 @@
 {
   "title": "BadHUD",
-  "description": "BadHUD for V-Slice, based off nubz4lif's port of Psych Engine HUD and Friday Night Bloxxin'",
+  "description": "BadHUD is a mod for V-Slice that lets you customize your HUD the way you want.",
   "contributors": [
     {
       "name": "ImVeryBad",
@@ -8,6 +8,6 @@
     }
   ],
   "api_version": "0.5.0",
-  "mod_version": "8.0.0",
+  "mod_version": "8.1.0",
   "license": "MIT"
 }
