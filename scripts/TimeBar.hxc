@@ -43,8 +43,7 @@ class TimeBar extends ScriptedModule {
 
     function initTimeBar() {
         timeText = new FlxText();
-        timeText.setFormat(Paths.font(new BadHUDOptions().font), 21, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
-        timeText.size = 21;
+        timeText.setFormat(Paths.font(new BadHUDOptions().font), new BadHUDOptions().fontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
         timeText.borderSize = 1.75;
         timeText.scrollFactor.set();
         if (!state.isMinimalMode) timeText.zIndex = state.iconP1.zIndex + 1;
