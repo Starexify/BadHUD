@@ -1015,7 +1015,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             {action: "Show Guide", keybind: "F1"},
             {action: "Return to Options", keybind: "BACK/F5"},
             {action: "Open Sprite Context Menu", keybind: "Right Mouse Button"},
-            {action: "Drag Sprite", keybind: "Left Mouse Button"},
+            {action: "Drag / Select Sprite", keybind: "Left Mouse Button"},
             {action: "Rotate Sprite", keybind: "Alt + Right Mouse Button"},
             {action: "Precise Sprite Movement", keybind: "W/A/S/D (+ 10) \nCtrl + W/A/S/D (+ 0.5)\nShift + W/A/S/D (+ 0.25)"},
             {action: "Precise Sprite Scaling", keybind: "Mouse Wheel (-/+ 0.1) \nCtrl + Mouse Wheel (-/+ 0.1 y-axis)\nShift + W/A/S/D (-/+ 0.1 x-axis)"},
