@@ -116,14 +116,6 @@ class BadHUDOptions extends Module {
                 // Extras
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold");
 
-                preferences.createPrefItemEnum("Accuracy System", "Choose the accuracy/score for visual display on the HUD. (Only visual!)", [
-                    "vanilla" => "Vanilla",
-                    "psych" => "Psych Engine",
-                    "osu" => "osu!Mania"
-                ], value -> badOptions.accuracyType = value, badOptions.accuracyType);
-
-                preferences.createPrefItemCheckbox("Comma Separated Score", "If enabled, the score will use commas as thousand separators", value -> badOptions.commaSeparatedScore = value, badOptions.commaSeparatedScore);
-
                 preferences.createPrefItemCheckbox("Enable Keybind Reminder", "If enabled, a keybind reminder will appear above notes when loaded, then fade.", value -> badOptions.remindKeys = value, badOptions.remindKeys);
 
                 preferences.createPrefItemCheckbox("Mute Miss Sounds", "If enabled, mutes the sound of the note being missed.", value -> badOptions.muteMiss = value, badOptions.muteMiss);

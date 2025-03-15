@@ -371,6 +371,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         initHealthBarSprite();
         initTimeBarSprite();
         initRestBarSprite();
+        initStats();
+        initJudgements();
     }
 
     function initPopUps() {
@@ -495,6 +497,26 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         add(restText);
         linkSpriteToTarget(draggableRestBar, restText);
         linkSpriteToTarget(draggableRestBar, restBar);
+    }
+
+    function initStats() {
+        var statsText:FlxText = new FlxText(10, FlxG.height * 0.45);
+        statsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: 0" + "\nCombo: 0";
+        statsText.borderSize = 1.25;
+        positionUIElement(statsText, "statsTextSettings", null, null);
+        addDraggableSprite(statsText, "statsText");
+        add(statsText);
+    }
+
+    function initJudgements() {
+        var judgementsText:FlxText = new FlxText(10, FlxG.height * 0.45);
+        judgementsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        judgementsText.text = "Sicks: 0" + "\nGoods: 0" + "\nBads: 0" + "\nShits: 0";
+        judgementsText.borderSize = 1.25;
+        positionUIElement(judgementsText, "judgementsTextSettings", null, null);
+        addDraggableSprite(judgementsText, "judgementsText");
+        add(judgementsText);
     }
 
     function initToolbox() {
@@ -725,6 +747,43 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             vbox.addComponent(displayBox);
         }
 
+        if (draggable.spriteType == "judgementsText") {
+/*            var textOrientation:Array<BasicEntry> = [
+                {id: "left", text: "Left"},
+                {id: "center", text: "Center"},
+                {id: "right", text: "Right"},
+            ];
+
+            var textOrientationBox = createOptionBox(
+                "Text Orientation:",
+                badOptions.healthIconPosition,
+                textOrientation,
+                value -> badOptions.healthIconPosition = value
+            );
+
+            vbox.addComponent(textOrientationBox);*/
+        }
+
+        if (draggable.spriteType == "statsText") {
+            var accuracySystem:Array<BasicEntry> = [
+                {id: "vanilla", text: "Vanilla"},
+                {id: "psych", text: "Psych Engine"},
+                {id: "osu", text: "osu!Mania"},
+            ];
+
+            var accuracySystemBox = createOptionBox(
+                "Accuracy System:",
+                badOptions.accuracyType,
+                accuracySystem,
+                value -> badOptions.accuracyType = value
+            );
+
+            var commaSeparationCheck = createCheckBox("Comma Separated Score", badOptions.commaSeparatedScore, 100, (event:UIEvent) -> badOptions.commaSeparatedScore = event.target.value);
+
+            vbox.addComponent(accuracySystemBox);
+            vbox.addComponent(commaSeparationCheck);
+        }
+
         frame.addComponent(vbox);
         contextMenu.addComponent(frame);
 
@@ -737,7 +796,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         checkbox.text = text;
         checkbox.selected = isSelected;
         checkbox.percentWidth = width;
-        checkbox.onChange = changeHandler;
+        if (changeHandler != null) checkbox.onChange = changeHandler;
         return checkbox;
     }
 
@@ -974,7 +1033,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             sprite.updateHitbox();
             sprite.setPosition(settings[0] - sprite.width / 2, settings[1] - sprite.height / 2);
             if (additionalSettings != null) additionalSettings(settings);
-        } else defaultPosition(sprite);
+        } else if (defaultPosition != null) defaultPosition(sprite);
     }
 
     function drawArc(sprite:FlxSprite, radius:Float, thickness:Int, startAngle:Float, endAngle:Float) {
