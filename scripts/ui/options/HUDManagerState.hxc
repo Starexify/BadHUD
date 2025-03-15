@@ -30,8 +30,10 @@ import haxe.ui.components.CheckBox;
 import haxe.ui.components.DropDown;
 import haxe.ui.components.Label;
 import haxe.ui.components.OptionStepper;
+import haxe.ui.containers.Frame;
 import haxe.ui.containers.HBox;
 import haxe.ui.containers.TableView;
+import haxe.ui.containers.VBox;
 import haxe.ui.containers.menus.Menu;
 import haxe.ui.containers.windows.Window;
 import haxe.ui.containers.windows.WindowManager;
@@ -66,6 +68,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     var contextMenu:Menu;
     var isSearching:Bool = false;
+    var mouseDownHandler = null;
 
     var prevAlpha:Float;
     var holdDelayTimer:Float = 0;
@@ -545,20 +548,30 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     function showContextMenu(mouseX:Float, mouseY:Float, draggable:DraggableSprite) {
         Screen.instance.removeComponent(contextMenu);
+        if (mouseDownHandler != null) {
+            Screen.instance.unregisterEvent(MouseEvent.MOUSE_DOWN, mouseDownHandler);
+            mouseDownHandler = null;
+        }
 
         contextMenu = new Menu();
-        contextMenu.width = 250;
+        contextMenu.width = 300;
         contextMenu.x = Math.max(0, Math.min(mouseX, FlxG.width - contextMenu.width));
         contextMenu.y = mouseY;
 
-        // For Judgement/Combo sprites opens NoteStyle
+        var frame:Frame = new Frame();
+        frame.text = "Sprite Settings";
+        frame.padding = 5;
+
+        var vbox = new VBox();
+        vbox.percentWidth = 100;
+        vbox.verticalSpacing = 10;
+
         if (draggable.spriteType == "judgement" || draggable.spriteType == "combo") {
-            contextMenu.height = 52;
             var noteStyleBox = new HBox();
             noteStyleBox.percentWidth = 100;
 
             var label = new Label();
-            label.text = "Note Style:";
+            label.text = "Note Style: \n(Only Visual!)";
             label.percentWidth = 30;
             label.verticalAlign = "center";
             label.textAlign = "right";
@@ -590,7 +603,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             noteStyleList.searchField.onClick = (event:MouseEvent) -> isSearching = true;
             noteStyleList.registerEvent(UIEvent.CLOSE, (event:UIEvent) -> isSearching = false);
 
-            Screen.instance.registerEvent(MouseEvent.MOUSE_DOWN, (event:MouseEvent) -> {
+            mouseDownHandler = (event:MouseEvent) -> {
                 var components = Screen.instance.findComponentsUnderPoint(event.screenX, event.screenY);
                 for (c in components) {
                     if (c.hasClass("popup")) {
@@ -598,12 +611,27 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                         break;
                     }
                 }
-            });
+            };
+            Screen.instance.registerEvent(MouseEvent.MOUSE_DOWN, mouseDownHandler);
 
             noteStyleBox.addComponent(label);
             noteStyleBox.addComponent(noteStyleList);
 
-            contextMenu.addComponent(noteStyleBox);
+            var ratingAnimations:Array<BasicEntry> = [
+                {id: "off", text: "Off"},
+                {id: "vanilla", text: "Vanilla"},
+                {id: "popup", text: "Pop-Up"}
+            ];
+
+            var ratingAnimationBox = createOptionBox(
+                "Animation Type:",
+                badOptions.popUpType,
+                ratingAnimations,
+                value -> badOptions.popUpType = value
+            );
+
+            vbox.addComponent(noteStyleBox);
+            vbox.addComponent(ratingAnimationBox);
         }
 
         if (draggable.spriteType == "healthBar") {
@@ -620,12 +648,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 "Health Icons Position:",
                 badOptions.healthIconPosition,
                 iconPositions,
-                value -> {
-                    badOptions.healthIconPosition = value;
-                }
+                value -> badOptions.healthIconPosition = value
             );
 
-            contextMenu.addComponent(iconsPositionBox);
+            vbox.addComponent(iconsPositionBox);
         }
 
         if (draggable.spriteType == "timeBar") {
@@ -679,8 +705,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 }
             );
 
-            contextMenu.addComponent(displayBox);
-            contextMenu.addComponent(styleBox);
+            vbox.addComponent(displayBox);
+            vbox.addComponent(styleBox);
         }
 
         if (draggable.spriteType == "restBar") {
@@ -696,8 +722,11 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 value -> badOptions.restBarType = value
             );
 
-            contextMenu.addComponent(displayBox);
+            vbox.addComponent(displayBox);
         }
+
+        frame.addComponent(vbox);
+        contextMenu.addComponent(frame);
 
         Screen.instance.addComponent(contextMenu);
     }

@@ -136,12 +136,6 @@ class BadHUDOptions extends Module {
                 preferences.items.addItem("Note Underlay Opacity", underlayOpacityItem);
                 preferences.preferenceItems.add(underlayOpacityItem.lefthandText);
 
-                preferences.createPrefItemEnum("Rating Pop-Up Animation", "Choose the animation for rating pop-ups when hitting a note.", [
-                    "off" => "Off",
-                    "vanilla" => "Vanilla",
-                    "popup" => "Pop-Up"
-                ], value -> badOptions.popUpType = value, badOptions.popUpType);
-
                 preferences.createPrefItemCheckbox("Show KPS Counter", "If enabled, a KPS (Key Per Second) counter will appear on the left side of the screen.", value -> badOptions.kpsCounter = value, badOptions.kpsCounter);
 
                 preferences.createPrefItemCheckbox("Custom Scroll Speed", "If enabled, the Scroll Speed Factor option will be used.", value -> badOptions.customScrollSpeed = value, badOptions.customScrollSpeed);
