@@ -76,6 +76,7 @@ class GamePlayStats extends ScriptedModule {
     // Init Methods
     function initJudgements(textSize:Int, textFont:String) {
         judgementsText = new FlxText();
+        judgementsText.borderSize = 1.25;
         var settings = Save.instance.modOptions.get("judgementsTextSettings");
         if (settings != null) {
             judgementsText.angle = settings[4];
@@ -89,9 +90,8 @@ class GamePlayStats extends ScriptedModule {
         }
         var alignment:String = judgementsText.x >= FlxG.width / 2 ? "right" : "left";
         judgementsText.setFormat(Paths.font(textFont), textSize, 0xFFFFFFFF, alignment, FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
-        judgementsText.scrollFactor.set();
-        judgementsText.borderSize = 1.25;
         judgementsText.zIndex = 851;
+        judgementsText.scrollFactor.set();
         judgementsText.cameras = [state.camHUD];
         state.add(judgementsText);
     }
@@ -143,25 +143,20 @@ class GamePlayStats extends ScriptedModule {
 
         // Update Text
         if (judgementsText != null) switch (badOptions.judgementsOrt) {
-            case "left":
-                judgementsText.text = "Sicks: " + sicks + "\nGoods: " + goods + "\nBads: " + bads + "\nShits: " + shits;
-            case "center":
-                judgementsText.text = "Sicks: " + sicks + " | Goods: " + goods + " | Bads: " + bads + " | Shits: " + shits;
-            case "right":
-                judgementsText.text = sicks + " Sicks\n" + goods + " Goods\n" + bads + " Bads\n" + shits + " Shits";
+            case "left": judgementsText.text = "Sicks: " + sicks + "\nGoods: " + goods + "\nBads: " + bads + "\nShits: " + shits;
+            case "center": judgementsText.text = "Sicks: " + sicks + " | Goods: " + goods + " | Bads: " + bads + " | Shits: " + shits;
+            case "right": judgementsText.text = sicks + " Sicks\n" + goods + " Goods\n" + bads + " Bads\n" + shits + " Shits";
         }
 
         if (statsText != null) {
             var ratingString = totalNotesPlayed != 0 ? ratingPercent + "% - " + ratingFC : ratingName;
             var tempScore:String = "Score: " + songScore + " | Combo Breaks: " + missed + " | Rating: " + ratingString;
             switch (badOptions.statsOrt) {
-                case "left":
-                    tempScore = "Score: " + songScore + "\nCombo Breaks: " + missed + "\nRating: " + ratingString + "\nCombo: " + combo;
+                case "left": tempScore = "Score: " + songScore + "\nCombo Breaks: " + missed + "\nRating: " + ratingString + "\nCombo: " + combo;
                 case "center":
                     if (badOptions.accuracyType == "psych") ratingString = totalNotesPlayed != 0 ? ratingName + " (" + ratingPercent + "%) - " + ratingFC : ratingName;
                     tempScore = "Score: " + songScore + " | Combo Breaks: " + missed + " | Rating: " + ratingString;
-                case "right":
-                    tempScore = songScore + " Score\n" + missed + " Combo Breaks\n" + ratingString + " Rating\n" + combo + " Combo";
+                case "right": tempScore = songScore + " Score\n" + missed + " Combo Breaks\n" + ratingString + " Rating\n" + combo + " Combo";
             }
             statsText.text = tempScore;
             if (badOptions.accuracyType == "vanilla") {
@@ -192,8 +187,7 @@ class GamePlayStats extends ScriptedModule {
         if (totalNotesPlayed != 0) {
             //ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalNotesPlayed)); // Old rating percent
             switch (badOptions.accuracyType) {
-                case "vanilla":
-                    ratingPercent = Std.int(Math.min(100, Math.max(0, 100 - (shits + bads + missed) / totalNotes * 100)));
+                case "vanilla": ratingPercent = Std.int(Math.min(100, Math.max(0, 100 - (shits + bads + missed) / totalNotes * 100)));
                 case "psych":
                     ratingPercent = Math.min(100, Math.max(0, 100 - ((sicks * 0 + goods * 0.33 + bads * 0.67 + shits * 1) / totalNotes) * 100));
                     ratingPercent = Math.round(ratingPercent * 100) / 100;
@@ -275,14 +269,10 @@ class GamePlayStats extends ScriptedModule {
         if (combo >= 0) combo = tallies.combo + 1;
 
         switch (event.judgement) {
-            case "sick":
-                if (sicks >= 0) sicks = (PlayStatePlaylist.isStoryMode ? talliesLevel.sick + tallies.sick : tallies.sick) + 1;
-            case "good":
-                if (goods >= 0) goods = (PlayStatePlaylist.isStoryMode ? talliesLevel.good + tallies.good : tallies.good) + 1;
-            case "bad":
-                if (bads >= 0) bads = (PlayStatePlaylist.isStoryMode ? talliesLevel.bad + tallies.bad : tallies.bad) + 1;
-            case "shit":
-                if (shits >= 0) shits = (PlayStatePlaylist.isStoryMode ? talliesLevel.shit + tallies.shit : tallies.shit) + 1;
+            case "sick": if (sicks >= 0) sicks = (PlayStatePlaylist.isStoryMode ? talliesLevel.sick + tallies.sick : tallies.sick) + 1;
+            case "good": if (goods >= 0) goods = (PlayStatePlaylist.isStoryMode ? talliesLevel.good + tallies.good : tallies.good) + 1;
+            case "bad": if (bads >= 0) bads = (PlayStatePlaylist.isStoryMode ? talliesLevel.bad + tallies.bad : tallies.bad) + 1;
+            case "shit": if (shits >= 0) shits = (PlayStatePlaylist.isStoryMode ? talliesLevel.shit + tallies.shit : tallies.shit) + 1;
         }
 
         totalNotesPlayed = (PlayStatePlaylist.isStoryMode ? talliesLevel.totalNotesHit + tallies.totalNotesHit : tallies.totalNotesHit) + 1;

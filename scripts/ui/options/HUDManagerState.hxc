@@ -59,8 +59,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var timeBarBG:FunkinSprite;
     var timeText:FlxText;
     var healthBarBG:FunkinSprite;
-    var judgementsText:FlxText;
+
     var statsText:FlxText;
+    var judgementsText:FlxText;
+    var kpsText:FlxText;
 
     var draggableSprites:Array<DraggableSprite> = [];
 
@@ -376,6 +378,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         initRestBarSprite();
         initStats();
         initJudgements();
+        initKPS();
     }
 
     function initPopUps() {
@@ -510,12 +513,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (statsText != null) remove(judgementsText);
         statsText = new FlxText();
         switch (badOptions.statsOrt) {
-            case "left":
-                statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: 0" + "\nCombo: 0";
-            case "center":
-                statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: 0";
-            case "right":
-                statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n0 Rating" + "\n0 Combo";
+            case "left": statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: 0" + "\nCombo: 0";
+            case "center": statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: 0";
+            case "right": statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n0 Rating" + "\n0 Combo";
         }
         statsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         statsText.borderSize = 1.25;
@@ -532,13 +532,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     function initJudgements() {
         if (judgementsText != null) remove(judgementsText);
         judgementsText = new FlxText();
+        judgementsText.borderSize = 1.25;
+
         switch (badOptions.judgementsOrt) {
-            case "left":
-                judgementsText.text = "Sicks: 0" + "\nGoods: 0" + "\nBads: 0" + "\nShits: 0";
-            case "center":
-                judgementsText.text = "Sicks: 0" + " | Goods: 0" + " | Bads: 0" + " | Shits: 0";
-            case "right":
-                judgementsText.text = "0 Sicks" + "\n0 Goods" + "\n0 Bads" + "\n0 Shits";
+            case "left": judgementsText.text = "Sicks: 0" + "\nGoods: 0" + "\nBads: 0" + "\nShits: 0";
+            case "center": judgementsText.text = "Sicks: 0" + " | Goods: 0" + " | Bads: 0" + " | Shits: 0";
+            case "right": judgementsText.text = "0 Sicks" + "\n0 Goods" + "\n0 Bads" + "\n0 Shits";
         }
 
         positionUIElement(judgementsText, "judgementsTextSettings", null, sprite -> {
@@ -548,9 +547,30 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         var alignment:String = judgementsText.x >= FlxG.width / 2 ? "right" : "left";
         judgementsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, alignment, FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
-        judgementsText.borderSize = 1.25;
         addDraggableSprite(judgementsText, "judgementsText");
         add(judgementsText);
+    }
+
+    function initKPS() {
+        if (kpsText != null) remove(kpsText);
+        kpsText = new FlxText();
+        kpsText.borderSize = 1.25;
+
+        switch (badOptions.kpsOrt) {
+            case "left": kpsText.text = "KPS: 0" + "\nMax KPS: 0";
+            case "center": kpsText.text = "KPS: 0" + "| Max KPS: 0";
+            case "right": kpsText.text = "0 KPS" + "\n0 Max KPS";
+        }
+
+        positionUIElement(kpsText, "kpsTextSettings", null, sprite -> {
+            sprite.x = 10;
+            sprite.y = FlxG.height * 0.6;
+        });
+
+        var alignment:String = kpsText.x >= FlxG.width / 2 ? "right" : "left";
+        kpsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, alignment, FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        addDraggableSprite(kpsText, "kpsText");
+        add(kpsText);
     }
 
     function initToolbox() {
@@ -801,12 +821,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 value -> {
                     badOptions.judgementsOrt = value;
                     switch (badOptions.judgementsOrt) {
-                        case "left":
-                            judgementsText.text = "Sicks: 0" + "\nGoods: 0" + "\nBads: 0" + "\nShits: 0";
-                        case "center":
-                            judgementsText.text = "Sicks: 0" + " | Goods: 0" + " | Bads: 0" + " | Shits: 0";
-                        case "right":
-                            judgementsText.text = "0 Sicks" + "\n0 Goods" + "\n0 Bads" + "\n0 Shits";
+                        case "left": judgementsText.text = "Sicks: 0" + "\nGoods: 0" + "\nBads: 0" + "\nShits: 0";
+                        case "center": judgementsText.text = "Sicks: 0" + " | Goods: 0" + " | Bads: 0" + " | Shits: 0";
+                        case "right": judgementsText.text = "0 Sicks" + "\n0 Goods" + "\n0 Bads" + "\n0 Shits";
                     }
                 }
             );
@@ -841,12 +858,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 value -> {
                     badOptions.statsOrt = value;
                     switch (badOptions.statsOrt) {
-                        case "left":
-                            statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: 0" + "\nCombo: 0";
-                        case "center":
-                            statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: 0";
-                        case "right":
-                            statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n0 Rating" + "\n0 Combo";
+                        case "left": statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: 0" + "\nCombo: 0";
+                        case "center": statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: 0";
+                        case "right": statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n0 Rating" + "\n0 Combo";
                     }
                 }
             );
@@ -856,6 +870,30 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             vbox.addComponent(accuracySystemBox);
             vbox.addComponent(textOrientationBox);
             vbox.addComponent(commaSeparationCheck);
+        }
+
+        if (draggable.spriteType == "kpsText") {
+            var textOrientation:Array<BasicEntry> = [
+                {id: "left", text: "Left"},
+                {id: "center", text: "Center"},
+                {id: "right", text: "Right"},
+            ];
+
+            var textOrientationBox = createOptionBox(
+                "Text Orientation:",
+                badOptions.kpsOrt,
+                textOrientation,
+                value -> {
+                    badOptions.kpsOrt = value;
+                    switch (badOptions.kpsOrt) {
+                        case "left": kpsText.text = "KPS: 0" + "\nMax KPS: 0";
+                        case "center": kpsText.text = "KPS: 0" + "| Max KPS: 0";
+                        case "right": kpsText.text = "0 KPS" + "\n0 Max KPS";
+                    }
+                }
+            );
+
+            vbox.addComponent(textOrientationBox);
         }
 
         frame.addComponent(vbox);
@@ -1084,7 +1122,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     function updateText(draggable:DraggableSprite) {
         if (spriteSettingsText != null) spriteSettingsText.text = "Offsets: " + draggable.sprite.getPosition() + "\nScale: " + draggable.sprite.scale + "\nRotation: " + draggable.sprite.angle;
 
-        if ((draggable.spriteType == "judgementsText" || draggable.spriteType == "statsText") && Std.isOfType(draggable.sprite, FlxText)) {
+        if ((draggable.spriteType == "judgementsText" || draggable.spriteType == "statsText" || draggable.spriteType == "kpsText") && Std.isOfType(draggable.sprite, FlxText)) {
             var text = Std.downcast(draggable.sprite, FlxText);
             if (text.x < FlxG.width / 2) text.alignment = "left";
             else text.alignment = "right";

@@ -15,6 +15,7 @@ import Math;
 import Std;
 
 class KPSCounter extends ScriptedModule {
+    var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var state:PlayState;
 
     var kpsText:FlxText;
@@ -30,29 +31,41 @@ class KPSCounter extends ScriptedModule {
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (!Save.instance.modOptions.get("badOptions").kpsCounter) return;
+        if (!badOptions.kpsCounter) return;
         var badHooks = ModuleHandler.getModule("BadHooks");
         if (badHooks != null) state = badHooks.scriptGet("state");
         if (state == null) return;
 
-        // Create KPS Text Element
-        var kpsTextFont = new BadHUDOptions().font;
-        var kpsTextXPos = 10;
-        var kpsTextYPos = FlxG.height * 0.6;
-
-        kpsText = new FlxText(kpsTextXPos, kpsTextYPos, FlxG.width, "", 20);
-        kpsText.setFormat(Paths.font(kpsTextFont), Save.instance.modOptions.get("badOptions").hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
-        kpsText.scrollFactor.set();
+        // Create KPS Text
+        kpsText = new FlxText();
         kpsText.borderSize = 1.25;
+        kpsText.setFormat(Paths.font(new BadHUDOptions().font), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         kpsText.zIndex = 851;
-        kpsText.text = "KPS: 0" + "\nMax KPS: 0";
+        switch (badOptions.kpsOrt) {
+            case "left": kpsText.text = "KPS: 0" + "\nMax KPS: 0";
+            case "center": kpsText.text = "KPS: 0" + "| Max KPS: 0";
+            case "right": kpsText.text = "0 KPS" + "\n0 Max KPS";
+        }
 
+        var settings = Save.instance.modOptions.get("kpsTextSettings");
+        if (settings != null) {
+            kpsText.angle = settings[4];
+            kpsText.scale.x = settings[2];
+            kpsText.scale.y = settings[3];
+            kpsText.updateHitbox();
+            kpsText.setPosition(settings[0] - kpsText.width / 2, settings[1] - kpsText.height / 2);
+        } else {
+            kpsText.x = 10;
+            kpsText.y = FlxG.height * 0.6;
+        }
+
+        kpsText.scrollFactor.set();
         kpsText.cameras = [state.camHUD];
         state.add(kpsText);
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null || !Save.instance.modOptions.get("badOptions").kpsCounter) return;
+        if (state == null || !badOptions.kpsCounter) return;
 
         var currentTime = FlxG.game.ticks / 1000;
 
@@ -76,7 +89,11 @@ class KPSCounter extends ScriptedModule {
     }
 
     function updateKPS() {
-        if (kpsText != null) kpsText.text = "KPS: " + Math.round(kps * 10) / 10 + "\nMax KPS: " + Math.round(kpsMax * 10) / 10;
+        if (kpsText != null) switch (badOptions.kpsOrt) {
+            case "left": kpsText.text = "KPS: " + Math.round(kps * 10) / 10 + "\nMax KPS: " + Math.round(kpsMax * 10) / 10;
+            case "center": kpsText.text = "KPS: " + Math.round(kps * 10) / 10 + "| Max KPS: " + Math.round(kpsMax * 10) / 10;
+            case "right": kpsText.text = Math.round(kps * 10) / 10 + " KPS\n" + Math.round(kpsMax * 10) / 10 + " Max KPS";
+        }
     }
 
     // Cleanup stuff
