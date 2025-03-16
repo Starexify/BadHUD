@@ -55,6 +55,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     var playerStrumline:Strumline;
     var opponentStrumline:Strumline;
+    var playerStrum:Bool = true;
+    var oppStrum:Bool = true;
 
     var ratingsPopUps:RatingPopUps;
     var timeBarBG:FunkinSprite;
@@ -66,10 +68,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var kpsText:FlxText;
 
     var draggableSprites:Array<DraggableSprite> = [];
+    var selectableSprites:Array<SelectableSprite> = [];
 
     var toolboxWindow:Window;
-    var oppNotes:CheckBox;
-    var playerNotes:CheckBox;
     var isOverToolbox:Bool = false;
 
     var contextMenu:Menu;
@@ -120,7 +121,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     override function update(elapsed:Float) {
         var mouseX = FlxG.mouse.x;
         var mouseY = FlxG.mouse.y;
-        var hoveredSprite = null;
+        var hoveredDraggable = null;
+        var hoveredSelectable = null;
 
         // Find hovered Sprite and handle selection
         var toolboxActive = !isOverToolbox || toolboxWindow.hidden;
@@ -129,26 +131,49 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             while (i-- > 0) {
                 var draggable = draggableSprites[i];
                 if (isPointInsideRotatedSprite(mouseX, mouseY, draggable.sprite)) {
-                    hoveredSprite = draggable;
+                    hoveredDraggable = draggable;
                     break;
+                }
+            }
+
+            if (hoveredDraggable == null) {
+                i = selectableSprites.length;
+                while (i-- > 0) {
+                    var selectable = selectableSprites[i];
+                    if (isPointInsideRotatedSprite(mouseX, mouseY, selectable.sprite)) {
+                        hoveredSelectable = selectable;
+                        break;
+                    }
                 }
             }
         }
 
-        if (hoveredSprite != null && FlxG.mouse.justPressed) {
+        if (hoveredDraggable != null && FlxG.mouse.justPressed) {
             for (draggable in draggableSprites) {
-                var isHovered = (draggable == hoveredSprite);
-                draggable.isSelected = isHovered;
-                draggable.isDragging = isHovered;
+                draggable.isSelected = (draggable == hoveredDraggable);
+                draggable.isDragging = (draggable == hoveredDraggable);
             }
-            hoveredSprite.isSelected = true;
-            hoveredSprite.isDragging = true;
-            hoveredSprite.dragOffsetX = mouseX - hoveredSprite.sprite.x;
-            hoveredSprite.dragOffsetY = mouseY - hoveredSprite.sprite.y;
-            prevAlpha = hoveredSprite.sprite.alpha;
+            for (selectable in selectableSprites) {
+                selectable.isSelected = false;
+            }
+            hoveredDraggable.isSelected = true;
+            hoveredDraggable.isDragging = true;
+            hoveredDraggable.dragOffsetX = mouseX - hoveredDraggable.sprite.x;
+            hoveredDraggable.dragOffsetY = mouseY - hoveredDraggable.sprite.y;
+            prevAlpha = hoveredDraggable.sprite.alpha;
+        } else if (hoveredDraggable != null && hoveredDraggable.isSelected && FlxG.mouse.justPressedRight) showContextMenu(mouseX, mouseY, hoveredDraggable);
+        else if (hoveredSelectable != null && FlxG.mouse.justPressed) {
+            // Clear previous selections
+            for (selectable in selectableSprites) {
+                selectable.isSelected = (selectable == hoveredSelectable);
+            }
+            for (draggable in draggableSprites) {
+                draggable.isSelected = false;
+                draggable.isDragging = false;
+            }
+        } else if (hoveredSelectable != null && hoveredSelectable.isSelected && FlxG.mouse.justPressedRight) {
+            showContextMenu(mouseX, mouseY, hoveredSelectable);
         }
-
-        if (hoveredSprite != null && hoveredSprite.isSelected && FlxG.mouse.justPressedRight) showContextMenu(mouseX, mouseY, hoveredSprite);
 
         // Handling the sprite movement
         for (draggable in draggableSprites) {
@@ -158,7 +183,13 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             if (draggable.isSelected || draggable.isDragging) updateHighlight(draggable);
         }
 
-        handleCursor(hoveredSprite);
+        for (selectable in selectableSprites) {
+            if (selectable.isSelected) {
+                updateHighlight(selectable);
+            }
+        }
+
+        handleCursor(hoveredDraggable != null ? hoveredDraggable : hoveredSelectable);
 
         if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
 
@@ -173,18 +204,17 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (playerStrumline != null) remove(playerStrumline);
         playerStrumline = new Strumline(noteStyle, true);
         playerStrumline.y = Preferences.downscroll ? FlxG.height - playerStrumline.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
-        if (playerNotes != null) playerStrumline.visible = playerNotes.selected;
+        playerStrumline.visible = playerStrum;
         if (badOptions.middlescroll) playerStrumline.screenCenter(0x01);
         else playerStrumline.x = FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET;
         add(playerStrumline);
-
         if (badOptions.opponentNoteOpacity > 0) {
             if (opponentStrumline != null) remove(opponentStrumline);
             opponentStrumline = new Strumline(noteStyle, true);
             opponentStrumline.x = Constants.STRUMLINE_X_OFFSET;
             opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
             opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
-            if (oppNotes != null) opponentStrumline.visible = oppNotes.selected;
+            opponentStrumline.visible = oppStrum;
             if (badOptions.middlescroll) {
                 var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
                 for (i in 2...4) {
@@ -435,11 +465,11 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var checkboxBox = new HBox();
         checkboxBox.percentWidth = 100;
 
-        oppNotes = createCheckBox("Enable Opponent Strumline", true, 50, (event:UIEvent) -> if (opponentStrumline != null) opponentStrumline.visible = oppNotes.selected);
-        playerNotes = createCheckBox("Enable Player Strumline", true, 50, (event:UIEvent) -> if (playerStrumline != null) playerStrumline.visible = playerNotes.selected);
+        var playerNotes:CheckBox = createCheckBox("Enable Player Strumline", playerStrum, 50, (event:UIEvent) -> if (playerStrumline != null) playerStrumline.visible = playerStrum = event.target.value);
+        var oppNotes:CheckBox = createCheckBox("Enable Opponent Strumline", oppStrum, 50, (event:UIEvent) -> if (opponentStrumline != null) opponentStrumline.visible = oppStrum = event.target.value);
 
-        checkboxBox.addComponent(oppNotes);
         checkboxBox.addComponent(playerNotes);
+        checkboxBox.addComponent(oppNotes);
 
         toolboxWindow.addComponent(keybindsTable);
         toolboxWindow.addComponent(checkboxBox);
@@ -447,7 +477,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         WindowManager.instance.addWindow(toolboxWindow);
     }
 
-    function showContextMenu(mouseX:Float, mouseY:Float, draggable:DraggableSprite) {
+    function showContextMenu(mouseX:Float, mouseY:Float, draggable) {
         Screen.instance.removeComponent(contextMenu);
         if (mouseDownHandler != null) {
             Screen.instance.unregisterEvent(MouseEvent.MOUSE_DOWN, mouseDownHandler);
@@ -849,7 +879,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         updateText(draggable);
     }
 
-    function handleCursor(hoveredSprite) {
+    function handleCursor(hoveredDraggable) {
         // Mouse sounds
         if (Cursor.cursorMode != CursorMode.Default || isOverToolbox) {
             if (FlxG.mouse.justPressed || FlxG.mouse.justPressedRight) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickDown"));
@@ -857,7 +887,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         }
 
         // Switch Sprites
-        if (hoveredSprite != null) Cursor.cursorMode = hoveredSprite.isDragging ? CursorMode.Grabbing : CursorMode.Pointer;
+        if (hoveredDraggable != null) Cursor.cursorMode = hoveredDraggable.isDragging ? CursorMode.Grabbing : CursorMode.Pointer;
         else Cursor.cursorMode = CursorMode.Default;
     }
 
@@ -905,7 +935,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return box;
     }
 
-    function updateHighlight(draggable:DraggableSprite) {
+    function updateHighlight(draggable) {
         if (draggable == null || !draggable.isSelected) {
             highlightOutline.visible = false;
             return;
@@ -928,6 +958,17 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         highlightOutline.y = draggable.sprite.y - 5;
         highlightOutline.angle = draggable.sprite.angle;
         highlightOutline.visible = true;
+    }
+
+    function addSelectableSprite(sprite:FlxSprite, type:String):SelectableSprite {
+        var selectable:SelectableSprite = {
+            sprite: sprite,
+            isSelected: false,
+            spriteType: type
+        };
+
+        selectableSprites.push(selectable);
+        return selectable;
     }
 
     function addDraggableSprite(sprite:FlxSprite, type:String):DraggableSprite {
@@ -1223,6 +1264,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (FlxG.sound.music != null) FlxG.sound.music.resume();
         FlxG.state.persistentUpdate = prevPersistentUpdate;
     }
+}
+
+typedef SelectableSprite = {
+    sprite:FlxSprite,
+    isSelected:Bool,
+    spriteType:String
 }
 
 typedef DraggableSprite = {
