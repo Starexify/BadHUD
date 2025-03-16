@@ -8,6 +8,7 @@ import funkin.util.Constants;
 import funkin.save.Save;
 
 import flixel.FlxSprite;
+import flixel.math.FlxAngle;
 import flixel.math.FlxMath;
 import flixel.ui.FlxBar;
 
@@ -81,7 +82,7 @@ class BadHealthBar extends ScriptedModule {
                     var centerX:Float = healthBarX + (healthBarWidth / 2);
                     var centerY:Float = healthBarY + (healthBarHeight / 2);
 
-                    var angleRad:Float = healthBar.angle * (Math.PI / 180);
+                    var angleRad = FlxAngle.asRadians(healthBar.angle);
 
                     var offsetX:Float = Math.cos(angleRad) * iconSpacing;
                     var offsetY:Float = -Math.sin(angleRad) * iconSpacing;
@@ -102,7 +103,7 @@ class BadHealthBar extends ScriptedModule {
                     var centerX:Float = healthBarX + halfBarLength;
                     var centerY:Float = healthBarY + healthBar.height / 2;
 
-                    var angleRad:Float = healthBar.angle * (Math.PI / 180);
+                    var angleRad = FlxAngle.asRadians(healthBar.angle);
 
                     var offsetX:Float = Math.cos(angleRad) * halfBarLength;
                     var offsetY:Float = -Math.sin(angleRad) * halfBarLength;

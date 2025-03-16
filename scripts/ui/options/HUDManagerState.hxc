@@ -20,6 +20,7 @@ import funkin.util.Constants;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
+import flixel.math.FlxAngle;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
 import flixel.ui.FlxBar;
@@ -121,14 +122,13 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var mouseY = FlxG.mouse.y;
         var hoveredSprite = null;
 
-        if (!isOverToolbox || toolboxWindow.hidden) {
-            for (i in 0...draggableSprites.length) {
-                var draggable = draggableSprites[draggableSprites.length - 1 - i];
-                var sprite = draggable.sprite;
-
-                var isMouseOver:Bool = isPointInsideRotatedSprite(mouseX, mouseY, sprite);
-
-                if (isMouseOver) {
+        // Find hovered Sprite and handle selection
+        var toolboxActive = !isOverToolbox || toolboxWindow.hidden;
+        if (toolboxActive) {
+            var i = draggableSprites.length;
+            while (i-- > 0) {
+                var draggable = draggableSprites[i];
+                if (isPointInsideRotatedSprite(mouseX, mouseY, draggable.sprite)) {
                     hoveredSprite = draggable;
                     break;
                 }
@@ -136,7 +136,11 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         }
 
         if (hoveredSprite != null && FlxG.mouse.justPressed) {
-            for (draggable in draggableSprites) { draggable.isSelected = false; draggable.isDragging = false; }
+            for (draggable in draggableSprites) {
+                var isHovered = (draggable == hoveredSprite);
+                draggable.isSelected = isHovered;
+                draggable.isDragging = isHovered;
+            }
             hoveredSprite.isSelected = true;
             hoveredSprite.isDragging = true;
             hoveredSprite.dragOffsetX = mouseX - hoveredSprite.sprite.x;
@@ -148,187 +152,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         // Handling the sprite movement
         for (draggable in draggableSprites) {
-            if (draggable.isDragging) {
-                if (FlxG.mouse.pressed) {
-                    if (FlxG.keys.pressed.ALT) {
-                        var spriteMiddleX = draggable.sprite.x + draggable.sprite.width / 2;
-                        var spriteMiddleY = draggable.sprite.y + draggable.sprite.height / 2;
-                        var angle = Math.atan2(mouseY - spriteMiddleY, mouseX - spriteMiddleX) * 180 / Math.PI;
-                        draggable.sprite.angle = Math.round(angle);
-
-                        // Rotate linked/combo sprites together
-                        if (draggable.linkedSprites != null) for (linked in draggable.linkedSprites) linked.sprite.angle = draggable.sprite.angle;
-                    } else {
-                        draggable.sprite.alpha = 0.4;
-                        var newX = mouseX - draggable.dragOffsetX;
-                        var newY = mouseY - draggable.dragOffsetY;
-
-                        // Calculate movement limits considering rotation
-                        if (draggable.sprite.angle % 360 != 0) {
-                            // Calculate rotated bounds
-                            var corners = getRotatedCorners(draggable.sprite);
-
-                            // Find min/max bounds of rotated sprite
-                            var minX = Math.POSITIVE_INFINITY, minY = Math.POSITIVE_INFINITY;
-                            var maxX = Math.NEGATIVE_INFINITY, maxY = Math.NEGATIVE_INFINITY;
-
-                            for (corner in corners) {
-                                minX = Math.min(minX, corner.x);
-                                minY = Math.min(minY, corner.y);
-                                maxX = Math.max(maxX, corner.x);
-                                maxY = Math.max(maxY, corner.y);
-                            }
-
-                            // Calculate offsets from sprite's top-left to rotated bounds
-                            var leftOffset = draggable.sprite.x - minX;
-                            var topOffset = draggable.sprite.y - minY;
-                            var rightOffset = maxX - draggable.sprite.x - draggable.sprite.width;
-                            var bottomOffset = maxY - draggable.sprite.y - draggable.sprite.height;
-
-                            // Apply boundary constraints with rotated dimensions
-                            newX = Math.max(leftOffset, Math.min(FlxG.width - draggable.sprite.width - rightOffset, newX));
-                            newY = Math.max(topOffset, Math.min(FlxG.height - draggable.sprite.height - bottomOffset, newY));
-                        } else {
-                            // Non-rotated sprite uses standard bounds
-                            newX = Math.max(0, Math.min(FlxG.width - draggable.sprite.width, newX));
-                            newY = Math.max(0, Math.min(FlxG.height - draggable.sprite.height, newY));
-                        }
-
-                        draggable.sprite.setPosition(newX, newY);
-
-                        // Move linked sprites
-                        if (draggable.linkedSprites != null) {
-                            for (linked in draggable.linkedSprites) {
-                                linked.sprite.alpha = 0.4;
-                                syncSpriteWithTarget(linked, draggable);
-                            }
-                        }
-                    }
-                    updateText(draggable);
-                } else { // Mouse released
-                    draggable.isDragging = false;
-                    draggable.sprite.alpha = prevAlpha;
-                    if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) for (linked in draggable.linkedSprites) linked.sprite.alpha = prevAlpha;
-                    saveSpriteSettings(draggable);
-                }
-            } else if (draggable.isSelected) {
-                var pressArray:Array<Bool> = [controls.UI_LEFT_P, controls.UI_DOWN_P, controls.UI_UP_P, controls.UI_RIGHT_P];
-                var holdArray:Array<Bool> = [controls.UI_LEFT, controls.UI_DOWN, controls.UI_UP, controls.UI_RIGHT];
-
-                var holdDelayThreshold:Float = 0.25;
-                var moveSpeed:Float = 10;
-                if (FlxG.keys.pressed.CONTROL) moveSpeed = 0.5;
-                else if (FlxG.keys.pressed.SHIFT) moveSpeed = 0.25;
-
-                var newX = draggable.sprite.x;
-                var newY = draggable.sprite.y;
-
-                if (holdArray.contains(true)) {
-                    if (!isHolding) {
-                        holdDelayTimer = 0;
-                        isHolding = true;
-                    } else holdDelayTimer += FlxG.elapsed;
-                } else {
-                    isHolding = false;
-                    holdDelayTimer = 0;
-                }
-
-                for (i in 0...pressArray.length) {
-                    if (pressArray[i]) {
-                        // Initial press - move immediately
-                        switch (i) {
-                            case 0: newX -= moveSpeed; // Left
-                            case 1: newY += moveSpeed; // Down
-                            case 2: newY -= moveSpeed; // Up
-                            case 3: newX += moveSpeed; // Right
-                        }
-                    } else if (holdArray[i] && (holdDelayTimer > holdDelayThreshold)) {
-                        // Only apply hold movement after the delay threshold
-                        switch (i) {
-                            case 0: newX -= moveSpeed; // Left
-                            case 1: newY += moveSpeed; // Down
-                            case 2: newY -= moveSpeed; // Up
-                            case 3: newX += moveSpeed; // Right
-                        }
-                    }
-                }
-
-                // Calculate movement limits considering rotation
-                if (draggable.sprite.angle % 360 != 0) {
-                    // Store original position to calculate rotated corners
-                    var origX = draggable.sprite.x;
-                    var origY = draggable.sprite.y;
-
-                    // Temporarily set position to new position to calculate rotated bounds
-                    draggable.sprite.setPosition(newX, newY);
-
-                    // Calculate rotated bounds at new position
-                    var corners = getRotatedCorners(draggable.sprite);
-
-                    // Restore original position
-                    draggable.sprite.setPosition(origX, origY);
-
-                    // Find min/max bounds of rotated sprite
-                    var minX = Math.POSITIVE_INFINITY, minY = Math.POSITIVE_INFINITY;
-                    var maxX = Math.NEGATIVE_INFINITY, maxY = Math.NEGATIVE_INFINITY;
-
-                    for (corner in corners) {
-                        minX = Math.min(minX, corner.x);
-                        minY = Math.min(minY, corner.y);
-                        maxX = Math.max(maxX, corner.x);
-                        maxY = Math.max(maxY, corner.y);
-                    }
-
-                    // Check bounds and adjust if needed
-                    if (minX < 0) newX += (0 - minX);
-                    if (minY < 0) newY += (0 - minY);
-                    if (maxX > FlxG.width) newX -= (maxX - FlxG.width);
-                    if (maxY > FlxG.height) newY -= (maxY - FlxG.height);
-                } else {
-                    // Non-rotated sprite uses standard bounds
-                    newX = Math.max(0, Math.min(FlxG.width - draggable.sprite.width, newX));
-                    newY = Math.max(0, Math.min(FlxG.height - draggable.sprite.height, newY));
-                }
-
-                draggable.sprite.setPosition(newX, newY);
-
-                if (controls.UI_DOWN_R || controls.UI_UP_R || controls.UI_LEFT_R || controls.UI_RIGHT_R) saveSpriteSettings(draggable);
-
-                if (FlxG.mouse.wheel != 0) {
-                    var maxScaleX:Float = FlxG.width / draggable.sprite.frameWidth;
-                    var maxScaleY:Float = FlxG.height / draggable.sprite.frameHeight;
-
-                    // Store original center coordinates
-                    var centerX = draggable.sprite.x + draggable.sprite.width / 2;
-                    var centerY = draggable.sprite.y + draggable.sprite.height / 2;
-
-                    var scaleChange = FlxG.mouse.wheel > 0 ? 0.1 : -0.1;
-
-                    if (FlxG.keys.pressed.CONTROL) draggable.sprite.scale.x = Math.min(Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10, maxScaleX);
-                    else if (FlxG.keys.pressed.SHIFT) draggable.sprite.scale.y = Math.min(Math.round((draggable.sprite.scale.y + scaleChange) * 10) / 10, maxScaleY);
-                    else {
-                        draggable.sprite.scale.x = Math.min(Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10, maxScaleX);
-                        draggable.sprite.scale.y = Math.min(Math.round((draggable.sprite.scale.y + scaleChange) * 10) / 10, maxScaleY);
-                    }
-                    draggable.sprite.updateHitbox();
-
-                    // Reposition to maintain center
-                    draggable.sprite.setPosition(centerX - draggable.sprite.width / 2, centerY - draggable.sprite.height / 2);
-
-                    // Scale linked sprites together
-                    if (draggable.linkedSprites != null) for (linked in draggable.linkedSprites) {
-                        syncSpriteWithTarget(linked, draggable);
-                        linked.sprite.scale = draggable.sprite.scale;
-                        linked.sprite.updateHitbox();
-                    }
-
-                    saveSpriteSettings(draggable);
-                } else {
-                    if (draggable.linkedSprites != null) for (linked in draggable.linkedSprites) syncSpriteWithTarget(linked, draggable);
-                }
-
-                updateText(draggable);
-            }
+            if (draggable.isDragging) handleDragging(draggable, mouseX, mouseY);
+            else if (draggable.isSelected) handleSelected(draggable);
 
             if (draggable.isSelected || draggable.isDragging) updateHighlight(draggable);
         }
@@ -902,7 +727,141 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         Screen.instance.addComponent(contextMenu);
     }
 
-    // Helper Methods
+    // Handlers
+    function handleDragging(draggable:DraggableSprite, mouseX:Float, mouseY:Float) {
+        if (FlxG.mouse.pressed) {
+            if (FlxG.keys.pressed.ALT) {
+                var spriteMiddleX = draggable.sprite.x + draggable.sprite.width / 2;
+                var spriteMiddleY = draggable.sprite.y + draggable.sprite.height / 2;
+                var angle = FlxAngle.degreesFromOrigin(mouseX - spriteMiddleX, mouseY - spriteMiddleY);
+                draggable.sprite.angle = Math.round(angle);
+
+                if (draggable.linkedSprites != null) for (linked in draggable.linkedSprites) linked.sprite.angle = draggable.sprite.angle;
+            } else {
+                draggable.sprite.alpha = 0.4;
+                var newPos = calculateDragPosition(draggable, mouseX, mouseY);
+                draggable.sprite.setPosition(newPos.x, newPos.y);
+
+                // Move linked sprites
+                if (draggable.linkedSprites != null) {
+                    for (linked in draggable.linkedSprites) {
+                        linked.sprite.alpha = 0.4;
+                        syncSpriteWithTarget(linked, draggable);
+                    }
+                }
+            }
+            updateText(draggable);
+        } else { // Mouse released
+            draggable.isDragging = false;
+            draggable.sprite.alpha = prevAlpha;
+            if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) for (linked in draggable.linkedSprites) linked.sprite.alpha = prevAlpha;
+            saveSpriteSettings(draggable);
+        }
+    }
+
+    function handleSelected(draggable:DraggableSprite) {
+        var pressArray:Array<Bool> = [controls.UI_LEFT_P, controls.UI_DOWN_P, controls.UI_UP_P, controls.UI_RIGHT_P];
+        var holdArray:Array<Bool> = [controls.UI_LEFT, controls.UI_DOWN, controls.UI_UP, controls.UI_RIGHT];
+
+        var holdDelayThreshold:Float = 0.25;
+        var moveSpeed:Float = 10;
+        if (FlxG.keys.pressed.CONTROL) moveSpeed = 0.5;
+        else if (FlxG.keys.pressed.SHIFT) moveSpeed = 0.25;
+
+        var newX = draggable.sprite.x;
+        var newY = draggable.sprite.y;
+
+        if (holdArray.contains(true)) {
+            if (!isHolding) {
+                holdDelayTimer = 0;
+                isHolding = true;
+            } else holdDelayTimer += FlxG.elapsed;
+        } else {
+            isHolding = false;
+            holdDelayTimer = 0;
+        }
+
+        for (i in 0...pressArray.length) {
+            if (pressArray[i]) {
+                switch (i) {
+                    case 0: newX -= moveSpeed; // Left
+                    case 1: newY += moveSpeed; // Down
+                    case 2: newY -= moveSpeed; // Up
+                    case 3: newX += moveSpeed; // Right
+                }
+            } else if (holdArray[i] && (holdDelayTimer > holdDelayThreshold)) {
+                // Only apply hold movement after the delay threshold
+                switch (i) {
+                    case 0: newX -= moveSpeed; // Left
+                    case 1: newY += moveSpeed; // Down
+                    case 2: newY -= moveSpeed; // Up
+                    case 3: newX += moveSpeed; // Right
+                }
+            }
+        }
+
+        var constrained = applyBoundaryConstraints(newX, newY, draggable.sprite);
+        draggable.sprite.setPosition(constrained.x, constrained.y);
+
+        if (controls.UI_DOWN_R || controls.UI_UP_R || controls.UI_LEFT_R || controls.UI_RIGHT_R) saveSpriteSettings(draggable);
+
+        if (FlxG.mouse.wheel != 0) {
+            var maxScaleX:Float = FlxG.width / draggable.sprite.frameWidth;
+            var maxScaleY:Float = FlxG.height / draggable.sprite.frameHeight;
+
+            // Store original center coordinates
+            var centerX = draggable.sprite.x + draggable.sprite.width / 2;
+            var centerY = draggable.sprite.y + draggable.sprite.height / 2;
+
+            var scaleChange = FlxG.mouse.wheel > 0 ? 0.1 : -0.1;
+            var newScaleX = draggable.sprite.scale.x;
+            var newScaleY = draggable.sprite.scale.y;
+
+            if (FlxG.keys.pressed.CONTROL) newScaleX = Math.min(Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10, maxScaleX);
+            else if (FlxG.keys.pressed.SHIFT) newScaleY = Math.min(Math.round((draggable.sprite.scale.y + scaleChange) * 10) / 10, maxScaleY);
+            else {
+                newScaleX = Math.min(Math.round((draggable.sprite.scale.x + scaleChange) * 10) / 10, maxScaleX);
+                newScaleY = Math.min(Math.round((draggable.sprite.scale.y + scaleChange) * 10) / 10, maxScaleY);
+            }
+            draggable.sprite.updateHitbox();
+
+            // Reposition to maintain center
+            draggable.sprite.setPosition(centerX - draggable.sprite.width / 2, centerY - draggable.sprite.height / 2);
+
+            // Scale linked sprites together
+            if (checkScaleBounds(draggable.sprite, newScaleX, newScaleY, centerX, centerY)) {
+                draggable.sprite.scale.set(newScaleX, newScaleY);
+                draggable.sprite.updateHitbox();
+                draggable.sprite.setPosition(centerX - draggable.sprite.width / 2, centerY - draggable.sprite.height / 2);
+
+                // Scale linked sprites together
+                if (draggable.linkedSprites != null) for (linked in draggable.linkedSprites) {
+                    syncSpriteWithTarget(linked, draggable);
+                    linked.sprite.scale = draggable.sprite.scale;
+                    linked.sprite.updateHitbox();
+                }
+                saveSpriteSettings(draggable);
+            }
+        } else {
+            if (draggable.linkedSprites != null) for (linked in draggable.linkedSprites) syncSpriteWithTarget(linked, draggable);
+        }
+
+        updateText(draggable);
+    }
+
+    function handleCursor(hoveredSprite) {
+        // Mouse sounds
+        if (Cursor.cursorMode != CursorMode.Default || isOverToolbox) {
+            if (FlxG.mouse.justPressed || FlxG.mouse.justPressedRight) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickDown"));
+            if (FlxG.mouse.justReleased || FlxG.mouse.justReleasedRight) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickUp"));
+        }
+
+        // Switch Sprites
+        if (hoveredSprite != null) Cursor.cursorMode = hoveredSprite.isDragging ? CursorMode.Grabbing : CursorMode.Pointer;
+        else Cursor.cursorMode = CursorMode.Default;
+    }
+
+    // Util Methods
     function createCheckBox(text:String, isSelected:Bool, width:Float, changeHandler:UIEvent -> Void):CheckBox {
         var checkbox = new CheckBox();
         checkbox.text = text;
@@ -946,94 +905,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return box;
     }
 
-    function isPointInsideRotatedSprite(pointX:Float, pointY:Float, sprite:FlxSprite):Bool {
-        // Get the sprite's center
-        var centerX:Float = sprite.x + sprite.width / 2;
-        var centerY:Float = sprite.y + sprite.height / 2;
-
-        // If sprite isn't rotated, use simple bounding box check
-        if (sprite.angle % 360 == 0) {
-            return pointX >= sprite.x &&
-            pointX <= sprite.x + sprite.width &&
-            pointY >= sprite.y &&
-            pointY <= sprite.y + sprite.height;
-        }
-
-        // Calculate the four corners of the sprite
-        var halfWidth:Float = sprite.width / 2;
-        var halfHeight:Float = sprite.height / 2;
-
-        // Get rotation in radians
-        var angleRad:Float = sprite.angle * Math.PI / 180;
-        var cos:Float = Math.cos(angleRad);
-        var sin:Float = Math.sin(angleRad);
-
-        // Calculate corner positions (relative to center)
-        var corners:Array<{x:Float, y:Float}> = [
-            { x: -halfWidth, y: -halfHeight }, // Top-left
-            { x: halfWidth, y: -halfHeight }, // Top-right
-            { x: halfWidth, y: halfHeight }, // Bottom-right
-            { x: -halfWidth, y: halfHeight } // Bottom-left
-        ];
-
-        // Rotate corners and translate to world position
-        for (i in 0...corners.length) {
-            var rotX:Float = corners[i].x * cos - corners[i].y * sin;
-            var rotY:Float = corners[i].x * sin + corners[i].y * cos;
-            corners[i].x = rotX + centerX;
-            corners[i].y = rotY + centerY;
-        }
-
-        // Check if point is inside the rotated rectangle using point-in-polygon test
-        return isPointInPolygon(pointX, pointY, corners);
-    }
-
-    function isPointInPolygon(pointX:Float, pointY:Float, vertices:Array<{x:Float, y:Float}>):Bool {
-        var inside:Bool = false;
-        var j:Int = vertices.length - 1;
-
-        for (i in 0...vertices.length) {
-            if (((vertices[i].y > pointY) != (vertices[j].y > pointY)) &&
-            (pointX < (vertices[j].x - vertices[i].x) * (pointY - vertices[i].y) /
-            (vertices[j].y - vertices[i].y) + vertices[i].x)) {
-                inside = !inside;
-            }
-            j = i;
-        }
-
-        return inside;
-    }
-
-    function getRotatedCorners(sprite:FlxSprite):Array<{x:Float, y:Float}> {
-        var centerX = sprite.x + sprite.width / 2;
-        var centerY = sprite.y + sprite.height / 2;
-        var halfWidth = sprite.width / 2;
-        var halfHeight = sprite.height / 2;
-
-        // Get rotation in radians
-        var angleRad = sprite.angle * Math.PI / 180;
-        var cos = Math.cos(angleRad);
-        var sin = Math.sin(angleRad);
-
-        // Calculate corner positions (relative to center)
-        var corners:Array<{x:Float, y:Float}> = [
-            { x: -halfWidth, y: -halfHeight }, // Top-left
-            { x: halfWidth, y: -halfHeight }, // Top-right
-            { x: halfWidth, y: halfHeight }, // Bottom-right
-            { x: -halfWidth, y: halfHeight } // Bottom-left
-        ];
-
-        // Rotate corners and translate to world position
-        for (i in 0...corners.length) {
-            var rotX = corners[i].x * cos - corners[i].y * sin;
-            var rotY = corners[i].x * sin + corners[i].y * cos;
-            corners[i].x = rotX + centerX;
-            corners[i].y = rotY + centerY;
-        }
-
-        return corners;
-    }
-
     function updateHighlight(draggable:DraggableSprite) {
         if (draggable == null || !draggable.isSelected) {
             highlightOutline.visible = false;
@@ -1057,18 +928,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         highlightOutline.y = draggable.sprite.y - 5;
         highlightOutline.angle = draggable.sprite.angle;
         highlightOutline.visible = true;
-    }
-
-    function handleCursor(hoveredSprite) {
-        // Mouse sounds
-        if (Cursor.cursorMode != CursorMode.Default || isOverToolbox) {
-            if (FlxG.mouse.justPressed || FlxG.mouse.justPressedRight) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickDown"));
-            if (FlxG.mouse.justReleased || FlxG.mouse.justReleasedRight) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickUp"));
-        }
-
-        // Switch Sprites
-        if (hoveredSprite != null) Cursor.cursorMode = hoveredSprite.isDragging ? CursorMode.Grabbing : CursorMode.Pointer;
-        else Cursor.cursorMode = CursorMode.Default;
     }
 
     function addDraggableSprite(sprite:FlxSprite, type:String):DraggableSprite {
@@ -1208,6 +1067,143 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (pauseState != null) pauseState.pauseMusic.pause();
         welcomeMusic = FunkinSound.load(Paths.music("chartEditorLoop/chartEditorLoop"), true, true);
         welcomeMusic.play(false, FlxG.random.int(0, Std.int(welcomeMusic.length / 2)));
+    }
+    //  RotationUtil
+    function checkScaleBounds(sprite:FlxSprite, newScaleX:Float, newScaleY:Float, centerX:Float, centerY:Float):Bool {
+        // Store original values
+        var origX = sprite.x;
+        var origY = sprite.y;
+        var origScaleX = sprite.scale.x;
+        var origScaleY = sprite.scale.y;
+
+        // Apply new scale temporarily
+        sprite.scale.set(newScaleX, newScaleY);
+        sprite.updateHitbox();
+        sprite.setPosition(centerX - sprite.width / 2, centerY - sprite.height / 2);
+
+        // Check if sprite would be out of bounds with new scale
+        var corners = getRotatedCorners(sprite);
+        var bounds = getMinMaxBounds(corners);
+        var outOfBounds = (bounds.minX < 0 || bounds.minY < 0 ||
+        bounds.maxX > FlxG.width || bounds.maxY > FlxG.height);
+
+        // Restore original values
+        sprite.scale.set(origScaleX, origScaleY);
+        sprite.updateHitbox();
+        sprite.setPosition(origX, origY);
+
+        return !outOfBounds;
+    }
+
+    function calculateDragPosition(draggable:DraggableSprite, mouseX:Float, mouseY:Float):{x:Float, y:Float} {
+        var newX = mouseX - draggable.dragOffsetX;
+        var newY = mouseY - draggable.dragOffsetY;
+
+        return applyBoundaryConstraints(newX, newY, draggable.sprite);
+    }
+
+    function applyBoundaryConstraints(newX:Float, newY:Float, sprite:FlxSprite):{x:Float, y:Float} {
+        if (sprite.angle % 360 != 0) {
+            var origX = sprite.x;
+            var origY = sprite.y;
+
+            sprite.setPosition(newX, newY);
+
+            var corners = getRotatedCorners(sprite);
+
+            sprite.setPosition(origX, origY);
+
+            // Find min/max bounds
+            var bounds = getMinMaxBounds(corners);
+
+            // Check bounds and adjust if needed
+            if (bounds.minX < 0) newX += (0 - bounds.minX);
+            if (bounds.minY < 0) newY += (0 - bounds.minY);
+            if (bounds.maxX > FlxG.width) newX -= (bounds.maxX - FlxG.width);
+            if (bounds.maxY > FlxG.height) newY -= (bounds.maxY - FlxG.height);
+        } else {
+            // Non-rotated sprite uses standard bounds
+            newX = Math.max(0, Math.min(FlxG.width - sprite.width, newX));
+            newY = Math.max(0, Math.min(FlxG.height - sprite.height, newY));
+        }
+
+        return {x: newX, y: newY};
+    }
+
+    function isPointInsideRotatedSprite(pointX:Float, pointY:Float, sprite:FlxSprite):Bool {
+        // If sprite isn't rotated, use simple bounding box check
+        if (sprite.angle % 360 == 0) {
+            return pointX >= sprite.x &&
+            pointX <= sprite.x + sprite.width &&
+            pointY >= sprite.y &&
+            pointY <= sprite.y + sprite.height;
+        }
+
+        // Get corners for rotated sprite
+        var corners = getRotatedCorners(sprite);
+
+        // Check if point is inside the rotated rectangle using point-in-polygon test
+        return isPointInPolygon(pointX, pointY, corners);
+    }
+
+    function isPointInPolygon(pointX:Float, pointY:Float, vertices:Array<{x:Float, y:Float}>):Bool {
+        var inside:Bool = false;
+        var j:Int = vertices.length - 1;
+
+        for (i in 0...vertices.length) {
+            if (((vertices[i].y > pointY) != (vertices[j].y > pointY)) &&
+            (pointX < (vertices[j].x - vertices[i].x) * (pointY - vertices[i].y) /
+            (vertices[j].y - vertices[i].y) + vertices[i].x)) {
+                inside = !inside;
+            }
+            j = i;
+        }
+
+        return inside;
+    }
+
+    function getRotatedCorners(sprite:FlxSprite):Array<{x:Float, y:Float}> {
+        var centerX = sprite.x + sprite.width / 2;
+        var centerY = sprite.y + sprite.height / 2;
+        var halfWidth = sprite.width / 2;
+        var halfHeight = sprite.height / 2;
+
+        // Get rotation in radians
+        var angleRad = FlxAngle.asRadians(sprite.angle);
+        var cos = Math.cos(angleRad);
+        var sin = Math.sin(angleRad);
+
+        // Calculate corner positions (relative to center)
+        var corners:Array<{x:Float, y:Float}> = [
+            { x: -halfWidth, y: -halfHeight }, // Top-left
+            { x: halfWidth, y: -halfHeight }, // Top-right
+            { x: halfWidth, y: halfHeight }, // Bottom-right
+            { x: -halfWidth, y: halfHeight } // Bottom-left
+        ];
+
+        // Rotate corners and translate to world position
+        for (i in 0...corners.length) {
+            var rotX = corners[i].x * cos - corners[i].y * sin;
+            var rotY = corners[i].x * sin + corners[i].y * cos;
+            corners[i].x = rotX + centerX;
+            corners[i].y = rotY + centerY;
+        }
+
+        return corners;
+    }
+
+    function getMinMaxBounds(corners:Array<{x:Float, y:Float}>):{minX:Float, minY:Float, maxX:Float, maxY:Float} {
+        var minX = Math.POSITIVE_INFINITY, minY = Math.POSITIVE_INFINITY;
+        var maxX = Math.NEGATIVE_INFINITY, maxY = Math.NEGATIVE_INFINITY;
+
+        for (corner in corners) {
+            minX = Math.min(minX, corner.x);
+            minY = Math.min(minY, corner.y);
+            maxX = Math.max(maxX, corner.x);
+            maxY = Math.max(maxY, corner.y);
+        }
+
+        return {minX: minX, minY: minY, maxX: maxX, maxY: maxY};
     }
 
     // Cleanup
