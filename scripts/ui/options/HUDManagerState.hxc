@@ -396,6 +396,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function initHealthBarSprite() {
+        if (!badOptions.healthBar) return;
         var healthBarBG:FunkinSprite = new FunkinSprite();
         healthBarBG.loadTexture("healthBar");
 
@@ -422,6 +423,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function initTimeBarSprite() {
+        if (!badOptions.timeBar) return;
         if (timeBarBG != null) remove(timeBarBG);
         timeBarBG = new FunkinSprite();
         timeBarBG.loadTexture(badOptions.timeBarStyle);
@@ -469,6 +471,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function initRestBarSprite() {
+        if (!badOptions.restBar) return;
         var restBarBG:FunkinSprite = new FunkinSprite();
         restBarBG.loadTexture("restBackground");
 
@@ -502,7 +505,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     function initStats() {
         var statsText:FlxText = new FlxText(10, FlxG.height * 0.45);
         statsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
-        statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: 0" + "\nCombo: 0";
+        statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: 0";
         statsText.borderSize = 1.25;
         positionUIElement(statsText, "statsTextSettings", null, null);
         addDraggableSprite(statsText, "statsText");
@@ -806,12 +809,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         var label = new Label();
         label.text = labelText;
-        label.percentWidth = 30;
+        label.percentWidth = 35;
         label.verticalAlign = "center";
         label.textAlign = "right";
 
         var stepper:OptionStepper = new OptionStepper();
-        stepper.percentWidth = 70;
+        stepper.percentWidth = 65;
 
         stepper.dataSource = new ArrayDataSource();
         for (option in options) stepper.dataSource.add(option);
