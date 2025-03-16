@@ -70,7 +70,7 @@ class TimeBar extends ScriptedModule {
             timeText.setPosition(settings[0] - timeText.width / 2, settings[1] - timeText.height / 2);
         } else {
             timeText.screenCenter(0x01);
-            timeText.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;
+            timeText.y = Preferences.downscroll ? FlxG.height * 0.95 : FlxG.height * 0.05;
         }
 
         var centerX = timeText.x + timeText.width / 2;

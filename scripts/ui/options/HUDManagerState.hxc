@@ -446,12 +446,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         positionUIElement(timeBarBG, "timeBarSettings", null, sprite -> {
             sprite.screenCenter(0x01);
-            sprite.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;
+            sprite.y = Preferences.downscroll ? FlxG.height * 0.95 : FlxG.height * 0.05;
         });
 
         positionUIElement(timeText, "timeBarSettings", null, sprite -> {
             sprite.screenCenter(0x01);
-            sprite.y = Preferences.downscroll ? FlxG.height * 0.05 : FlxG.height * 0.95;
+            sprite.y = Preferences.downscroll ? FlxG.height * 0.95 : FlxG.height * 0.05;
         });
 
         var draggableSprite = timeBarVisible ? timeBarBG : timeText;
