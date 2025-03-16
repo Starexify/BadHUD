@@ -76,8 +76,6 @@ class BadHUDOptions extends Module {
 
                 preferences.createPrefItemCheckbox("Enable Rest Bar", "If enabled, the rest bar will be visible.", value -> badOptions.restBar = value, badOptions.restBar);
 
-                preferences.createPrefItemCheckbox("Smooth Bars", "If enabled, bars will fill smoothly with fluid animation. (May reduce performance!)", value -> badOptions.smoothBars = value, badOptions.smoothBars);
-
                 preferences.createPrefItemCheckbox("Icon Colored Health Bar", "If enabled, the health bar will match the dominant color of the icon.", value -> badOptions.iconColors = value, badOptions.iconColors);
 
                 // HUD Customization

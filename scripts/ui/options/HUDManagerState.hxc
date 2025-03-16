@@ -676,7 +676,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 value -> badOptions.healthIconPosition = value
             );
 
+            var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
+
             vbox.addComponent(iconsPositionBox);
+            vbox.addComponent(smoothBarsCheck);
         }
 
         if (draggable.spriteType == "timeBar") {
@@ -730,8 +733,11 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 }
             );
 
+            var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
+
             vbox.addComponent(displayBox);
             vbox.addComponent(styleBox);
+            vbox.addComponent(smoothBarsCheck);
         }
 
         if (draggable.spriteType == "restBar") {
