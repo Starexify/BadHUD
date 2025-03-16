@@ -72,9 +72,6 @@ class BadHUDOptions extends Module {
 
                 // Bars
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Bars :", "bold");
-                preferences.createPrefItemCheckbox("Enable Health Bar", "If enabled, the health bar will be visible.", value -> badOptions.healthBar = value, badOptions.healthBar);
-
-                preferences.createPrefItemCheckbox("Enable Time Bar", "If enabled, the time bar will be visible.", value -> badOptions.timeBar = value, badOptions.timeBar);
 
                 preferences.createPrefItemCheckbox("Enable Rest Bar", "If enabled, the rest bar will be visible.", value -> badOptions.restBar = value, badOptions.restBar);
 

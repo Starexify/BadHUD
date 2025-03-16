@@ -61,12 +61,15 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var ratingsPopUps:RatingPopUps;
     var timeBarBG:FunkinSprite;
     var timeText:FlxText;
+    var timeBar:FlxBar;
     var healthBarBG:FunkinSprite;
+    var healthBar:FlxBar;
     var statsText:FlxText;
     var judgementsText:FlxText;
     var kpsText:FlxText;
 
     var draggableSprites:Array<DraggableSprite> = [];
+    var checkboxPool:Array<CheckBox> = [];
 
     var toolboxWindow:Window;
     var isOverToolbox:Bool = false;
@@ -78,7 +81,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var prevAlpha:Float;
     var holdDelayTimer:Float = 0;
     var isHolding:Bool = false;
-
     var prevPersistentUpdate:Bool;
 
     override function create() {
@@ -120,9 +122,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var mouseX = FlxG.mouse.x;
         var mouseY = FlxG.mouse.y;
         var hoveredDraggable = null;
+        var toolboxActive = !isOverToolbox || toolboxWindow.hidden;
 
         // Find hovered Sprite and handle selection
-        var toolboxActive = !isOverToolbox || toolboxWindow.hidden;
         if (toolboxActive) {
             var i = draggableSprites.length;
             while (i-- > 0) {
@@ -222,8 +224,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function initHealthBarSprite() {
-        if (!badOptions.healthBar) return;
         if (healthBarBG != null) remove(healthBarBG);
+        if (healthBar != null) remove(healthBar);
+        if (!badOptions.healthBar) return;
         healthBarBG = new FunkinSprite();
         healthBarBG.loadTexture("healthBar");
 
@@ -238,7 +241,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             sprite.y = Preferences.downscroll ? FlxG.height * 0.1 : FlxG.height * 0.9;
         });
 
-        var healthBar:FlxBar = new FlxBar(0, 0, FlxBarFillDirection.RIGHT_TO_LEFT, barWidth);
+        healthBar = new FlxBar(0, 0, FlxBarFillDirection.RIGHT_TO_LEFT, barWidth);
         healthBar.height *= barHeight;
         healthBar.createFilledBar(Constants.COLOR_HEALTH_BAR_RED, Constants.COLOR_HEALTH_BAR_GREEN);
         healthBar.percent = 50;
@@ -250,14 +253,15 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function initTimeBarSprite() {
-        if (!badOptions.timeBar) return;
         if (timeBarBG != null) remove(timeBarBG);
+        if (timeText != null) remove(timeText);
+        if (timeBar != null) remove(timeBar);
+        if (!badOptions.timeBar) return;
         timeBarBG = new FunkinSprite();
         timeBarBG.loadTexture(badOptions.timeBarStyle);
 
         var timeBarVisible = badOptions.timeBarStyle != "off";
 
-        if (timeText != null) remove(timeText);
         timeText = new FlxText();
         var fontSize = badOptions.timeBarStyle == "timeBarPsychEngine" ? 32 : badHUDOptions.fontSize;
         timeText.setFormat(Paths.font(badHUDOptions.font), fontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
@@ -279,7 +283,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         if (timeBarVisible) {
             var timeBarHeight = badOptions.timeBarStyle == "timeBarMinimalRounded" ? 4 : 6;
-            var timeBar:FlxBar = new FlxBar(0, 0, null, Std.int(timeBarBG.width - 5), Std.int(timeBarBG.height - timeBarHeight));
+            timeBar = new FlxBar(0, 0, null, Std.int(timeBarBG.width - 5), Std.int(timeBarBG.height - timeBarHeight));
             timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
             timeBar.percent = 50;
 
@@ -427,18 +431,39 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         keybindsTable.value = populateKeybindsTable(keybindsTable);
 
-        var checkboxBox = new HBox();
-        checkboxBox.percentWidth = 100;
+        var hBox = new HBox();
+        hBox.percentWidth = 100;
 
         var playerNotes:CheckBox = createCheckBox("Enable Player Strumline", playerStrum, 50, (event:UIEvent) -> if (playerStrumline != null) playerStrumline.visible = playerStrum = event.target.value);
         var oppNotes:CheckBox = createCheckBox("Enable Opponent Strumline", oppStrum, 50, (event:UIEvent) -> if (opponentStrumline != null) opponentStrumline.visible = oppStrum = event.target.value);
 
-        checkboxBox.addComponent(playerNotes);
-        checkboxBox.addComponent(oppNotes);
+        hBox.addComponent(playerNotes);
+        hBox.addComponent(oppNotes);
+
+        var hBox2 = new HBox();
+        hBox2.percentWidth = 100;
+
+        var healthBarBox:CheckBox = createCheckBox("Enable Health Bar", badOptions.healthBar, 50, (event:UIEvent) -> {
+            badOptions.healthBar = event.target.value;
+            initHealthBarSprite();
+            if (!badOptions.healthBar) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "healthBar");
+            updateHighlight();
+            updateText();
+        });
+        var timeBarBox:CheckBox = createCheckBox("Enable Time Bar", badOptions.timeBar, 50, (event:UIEvent) -> {
+            badOptions.timeBar = event.target.value;
+            initTimeBarSprite();
+            if (!badOptions.timeBar) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "timeBar");
+            updateHighlight();
+            updateText();
+        });
+
+        hBox2.addComponent(healthBarBox);
+        hBox2.addComponent(timeBarBox);
 
         toolboxWindow.addComponent(keybindsTable);
-        toolboxWindow.addComponent(checkboxBox);
-
+        toolboxWindow.addComponent(hBox);
+        toolboxWindow.addComponent(hBox2);
         WindowManager.instance.addWindow(toolboxWindow);
     }
 
@@ -856,12 +881,23 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     // Util Methods
-    function createCheckBox(text:String, isSelected:Bool, width:Float, changeHandler:UIEvent -> Void):CheckBox {
-        var checkbox = new CheckBox();
-        checkbox.text = text;
-        checkbox.selected = isSelected;
-        checkbox.percentWidth = width;
-        if (changeHandler != null) checkbox.onChange = changeHandler;
+    function createCheckBox(text:String, value:Bool, width:Float, onChange:UIEvent -> Void):CheckBox {
+        var checkbox:CheckBox = null;
+
+        if (checkboxPool.length > 0) {
+            checkbox = checkboxPool.pop();
+            checkbox.text = text;
+            checkbox.selected = value;
+            checkbox.percentWidth = width;
+            checkbox.onChange = onChange;
+        } else {
+            checkbox = new CheckBox();
+            checkbox.text = text;
+            checkbox.selected = value;
+            checkbox.percentWidth = width;
+            checkbox.onChange = onChange;
+        }
+
         return checkbox;
     }
 
@@ -894,7 +930,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return box;
     }
 
-    function updateHighlight(draggable) {
+    function updateHighlight(?draggable) {
         if (draggable == null || !draggable.isSelected) {
             highlightOutline.visible = false;
             return;
@@ -967,7 +1003,11 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         }
     }
 
-    function updateText(draggable:DraggableSprite) {
+    function updateText(?draggable:DraggableSprite) {
+        if (draggable == null) {
+            spriteSettingsText.text = "";
+            return;
+        }
         if (spriteSettingsText != null) spriteSettingsText.text = "Offsets: " + draggable.sprite.getPosition() + "\nScale: " + draggable.sprite.scale + "\nRotation: " + draggable.sprite.angle;
 
         if ((draggable.spriteType == "judgementsText" || draggable.spriteType == "statsText" || draggable.spriteType == "kpsText") && Std.isOfType(draggable.sprite, FlxText)) {
@@ -1092,29 +1132,29 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function applyBoundaryConstraints(newX:Float, newY:Float, sprite:FlxSprite):{x:Float, y:Float} {
-        if (sprite.angle % 360 != 0) {
-            var origX = sprite.x;
-            var origY = sprite.y;
-
-            sprite.setPosition(newX, newY);
-
-            var corners = getRotatedCorners(sprite);
-
-            sprite.setPosition(origX, origY);
-
-            // Find min/max bounds
-            var bounds = getMinMaxBounds(corners);
-
-            // Check bounds and adjust if needed
-            if (bounds.minX < 0) newX += (0 - bounds.minX);
-            if (bounds.minY < 0) newY += (0 - bounds.minY);
-            if (bounds.maxX > FlxG.width) newX -= (bounds.maxX - FlxG.width);
-            if (bounds.maxY > FlxG.height) newY -= (bounds.maxY - FlxG.height);
-        } else {
-            // Non-rotated sprite uses standard bounds
-            newX = Math.max(0, Math.min(FlxG.width - sprite.width, newX));
-            newY = Math.max(0, Math.min(FlxG.height - sprite.height, newY));
+        // Fast path for unrotated sprites
+        if (sprite.angle % 360 == 0) {
+            return {
+                x: Math.max(0, Math.min(FlxG.width - sprite.width, newX)),
+                y: Math.max(0, Math.min(FlxG.height - sprite.height, newY))
+            };
         }
+
+        // Only calculate corners for rotated sprites
+        var origX = sprite.x;
+        var origY = sprite.y;
+
+        sprite.setPosition(newX, newY);
+        var corners = getRotatedCorners(sprite);
+        sprite.setPosition(origX, origY);
+
+        var bounds = getMinMaxBounds(corners);
+
+        // Apply constraints only if needed
+        if (bounds.minX < 0) newX += (0 - bounds.minX);
+        if (bounds.minY < 0) newY += (0 - bounds.minY);
+        if (bounds.maxX > FlxG.width) newX -= (bounds.maxX - FlxG.width);
+        if (bounds.maxY > FlxG.height) newY -= (bounds.maxY - FlxG.height);
 
         return {x: newX, y: newY};
     }
@@ -1136,15 +1176,17 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function isPointInPolygon(pointX:Float, pointY:Float, vertices:Array<{x:Float, y:Float}>):Bool {
-        var inside:Bool = false;
-        var j:Int = vertices.length - 1;
+        var inside = false;
+        var n = vertices.length;
+        var j = n - 1;
 
-        for (i in 0...vertices.length) {
-            if (((vertices[i].y > pointY) != (vertices[j].y > pointY)) &&
-            (pointX < (vertices[j].x - vertices[i].x) * (pointY - vertices[i].y) /
-            (vertices[j].y - vertices[i].y) + vertices[i].x)) {
-                inside = !inside;
-            }
+        for (i in 0...n) {
+            // Cache vertex lookups to avoid repeated array access
+            var vertexI = vertices[i];
+            var vertexJ = vertices[j];
+
+            // Faster computation by avoiding division when possible
+            if (((vertexI.y > pointY) != (vertexJ.y > pointY)) && (pointX < ((vertexJ.x - vertexI.x) * (pointY - vertexI.y) / (vertexJ.y - vertexI.y) + vertexI.x))) inside = !inside;
             j = i;
         }
 
@@ -1157,26 +1199,18 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var halfWidth = sprite.width / 2;
         var halfHeight = sprite.height / 2;
 
-        // Get rotation in radians
+        // Cache these calculations
         var angleRad = FlxAngle.asRadians(sprite.angle);
         var cos = Math.cos(angleRad);
         var sin = Math.sin(angleRad);
 
-        // Calculate corner positions (relative to center)
+        // Pre-allocate array with fixed size for better memory management
         var corners:Array<{x:Float, y:Float}> = [
-            { x: -halfWidth, y: -halfHeight }, // Top-left
-            { x: halfWidth, y: -halfHeight }, // Top-right
-            { x: halfWidth, y: halfHeight }, // Bottom-right
-            { x: -halfWidth, y: halfHeight } // Bottom-left
+            { x: (-halfWidth * cos) - (-halfHeight * sin) + centerX, y: (-halfWidth * sin) + (-halfHeight * cos) + centerY },
+            { x: (halfWidth * cos) - (-halfHeight * sin) + centerX, y: (halfWidth * sin) + (-halfHeight * cos) + centerY },
+            { x: (halfWidth * cos) - (halfHeight * sin) + centerX, y: (halfWidth * sin) + (halfHeight * cos) + centerY },
+            { x: (-halfWidth * cos) - (halfHeight * sin) + centerX, y: (-halfWidth * sin) + (halfHeight * cos) + centerY }
         ];
-
-        // Rotate corners and translate to world position
-        for (i in 0...corners.length) {
-            var rotX = corners[i].x * cos - corners[i].y * sin;
-            var rotY = corners[i].x * sin + corners[i].y * cos;
-            corners[i].x = rotX + centerX;
-            corners[i].y = rotY + centerY;
-        }
 
         return corners;
     }
