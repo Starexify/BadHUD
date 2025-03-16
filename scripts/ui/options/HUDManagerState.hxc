@@ -62,13 +62,11 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var timeBarBG:FunkinSprite;
     var timeText:FlxText;
     var healthBarBG:FunkinSprite;
-
     var statsText:FlxText;
     var judgementsText:FlxText;
     var kpsText:FlxText;
 
     var draggableSprites:Array<DraggableSprite> = [];
-    var selectableSprites:Array<SelectableSprite> = [];
 
     var toolboxWindow:Window;
     var isOverToolbox:Bool = false;
@@ -122,7 +120,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var mouseX = FlxG.mouse.x;
         var mouseY = FlxG.mouse.y;
         var hoveredDraggable = null;
-        var hoveredSelectable = null;
 
         // Find hovered Sprite and handle selection
         var toolboxActive = !isOverToolbox || toolboxWindow.hidden;
@@ -135,17 +132,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                     break;
                 }
             }
-
-            if (hoveredDraggable == null) {
-                i = selectableSprites.length;
-                while (i-- > 0) {
-                    var selectable = selectableSprites[i];
-                    if (isPointInsideRotatedSprite(mouseX, mouseY, selectable.sprite)) {
-                        hoveredSelectable = selectable;
-                        break;
-                    }
-                }
-            }
         }
 
         if (hoveredDraggable != null && FlxG.mouse.justPressed) {
@@ -153,27 +139,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 draggable.isSelected = (draggable == hoveredDraggable);
                 draggable.isDragging = (draggable == hoveredDraggable);
             }
-            for (selectable in selectableSprites) {
-                selectable.isSelected = false;
-            }
             hoveredDraggable.isSelected = true;
             hoveredDraggable.isDragging = true;
             hoveredDraggable.dragOffsetX = mouseX - hoveredDraggable.sprite.x;
             hoveredDraggable.dragOffsetY = mouseY - hoveredDraggable.sprite.y;
             prevAlpha = hoveredDraggable.sprite.alpha;
         } else if (hoveredDraggable != null && hoveredDraggable.isSelected && FlxG.mouse.justPressedRight) showContextMenu(mouseX, mouseY, hoveredDraggable);
-        else if (hoveredSelectable != null && FlxG.mouse.justPressed) {
-            // Clear previous selections
-            for (selectable in selectableSprites) {
-                selectable.isSelected = (selectable == hoveredSelectable);
-            }
-            for (draggable in draggableSprites) {
-                draggable.isSelected = false;
-                draggable.isDragging = false;
-            }
-        } else if (hoveredSelectable != null && hoveredSelectable.isSelected && FlxG.mouse.justPressedRight) {
-            showContextMenu(mouseX, mouseY, hoveredSelectable);
-        }
 
         // Handling the sprite movement
         for (draggable in draggableSprites) {
@@ -183,13 +154,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             if (draggable.isSelected || draggable.isDragging) updateHighlight(draggable);
         }
 
-        for (selectable in selectableSprites) {
-            if (selectable.isSelected) {
-                updateHighlight(selectable);
-            }
-        }
-
-        handleCursor(hoveredDraggable != null ? hoveredDraggable : hoveredSelectable);
+        handleCursor(hoveredDraggable);
 
         if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
 
@@ -753,7 +718,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         frame.addComponent(vbox);
         contextMenu.addComponent(frame);
-
         Screen.instance.addComponent(contextMenu);
     }
 
@@ -908,30 +872,25 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var label = new Label();
         label.text = labelText;
         label.percentWidth = 35;
-        label.verticalAlign = "center";
         label.textAlign = "right";
+        label.verticalAlign = "center";
 
         var stepper:OptionStepper = new OptionStepper();
         stepper.percentWidth = 65;
-
         stepper.dataSource = new ArrayDataSource();
         for (option in options) stepper.dataSource.add(option);
 
-        var selectedIndex = 0;
-        for (i in 0...stepper.dataSource.size) {
+        for (i in 0...stepper.dataSource.size)
             if (stepper.dataSource.get(i).id == currentValue) {
-                selectedIndex = i;
+                stepper.selectedIndex = i;
                 break;
             }
-        }
-        stepper.selectedIndex = selectedIndex;
 
         var callback_persist = onChangeHandler;
         stepper.onChange = (event:UIEvent) -> callback_persist(stepper.value.id);
 
         box.addComponent(label);
         box.addComponent(stepper);
-
         return box;
     }
 
@@ -958,17 +917,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         highlightOutline.y = draggable.sprite.y - 5;
         highlightOutline.angle = draggable.sprite.angle;
         highlightOutline.visible = true;
-    }
-
-    function addSelectableSprite(sprite:FlxSprite, type:String):SelectableSprite {
-        var selectable:SelectableSprite = {
-            sprite: sprite,
-            isSelected: false,
-            spriteType: type
-        };
-
-        selectableSprites.push(selectable);
-        return selectable;
     }
 
     function addDraggableSprite(sprite:FlxSprite, type:String):DraggableSprite {
@@ -1264,12 +1212,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (FlxG.sound.music != null) FlxG.sound.music.resume();
         FlxG.state.persistentUpdate = prevPersistentUpdate;
     }
-}
-
-typedef SelectableSprite = {
-    sprite:FlxSprite,
-    isSelected:Bool,
-    spriteType:String
 }
 
 typedef DraggableSprite = {
