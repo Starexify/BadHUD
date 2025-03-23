@@ -404,7 +404,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         toolboxWindow = new Window();
         toolboxWindow.width = 420;
-        toolboxWindow.x = 10;
+        toolboxWindow.x = 120;
         toolboxWindow.y = FlxG.height / 4;
         toolboxWindow.title = "HUD Manager Guide";
         toolboxWindow.maximizable = false;
@@ -449,6 +449,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             badOptions.healthBar = event.target.value;
             initHealthBarSprite();
             if (!badOptions.healthBar) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "healthBar");
+            initStrumlines();
             updateHighlight();
             updateText();
         });
@@ -1024,8 +1025,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (draggable.spriteType == "judgement") originalScale = noteStyle.buildJudgementSprite("sick").scale;
         else if (draggable.spriteType == "combo") originalScale = noteStyle.buildComboNumSprite(0).scale;
 
-        var settingsKey = draggable.spriteType + "Settings";
-
         var xPos = Std.int(draggable.sprite.x + draggable.sprite.width / 2);
         if (draggable.spriteType == "kpsText") xPos = Std.int(draggable.sprite.x);
         else if ((draggable.spriteType == "statsText" || draggable.spriteType == "judgementsText") && Std.isOfType(draggable.sprite, FlxText)) {
@@ -1038,6 +1037,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         ? Std.int(draggable.sprite.y)
         : Std.int(draggable.sprite.y + draggable.sprite.height / 2);
 
+        var settingsKey = draggable.spriteType + "Settings";
         Save.instance.modOptions.set(settingsKey, [
             xPos, yPos,
             draggable.sprite.scale.x - originalScale.x, draggable.sprite.scale.y - originalScale.y,
