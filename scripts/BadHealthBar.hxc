@@ -3,6 +3,7 @@ import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
 import funkin.modding.module.ScriptedModule;
 import funkin.play.PlayState;
+import funkin.play.character.BaseCharacter;
 import funkin.play.components.HealthIcon;
 import funkin.util.Constants;
 import funkin.save.Save;
@@ -17,6 +18,8 @@ import Std;
 class BadHealthBar extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var state:PlayState;
+    var currentP1:BaseCharacter = null;
+    var currentP2:BaseCharacter = null;
 
     var healthBarBG:FunkinSprite;
     var healthBar:FlxBar;
@@ -38,6 +41,8 @@ class BadHealthBar extends ScriptedModule {
         healthBar = state.healthBar;
         iconP1 = state.iconP1;
         iconP2 = state.iconP2;
+        currentP1 = state.currentStage.getBoyfriend();
+        currentP2 = state.currentStage.getDad();
 
         // Health Bar
         var settings = Save.instance.modOptions.get("healthBarSettings");
@@ -120,12 +125,7 @@ class BadHealthBar extends ScriptedModule {
         }
 
         // Icon Colored Health Bar
-        if (badOptions.iconColors) {
-            var bfHealthColor = getDominantColor(iconP1);
-            var opponentHealthColor = getDominantColor(iconP2);
-            healthBar.createFilledBar(opponentHealthColor, bfHealthColor);
-            healthBar.updateBar();
-        }
+        updateHealthIconsColor(3);
 
         if (!state.isMinimalMode) {
             if (iconP1 != null) iconP1.alpha = badOptions.hudOpacity / 100;
@@ -135,29 +135,74 @@ class BadHealthBar extends ScriptedModule {
         if (!state.isMinimalMode) updateIconsPosition();
     }
 
+    override function onSongEvent(event:SongEventScriptEvent) {
+        var newP1 = state.currentStage.getBoyfriend();
+        var newP2 = state.currentStage.getDad();
+
+        if (newP1 != currentP1 || newP2 != currentP2) {
+            currentP1 = newP1;
+            currentP2 = newP2;
+            updateHealthIconsColor(12);
+        }
+    }
+
     // bop for icons, I think onBeatHit is better than onUpdate and fixes it ?
     override function onBeatHit(event:SongTimeScriptEvent) { if (state != null && !state.isMinimalMode) updateIconsPosition(); }
 
-    override function onUpdate(event:UpdateScriptEvent) { if (state != null && !state.isMinimalMode) updateIconsPosition(); }
+    override function onUpdate(event:UpdateScriptEvent) {
+        if (state != null && !state.isMinimalMode) updateIconsPosition();
+    }
 
     // Helper Methods
-    function getDominantColor(sprite:FlxSprite) {
+    function updateHealthIconsColor(sampleRate:Int) {
+        if (badOptions.iconColors) {
+            var bfHealthColor = getDominantColor(iconP1, sampleRate);
+            var opponentHealthColor = getDominantColor(iconP2, sampleRate);
+            healthBar.createFilledBar(opponentHealthColor, bfHealthColor);
+        }
+    }
+
+    function getDominantColor(sprite:FlxSprite, sampleRate:Int = 4) {
         if (sprite == null || sprite.pixels == null) return;
 
-        var colorData = [];
+        var colorData:Array<{color:Int, count:Int}> = [];
         var maxCount = 0;
         var dominantColor = 0xFFFFFFFF;
 
+        sprite.pixels.lock();
+
         for (y in 0...sprite.frameHeight) {
+            if (y % sampleRate != 0) continue;
             for (x in 0...sprite.frameWidth) {
+                if (x % sampleRate != 0) continue;
                 var color = sprite.pixels.getPixel32(x, y);
-                if (color == 0) continue;
-                if (color.alphaFloat <= 0.05) continue;
+
+                if (color == 0 || (color >>> 24) <= 13) continue;
+                if (color == 0xFFF000000 || color == 0x00FFFFFF) continue;
+
+                if (color == dominantColor) {
+                    for (data in colorData) {
+                        if (data.color == color) {
+                            data.count++;
+                            if (data.count > maxCount) {
+                                maxCount = data.count;
+                            }
+                            break;
+                        }
+                    }
+                    continue;
+                }
 
                 var found = false;
-                for (data in colorData) {
-                    if (data.color == color) {
-                        data.count++;
+                for (i in 0...colorData.length) {
+                    if (colorData[i].color == color) {
+                        colorData[i].count++;
+
+                        if (colorData[i].count > maxCount) {
+                        maxCount = colorData[i].count;
+                        dominantColor = color;
+                        }
+
                         found = true;
                         break;
                     }
@@ -168,15 +213,8 @@ class BadHealthBar extends ScriptedModule {
             }
         }
 
-        for (data in colorData) {
-            if (data.color == 0xFFF000000 || data.color == 0x00FFFFFF) continue;
-
-            if (data.count > maxCount) {
-                maxCount = data.count;
-                dominantColor = data.color;
-            }
-        }
         colorData = [];
+        sprite.pixels.unlock();
         return dominantColor;
     }
 
