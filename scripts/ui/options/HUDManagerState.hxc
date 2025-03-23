@@ -239,7 +239,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         }, sprite -> {
             sprite.screenCenter(0x01);
             sprite.y = Preferences.downscroll ? FlxG.height * 0.1 : FlxG.height * 0.9;
-        });
+        }, true);
 
         healthBar = new FlxBar(0, 0, FlxBarFillDirection.RIGHT_TO_LEFT, barWidth);
         healthBar.height *= barHeight;
@@ -271,12 +271,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         positionUIElement(timeBarBG, "timeBarSettings", null, sprite -> {
             sprite.screenCenter(0x01);
             sprite.y = Preferences.downscroll ? FlxG.height * 0.95 : FlxG.height * 0.05;
-        });
+        }, true);
 
         positionUIElement(timeText, "timeBarSettings", null, sprite -> {
             sprite.screenCenter(0x01);
             sprite.y = Preferences.downscroll ? FlxG.height * 0.95 : FlxG.height * 0.05;
-        });
+        }, true);
 
         var draggableSprite = timeBarVisible ? timeBarBG : timeText;
         var draggableTimeBar = addDraggableSprite(draggableSprite, "timeBar");
@@ -314,7 +314,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         positionUIElement(restBarBG, "restBarSettings", null, sprite -> {
             sprite.x = playerStrumline.x + playerStrumline.width / 2 - sprite.width / 2;
             sprite.y = Preferences.downscroll ? playerStrumline.y - sprite.height : playerStrumline.y + sprite.height * 1.75;
-        });
+        }, true);
 
         var draggableRestBar = addDraggableSprite(restBarBG, "restBar");
 
@@ -337,18 +337,19 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (statsText != null) remove(judgementsText);
         statsText = new FlxText();
         switch (badOptions.statsOrt) {
-            case "left": statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: 0" + "\nCombo: 0";
-            case "center": statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: 0";
-            case "right": statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n0 Rating" + "\n0 Combo";
+            case "left": statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: ?" + "\nCombo: 0";
+            case "center": statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: ?";
+            case "right": statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n? Rating" + "\n0 Combo";
         }
         statsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         statsText.borderSize = 1.25;
         positionUIElement(statsText, "statsTextSettings", settings -> {
             statsText.alignment = statsText.x >= FlxG.width / 2 ? "right" : "left";
+            if (statsText.alignment == "right" && badOptions.statsOrt != "center") statsText.x = settings[0] - statsText.width;
         }, sprite -> {
             sprite.screenCenter(0x01);
             sprite.y = (badOptions.healthBar && Save.instance.modOptions.get("healthBarSettings") != null) ? healthBarBG.y + 45 : 40;
-        });
+        }, false);
         addDraggableSprite(statsText, "statsText");
         add(statsText);
     }
@@ -356,6 +357,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     function initJudgements() {
         if (judgementsText != null) remove(judgementsText);
         judgementsText = new FlxText();
+        judgementsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         judgementsText.borderSize = 1.25;
 
         switch (badOptions.judgementsOrt) {
@@ -364,13 +366,14 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             case "right": judgementsText.text = "0 Sicks" + "\n0 Goods" + "\n0 Bads" + "\n0 Shits";
         }
 
-        positionUIElement(judgementsText, "judgementsTextSettings", null, sprite -> {
+        positionUIElement(judgementsText, "judgementsTextSettings", settings -> {
+            judgementsText.alignment = judgementsText.x >= FlxG.width / 2 ? "right" : "left";
+            if (judgementsText.alignment == "right" && badOptions.judgementsOrt != "center") judgementsText.x = settings[0] - judgementsText.width;
+        }, sprite -> {
             sprite.x = 10;
             sprite.y = FlxG.height * 0.45;
-        });
+        }, false);
 
-        var alignment:String = judgementsText.x >= FlxG.width / 2 ? "right" : "left";
-        judgementsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, alignment, FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         addDraggableSprite(judgementsText, "judgementsText");
         add(judgementsText);
     }
@@ -378,21 +381,20 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     function initKPS() {
         if (kpsText != null) remove(kpsText);
         kpsText = new FlxText();
+        kpsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         kpsText.borderSize = 1.25;
 
         switch (badOptions.kpsOrt) {
-            case "left": kpsText.text = "KPS: 0" + "\nMax KPS: 0";
-            case "center": kpsText.text = "KPS: 0" + "| Max KPS: 0";
-            case "right": kpsText.text = "0 KPS" + "\n0 Max KPS";
+            case "left": kpsText.text = "KPS: 0" + "\nMax KPS: 99";
+            case "center": kpsText.text = "KPS: 0" + "| Max KPS: 99";
+            case "right": kpsText.text = "0 KPS" + "\n99 Max KPS";
         }
 
-        positionUIElement(kpsText, "kpsTextSettings", null, sprite -> {
+        positionUIElement(kpsText, "kpsTextSettings", settings -> kpsText.alignment = kpsText.x >= FlxG.width / 2 ? "right" : "left", sprite -> {
             sprite.x = 10;
             sprite.y = FlxG.height * 0.6;
-        });
+        }, false);
 
-        var alignment:String = kpsText.x >= FlxG.width / 2 ? "right" : "left";
-        kpsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, alignment, FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         addDraggableSprite(kpsText, "kpsText");
         add(kpsText);
     }
@@ -901,7 +903,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return checkbox;
     }
 
-    function createOptionBox(labelText:String, currentValue:String, options:Array<BasicEntry>, onChangeHandler:(value:String) -> Void):HBox {
+    function createOptionBox(labelText:String, currentValue:String, options:Array<BasicEntry>, onChangeHandler:String -> Void):HBox {
         var box = new HBox();
         box.percentWidth = 100;
 
@@ -1023,21 +1025,36 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         else if (draggable.spriteType == "combo") originalScale = noteStyle.buildComboNumSprite(0).scale;
 
         var settingsKey = draggable.spriteType + "Settings";
+
+        var xPos = Std.int(draggable.sprite.x + draggable.sprite.width / 2);
+        if (draggable.spriteType == "kpsText") xPos = Std.int(draggable.sprite.x);
+        else if ((draggable.spriteType == "statsText" || draggable.spriteType == "judgementsText") && Std.isOfType(draggable.sprite, FlxText)) {
+            var text = Std.downcast(draggable.sprite, FlxText);
+            if (text.alignment == "right") xPos = Std.int(draggable.sprite.x + draggable.sprite.width);
+            else xPos = Std.int(draggable.sprite.x);
+        }
+
+        var yPos = (draggable.spriteType == "statsText" || draggable.spriteType == "judgementsText" || draggable.spriteType == "kpsText")
+        ? Std.int(draggable.sprite.y)
+        : Std.int(draggable.sprite.y + draggable.sprite.height / 2);
+
         Save.instance.modOptions.set(settingsKey, [
-            Std.int(draggable.sprite.x + draggable.sprite.width / 2), Std.int(draggable.sprite.y + draggable.sprite.height / 2),
+            xPos, yPos,
             draggable.sprite.scale.x - originalScale.x, draggable.sprite.scale.y - originalScale.y,
             draggable.sprite.angle
         ]);
     }
 
-    function positionUIElement(sprite:FlxSprite, settingsKey:String, additionalSettings:String -> Void, defaultPosition:FlxSprite -> Void) {
+    function positionUIElement(sprite:FlxSprite, settingsKey:String, additionalSettings:String -> Void, defaultPosition:FlxSprite -> Void, centered:Bool) {
         var settings = Save.instance.modOptions.get(settingsKey);
         if (settings != null) {
             sprite.angle = settings[4];
             sprite.scale.x = settings[2];
             sprite.scale.y = settings[3];
             sprite.updateHitbox();
-            sprite.setPosition(settings[0] - sprite.width / 2, settings[1] - sprite.height / 2);
+            if (centered) sprite.setPosition(settings[0] - sprite.width / 2, settings[1] - sprite.height / 2);
+            else sprite.setPosition(settings[0], settings[1]);
+
             if (additionalSettings != null) additionalSettings(settings);
         } else { if (defaultPosition != null) defaultPosition(sprite); }
     }

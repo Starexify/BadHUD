@@ -76,6 +76,7 @@ class GamePlayStats extends ScriptedModule {
     // Init Methods
     function initJudgements(textSize:Int, textFont:String) {
         judgementsText = new FlxText();
+        judgementsText.setFormat(Paths.font(textFont), textSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         judgementsText.borderSize = 1.25;
         var settings = Save.instance.modOptions.get("judgementsTextSettings");
         if (settings != null) {
@@ -83,13 +84,12 @@ class GamePlayStats extends ScriptedModule {
             judgementsText.scale.x = settings[2];
             judgementsText.scale.y = settings[3];
             judgementsText.updateHitbox();
-            judgementsText.setPosition(settings[0] - judgementsText.width / 2, settings[1] - judgementsText.height / 2);
+            judgementsText.setPosition(settings[0], settings[1]);
+            judgementsText.alignment = judgementsText.x >= FlxG.width / 2 ? "right" : "left";
         } else {
             judgementsText.x = 10;
             judgementsText.y = FlxG.height * 0.45;
         }
-        var alignment:String = judgementsText.x >= FlxG.width / 2 ? "right" : "left";
-        judgementsText.setFormat(Paths.font(textFont), textSize, 0xFFFFFFFF, alignment, FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         judgementsText.zIndex = 851;
         judgementsText.scrollFactor.set();
         judgementsText.cameras = [state.camHUD];
@@ -98,7 +98,7 @@ class GamePlayStats extends ScriptedModule {
 
     function initStats(textSize:Int, textFont:String) {
         statsText = new FlxText();
-        statsText.setFormat(Paths.font(textFont), textSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        statsText.setFormat(Paths.font(textFont), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         statsText.borderSize = 1.25;
         var settings = Save.instance.modOptions.get("statsTextSettings");
         if (settings != null) {
@@ -106,8 +106,8 @@ class GamePlayStats extends ScriptedModule {
             statsText.scale.x = settings[2];
             statsText.scale.y = settings[3];
             statsText.updateHitbox();
-            statsText.setPosition(settings[0] - statsText.width / 2, settings[1] - statsText.height / 2);
-            statsText.alignment = statsText.x >= FlxG.width / 2 ? "right" : "left";
+            statsText.setPosition(settings[0], settings[1]);
+            statsText.alignment = settings[0] >= FlxG.width / 2 ? "right" : "left";
         } else {
             statsText.screenCenter(0x01);
             statsText.y = (badOptions.healthBar && Save.instance.modOptions.get("healthBarSettings") != null) ? state.healthBarBG.y + 45 : 40;
@@ -142,10 +142,14 @@ class GamePlayStats extends ScriptedModule {
         if (badOptions.commaSeparatedScore) songScore = FlxStringUtil.formatMoney(songScore, false, true);
 
         // Update Text
-        if (judgementsText != null) switch (badOptions.judgementsOrt) {
-            case "left": judgementsText.text = "Sicks: " + sicks + "\nGoods: " + goods + "\nBads: " + bads + "\nShits: " + shits;
-            case "center": judgementsText.text = "Sicks: " + sicks + " | Goods: " + goods + " | Bads: " + bads + " | Shits: " + shits;
-            case "right": judgementsText.text = sicks + " Sicks\n" + goods + " Goods\n" + bads + " Bads\n" + shits + " Shits";
+        if (judgementsText != null) {
+            switch (badOptions.judgementsOrt) {
+                case "left": judgementsText.text = "Sicks: " + sicks + "\nGoods: " + goods + "\nBads: " + bads + "\nShits: " + shits;
+                case "center": judgementsText.text = "Sicks: " + sicks + " | Goods: " + goods + " | Bads: " + bads + " | Shits: " + shits;
+                case "right": judgementsText.text = sicks + " Sicks\n" + goods + " Goods\n" + bads + " Bads\n" + shits + " Shits";
+            }
+            var settings = Save.instance.modOptions.get("judgementsTextSettings");
+            if (settings != null) if (judgementsText.alignment == "right" && badOptions.judgementsOrt != "center") judgementsText.x = settings[0] - judgementsText.width;
         }
 
         if (statsText != null) {
@@ -170,14 +174,13 @@ class GamePlayStats extends ScriptedModule {
                 ];
                 statsText.applyMarkup(tempScore, formatPairs);
             }
+            var settings = Save.instance.modOptions.get("statsTextSettings");
+            if (settings != null) if (statsText.alignment == "right" && badOptions.statsOrt != "center") statsText.x = settings[0] - statsText.width;
+            if (bopScoreOnMiss) scoreBopOnMiss();
         }
-
-        if (bopScoreOnMiss) scoreBopOnMiss();
     }
 
     function scoreBopOnMiss() {
-        if (badOptions.statsOrt == "center" || badOptions.accuracyType == "psych") return;
-
         if (scoreTextTween != null) scoreTextTween.cancel();
         statsText.scale.set(1.075, 1.075);
         scoreTextTween = FlxTween.tween(statsText.scale, {x: 1, y: 1}, 0.2, { onComplete: tween -> scoreTextTween = null });
@@ -277,7 +280,7 @@ class GamePlayStats extends ScriptedModule {
 
         totalNotesPlayed = (PlayStatePlaylist.isStoryMode ? talliesLevel.totalNotesHit + tallies.totalNotesHit : tallies.totalNotesHit) + 1;
 
-        updateScore(badOptions.accuracyType != "osu");
+        updateScore(badOptions.accuracyType == "psych" && badOptions.statsOrt == "center");
     }
 
     override function onNoteMiss(event:NoteScriptEvent) {

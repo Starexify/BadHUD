@@ -38,14 +38,8 @@ class KPSCounter extends ScriptedModule {
 
         // Create KPS Text
         kpsText = new FlxText();
-        kpsText.borderSize = 1.25;
         kpsText.setFormat(Paths.font(new BadHUDOptions().font), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
-        kpsText.zIndex = 851;
-        switch (badOptions.kpsOrt) {
-            case "left": kpsText.text = "KPS: 0" + "\nMax KPS: 0";
-            case "center": kpsText.text = "KPS: 0" + "| Max KPS: 0";
-            case "right": kpsText.text = "0 KPS" + "\n0 Max KPS";
-        }
+        kpsText.borderSize = 1.25;
 
         var settings = Save.instance.modOptions.get("kpsTextSettings");
         if (settings != null) {
@@ -53,12 +47,14 @@ class KPSCounter extends ScriptedModule {
             kpsText.scale.x = settings[2];
             kpsText.scale.y = settings[3];
             kpsText.updateHitbox();
-            kpsText.setPosition(settings[0] - kpsText.width / 2, settings[1] - kpsText.height / 2);
+            kpsText.setPosition(settings[0], settings[1]);
+            kpsText.alignment = kpsText.x >= FlxG.width / 2 ? "right" : "left";
         } else {
             kpsText.x = 10;
             kpsText.y = FlxG.height * 0.6;
         }
 
+        kpsText.zIndex = 851;
         kpsText.scrollFactor.set();
         kpsText.cameras = [state.camHUD];
         state.add(kpsText);
