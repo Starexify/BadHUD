@@ -44,7 +44,6 @@ import haxe.ui.core.Screen;
 import haxe.ui.data.ArrayDataSource;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.events.UIEvent;
-import haxe.ui.layouts.HorizontalGridLayout;
 import haxe.ui.layouts.VerticalGridLayout;
 
 class HUDManagerState extends ScriptedMusicBeatSubState {
