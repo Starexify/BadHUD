@@ -59,8 +59,8 @@ class GamePlayStats extends ScriptedModule {
 
         // Remove and Init HUD Elements
         state.remove(state.scoreText);
-        initJudgements(textSize, textFont);
         initStats(textSize, textFont);
+        initJudgements(textSize, textFont);
 
         if (PlayStatePlaylist.isStoryMode) talliesLevel = Highscore.talliesLevel;
     }
@@ -74,29 +74,8 @@ class GamePlayStats extends ScriptedModule {
     }
 
     // Init Methods
-    function initJudgements(textSize:Int, textFont:String) {
-        judgementsText = new FlxText();
-        judgementsText.setFormat(Paths.font(textFont), textSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
-        judgementsText.borderSize = 1.25;
-        var settings = Save.instance.modOptions.get("judgementsTextSettings");
-        if (settings != null) {
-            judgementsText.angle = settings[4];
-            judgementsText.scale.x = settings[2];
-            judgementsText.scale.y = settings[3];
-            judgementsText.updateHitbox();
-            judgementsText.setPosition(settings[0], settings[1]);
-            judgementsText.alignment = judgementsText.x >= FlxG.width / 2 ? "right" : "left";
-        } else {
-            judgementsText.x = 10;
-            judgementsText.y = FlxG.height * 0.45;
-        }
-        judgementsText.zIndex = 851;
-        judgementsText.scrollFactor.set();
-        judgementsText.cameras = [state.camHUD];
-        state.add(judgementsText);
-    }
-
     function initStats(textSize:Int, textFont:String) {
+        if (!badOptions.statsBool) return;
         statsText = new FlxText();
         statsText.setFormat(Paths.font(textFont), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         statsText.borderSize = 1.25;
@@ -116,6 +95,29 @@ class GamePlayStats extends ScriptedModule {
         statsText.zIndex = 851;
         statsText.cameras = [state.camHUD];
         state.add(statsText);
+    }
+
+    function initJudgements(textSize:Int, textFont:String) {
+        if (!badOptions.judgementsBool) return;
+        judgementsText = new FlxText();
+        judgementsText.setFormat(Paths.font(textFont), textSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        judgementsText.borderSize = 1.25;
+        var settings = Save.instance.modOptions.get("judgementsTextSettings");
+        if (settings != null) {
+            judgementsText.angle = settings[4];
+            judgementsText.scale.x = settings[2];
+            judgementsText.scale.y = settings[3];
+            judgementsText.updateHitbox();
+            judgementsText.setPosition(settings[0], settings[1]);
+            judgementsText.alignment = judgementsText.x >= FlxG.width / 2 ? "right" : "left";
+        } else {
+            judgementsText.x = 10;
+            judgementsText.y = FlxG.height * 0.45;
+        }
+        judgementsText.zIndex = 851;
+        judgementsText.scrollFactor.set();
+        judgementsText.cameras = [state.camHUD];
+        state.add(judgementsText);
     }
 
     // Helper Methods

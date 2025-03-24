@@ -33,8 +33,10 @@ class BadHUDOptions extends Module {
         restBarText: true,
         smoothBars: true,
         iconColors: true,
-        judgementsOrt: "left",
         statsOrt: "center",
+        statsBol: true,
+        judgementsOrt: "left",
+        kpsCounter: false,
         kpsOrt: "left",
         hudOpacity: 100,
         hudFont: 0,
@@ -45,7 +47,6 @@ class BadHUDOptions extends Module {
         remindKeys: true,
         muteMiss: true,
         underlayOpacity: 0,
-        kpsCounter: false,
         customScrollSpeed: false,
         scrollSpeedFactor: 18
     };
@@ -72,8 +73,6 @@ class BadHUDOptions extends Module {
 
                 // Bars
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Bars :", "bold");
-
-                preferences.createPrefItemCheckbox("Enable Rest Bar", "If enabled, the rest bar will be visible.", value -> badOptions.restBar = value, badOptions.restBar);
 
                 preferences.createPrefItemCheckbox("Icon Colored Health Bar", "If enabled, the health bar will match the dominant color of the icon.", value -> badOptions.iconColors = value, badOptions.iconColors);
 
@@ -107,7 +106,6 @@ class BadHUDOptions extends Module {
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold");
 
                 preferences.createPrefItemCheckbox("Enable Keybind Reminder", "If enabled, a keybind reminder will appear above notes when loaded, then fade.", value -> badOptions.remindKeys = value, badOptions.remindKeys);
-
                 preferences.createPrefItemCheckbox("Mute Miss Sounds", "If enabled, mutes the sound of the note being missed.", value -> badOptions.muteMiss = value, badOptions.muteMiss);
 
                 var underlayOpacityItem = new NumberPreferenceItem(0, (120 * preferences.items.length) + 30, "Note Underlay Opacity",
@@ -117,8 +115,6 @@ class BadHUDOptions extends Module {
                 );
                 preferences.items.addItem("Note Underlay Opacity", underlayOpacityItem);
                 preferences.preferenceItems.add(underlayOpacityItem.lefthandText);
-
-                preferences.createPrefItemCheckbox("Show KPS Counter", "If enabled, a KPS (Key Per Second) counter will appear on the left side of the screen.", value -> badOptions.kpsCounter = value, badOptions.kpsCounter);
 
                 preferences.createPrefItemCheckbox("Custom Scroll Speed", "If enabled, the Scroll Speed Factor option will be used.", value -> badOptions.customScrollSpeed = value, badOptions.customScrollSpeed);
 
@@ -180,9 +176,12 @@ typedef BadSaveData = {
     restBarText:Bool,
     smoothBars:Bool,
     iconColors:Bool,
-    judgementsOrt:String,
     statsOrt:String,
+    statsBool:Bool,
+    judgementsOrt:String,
+    judgementsBool:Bool,
     kpsOrt:String,
+    kpsCounter:Bool,
     hudOpacity:Int,
     hudFont:Int,
     hudFontSize:Int,
@@ -192,7 +191,6 @@ typedef BadSaveData = {
     remindKeys:Bool,
     muteMiss:Bool,
     underlayOpacity:Int,
-    kpsCounter:Bool,
     customScrollSpeed:Bool,
     scrollSpeedFactor:Float
 }

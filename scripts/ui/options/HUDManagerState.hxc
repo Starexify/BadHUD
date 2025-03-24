@@ -34,6 +34,8 @@ import haxe.ui.components.OptionStepper;
 import haxe.ui.containers.Frame;
 import haxe.ui.containers.HBox;
 import haxe.ui.containers.TableView;
+import haxe.ui.containers.TabView;
+import haxe.ui.containers.Box;
 import haxe.ui.containers.VBox;
 import haxe.ui.containers.menus.Menu;
 import haxe.ui.containers.windows.Window;
@@ -42,6 +44,8 @@ import haxe.ui.core.Screen;
 import haxe.ui.data.ArrayDataSource;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.events.UIEvent;
+import haxe.ui.layouts.HorizontalGridLayout;
+import haxe.ui.layouts.VerticalGridLayout;
 
 class HUDManagerState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -64,6 +68,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var timeBar:FlxBar;
     var healthBarBG:FunkinSprite;
     var healthBar:FlxBar;
+    var restBarBG:FunkinSprite;
+    var restText:FlxText;
+    var restBar:FunkinSprite;
     var statsText:FlxText;
     var judgementsText:FlxText;
     var kpsText:FlxText;
@@ -302,11 +309,14 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function initRestBarSprite() {
+        if (restBarBG != null) remove(restBarBG);
+        if (restText != null) remove(restText);
+        if (restBar != null) remove(restBar);
         if (!badOptions.restBar) return;
-        var restBarBG:FunkinSprite = new FunkinSprite();
+        restBarBG = new FunkinSprite();
         restBarBG.loadTexture("restBackground");
 
-        var restText:FlxText = new FlxText();
+        restText = new FlxText();
         restText.setFormat(Paths.font(badHUDOptions.font), badHUDOptions.fontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         restText.text = "999";
         restText.borderSize = 1.75;
@@ -321,7 +331,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var restBarThickness:Int = 13;
         var restBarRadius = restBarBG.width / 2.5;
         var restBarWidth = Std.int((restBarRadius + restBarThickness) * 2);
-        var restBar:FunkinSprite = new FunkinSprite();
+        restBar = new FunkinSprite();
         restBar.makeGraphic(restBarWidth, restBarWidth, 0x00000000, true);
 
         drawArc(restBar, restBarRadius, restBarThickness, -Math.PI / 2, -Math.PI / 2 + Math.PI);
@@ -334,7 +344,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function initStats() {
-        if (statsText != null) remove(judgementsText);
+        if (statsText != null) remove(statsText);
+        if (!badOptions.statsBool) return;
         statsText = new FlxText();
         switch (badOptions.statsOrt) {
             case "left": statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: ?" + "\nCombo: 0";
@@ -356,6 +367,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     function initJudgements() {
         if (judgementsText != null) remove(judgementsText);
+        if (!badOptions.judgementsBool) return;
         judgementsText = new FlxText();
         judgementsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         judgementsText.borderSize = 1.25;
@@ -380,6 +392,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     function initKPS() {
         if (kpsText != null) remove(kpsText);
+        if (!badOptions.kpsCounter) return;
         kpsText = new FlxText();
         kpsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         kpsText.borderSize = 1.25;
@@ -406,7 +419,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         toolboxWindow.width = 420;
         toolboxWindow.x = 120;
         toolboxWindow.y = FlxG.height / 4;
-        toolboxWindow.title = "HUD Manager Guide";
+        toolboxWindow.title = "HUD Manager Panel";
         toolboxWindow.maximizable = false;
         toolboxWindow.maximized = true;
 
@@ -415,6 +428,13 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             Cursor.cursorMode = CursorMode.Default;
         }
         toolboxWindow.onMouseOut = (event:MouseEvent) -> isOverToolbox = false;
+
+        var tabView:TabView = new TabView();
+        tabView.percentWidth = 100;
+
+        var keybindsTab:Box = new Box();
+        keybindsTab.text = "Keybinds";
+        keybindsTab.percentWidth = 100;
 
         var keybindsTable:TableView = new TableView();
         keybindsTable.id = "keybindsTable";
@@ -433,23 +453,41 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         keybindsTable.value = populateKeybindsTable(keybindsTable);
 
-        var hBox = new HBox();
-        hBox.percentWidth = 100;
+        keybindsTab.addComponent(keybindsTable);
+
+        var visualsTab:Box = new Box();
+        visualsTab.text = "Visual Settings";
+        visualsTab.percentWidth = 100;
+
+        var strumlineBox = new HBox();
+        strumlineBox.percentWidth = 100;
 
         var playerNotes:CheckBox = createCheckBox("Enable Player Strumline", playerStrum, 50, (event:UIEvent) -> if (playerStrumline != null) playerStrumline.visible = playerStrum = event.target.value);
         var oppNotes:CheckBox = createCheckBox("Enable Opponent Strumline", oppStrum, 50, (event:UIEvent) -> if (opponentStrumline != null) opponentStrumline.visible = oppStrum = event.target.value);
 
-        hBox.addComponent(playerNotes);
-        hBox.addComponent(oppNotes);
+        strumlineBox.addComponent(playerNotes);
+        strumlineBox.addComponent(oppNotes);
 
-        var hBox2 = new HBox();
-        hBox2.percentWidth = 100;
+        visualsTab.addComponent(strumlineBox);
+
+        var settingsTab:Box = new Box();
+        settingsTab.text = "HUD Settings";
+        settingsTab.percentWidth = 100;
+        settingsTab.layout = new VerticalGridLayout();
+        settingsTab.layout.columns = 2;
 
         var healthBarBox:CheckBox = createCheckBox("Enable Health Bar", badOptions.healthBar, 50, (event:UIEvent) -> {
             badOptions.healthBar = event.target.value;
             initHealthBarSprite();
             if (!badOptions.healthBar) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "healthBar");
             initStrumlines();
+            updateHighlight();
+            updateText();
+        });
+        var statsTextBox:CheckBox = createCheckBox("Enable Stats", badOptions.statsBool, 50, (event:UIEvent) -> {
+            badOptions.statsBool = event.target.value;
+            initStats();
+            if (!badOptions.statsBool) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "statsText");
             updateHighlight();
             updateText();
         });
@@ -460,13 +498,39 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             updateHighlight();
             updateText();
         });
+        var judgementsTextBox:CheckBox = createCheckBox("Enable Judgements", badOptions.judgementsBool, 50, (event:UIEvent) -> {
+            badOptions.judgementsBool = event.target.value;
+            initJudgements();
+            if (!badOptions.judgementsBool) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "judgementsText");
+            updateHighlight();
+            updateText();
+        });
+        var restBarBox:CheckBox = createCheckBox("Enable Rest Bar", badOptions.restBar, 50, (event:UIEvent) -> {
+            badOptions.restBar = event.target.value;
+            initRestBarSprite();
+            if (!badOptions.restBar) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "restBar");
+            updateHighlight();
+            updateText();
+        });
+        var kpsCounterBox:CheckBox = createCheckBox("Enable KPS Counter", badOptions.kpsCounter, 50, (event:UIEvent) -> {
+            badOptions.kpsCounter = event.target.value;
+            initKPS();
+            if (!badOptions.kpsCounter) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "kpsText");
+            updateHighlight();
+            updateText();
+        });
 
-        hBox2.addComponent(healthBarBox);
-        hBox2.addComponent(timeBarBox);
+        settingsTab.addComponent(healthBarBox);
+        settingsTab.addComponent(statsTextBox);
+        settingsTab.addComponent(timeBarBox);
+        settingsTab.addComponent(judgementsTextBox);
+        settingsTab.addComponent(restBarBox);
+        settingsTab.addComponent(kpsCounterBox);
 
-        toolboxWindow.addComponent(keybindsTable);
-        toolboxWindow.addComponent(hBox);
-        toolboxWindow.addComponent(hBox2);
+        tabView.addComponent(keybindsTab);
+        tabView.addComponent(visualsTab);
+        tabView.addComponent(settingsTab);
+        toolboxWindow.addComponent(tabView);
         WindowManager.instance.addWindow(toolboxWindow);
     }
 
