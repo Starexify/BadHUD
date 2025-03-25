@@ -72,11 +72,6 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemCheckbox("Middlescroll", "If enabled, player notes will be centerd on the screen, and opponent's notes will be split.", value -> badOptions.middlescroll = value, badOptions.middlescroll);
                 preferences.createPrefItemPercentage("Opponent Notes Opacity", "Adjust the opacity of the opponent's notes.", value -> badOptions.opponentNoteOpacity = value, badOptions.opponentNoteOpacity);
 
-                // Bars
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, "Bars :", "bold");
-
-                preferences.createPrefItemCheckbox("Icon Colored Health Bar", "If enabled, the health bar will match the dominant color of the icon.", value -> badOptions.iconColors = value, badOptions.iconColors);
-
                 // HUD Customization
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold");
 

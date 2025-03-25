@@ -639,8 +639,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             );
 
             var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
+            var coloredBarCheck = createCheckBox("Icon Colored Bar (May reduce performance!)", badOptions.iconColors, 100, (event:UIEvent) -> badOptions.iconColors = event.target.value);
 
             vbox.addComponent(iconsPositionBox);
+            vbox.addComponent(coloredBarCheck);
             vbox.addComponent(smoothBarsCheck);
         }
 
