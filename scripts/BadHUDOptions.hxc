@@ -76,7 +76,6 @@ class BadHUDOptions extends Module {
                 preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold");
 
                 preferences.createPrefItemPercentage("HUD Opacity", "Adjust the opacity of the HUD.", value -> badOptions.hudOpacity = value, badOptions.hudOpacity);
-
                 preferences.createPrefItemEnum("HUD Font", "Select the font style for the HUD text.", [
                     "0" => "VCR OSD Mono (Vanilla)",
                     "1" => "VCR OSD Neue",
@@ -89,13 +88,13 @@ class BadHUDOptions extends Module {
                     "8" => "Euxoi",
                     "9" => "House of Terror",
                     "10" => "Determination",
-                    "11" => "fbUsv8C5eI"
+                    "11" => "Wii Sans 2",
+                    "12" => "fbUsv8C5eI"
                 ], value -> {
                     badOptions.hudFont = Std.parseInt(value);
                     switchFont();
                     changeDebugDisplay(font);
                 }, Std.string(badOptions.hudFont));
-
                 preferences.createPrefItemNumber("HUD Font Size", "Adjust the size of the HUD text.", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
 
                 // Extras
@@ -153,7 +152,9 @@ class BadHUDOptions extends Module {
                 fontSize = 24;
             case 10: font = "determination-regular.ttf";
                 fontSize = 24;
-            case 11: font = "fbUsv8C5eI.ttf"; // ?px
+            case 11: font = "wii_sans_v2_by_notsoartisty.ttf"; // ?px
+                fontSize = 24;
+            case 12: font = "fbUsv8C5eI.ttf"; // ?px
                 fontSize = 24;
         }
     }
