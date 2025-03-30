@@ -66,7 +66,7 @@ class ExtraStrumline extends ScriptedModule {
         }
 
         if (badOptions.opponentNoteOpacity > 0) state.opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
-        else state.remove(state.opponentStrumline);
+        else state.opponentStrumline.visible = false;
 
         // Note Underlay
         if (badOptions.underlayOpacity > 0) {
