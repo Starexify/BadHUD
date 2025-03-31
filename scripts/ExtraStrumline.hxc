@@ -69,7 +69,7 @@ class ExtraStrumline extends ScriptedModule {
         else state.opponentStrumline.visible = false;
 
         // Note Underlay
-        if (badOptions.underlayOpacity > 0) {
+        /*if (badOptions.underlayOpacity > 0) {
             laneUnderlay = new FlxSprite(0, 0).makeGraphic(Std.int(state.playerStrumline.get_width()), FlxG.height * 2);
             laneUnderlay.x = state.playerStrumline.x;
             laneUnderlay.color = 0x000000;
@@ -90,7 +90,7 @@ class ExtraStrumline extends ScriptedModule {
                 sprite.cameras = [state.camHUD];
                 state.add(sprite);
             }
-        }
+        }*/
 
         // Replace Rating PopUps
         state.remove(state.comboPopUps);
@@ -124,7 +124,7 @@ class ExtraStrumline extends ScriptedModule {
     override function onUpdate(event:UpdateScriptEvent) {
         if (state == null) return;
         try {
-            if (badOptions.underlayOpacity > 0) updatePosition();
+            //if (badOptions.underlayOpacity > 0) updatePosition();
             if (badOptions.middlescroll && !badOptions.oppNotes) {
                 if (state.currentStage != null && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) updateOpponentNotes();
                 else if (state.isMinimalMode) updateOpponentNotes();

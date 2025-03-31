@@ -10,6 +10,8 @@ import funkin.ui.options.items.NumberPreferenceItem;
 
 import openfl.text.TextFormat;
 
+import haxe.Exception;
+
 import Main;
 import Std;
 
@@ -47,8 +49,7 @@ class BadHUDOptions extends Module {
         popUpType: "vanilla",
         remindKeys: true,
         muteMiss: true,
-        underlayOpacity: 0,
-        customScrollSpeed: false,
+        customScrollSpeed: true,
         scrollSpeedFactor: 18
     };
 
@@ -64,7 +65,7 @@ class BadHUDOptions extends Module {
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
         if (Std.isOfType(event.targetState, OptionsState)) {
-            var preferences:PreferencesMenu = event.targetState.pages.get("preferences");
+            var preferences:PreferencesMenu = event.targetState.optionsCodex.pages.get("preferences");
             if (preferences != null) {
                 switchFont();
                 Save.instance.flush();
@@ -73,7 +74,7 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemPercentage("Opponent Notes Opacity", "Adjust the opacity of the opponent's notes.", value -> badOptions.opponentNoteOpacity = value, badOptions.opponentNoteOpacity);
 
                 // HUD Customization
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold");
+                //preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold");
 
                 preferences.createPrefItemPercentage("HUD Opacity", "Adjust the opacity of the HUD.", value -> badOptions.hudOpacity = value, badOptions.hudOpacity);
                 preferences.createPrefItemEnum("HUD Font", "Select the font style for the HUD text.", [
@@ -98,18 +99,18 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemNumber("HUD Font Size", "Adjust the size of the HUD text.", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
 
                 // Extras
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold");
+                //preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold");
 
                 preferences.createPrefItemCheckbox("Enable Keybind Reminder", "If enabled, a keybind reminder will appear above notes when loaded, then fade.", value -> badOptions.remindKeys = value, badOptions.remindKeys);
                 preferences.createPrefItemCheckbox("Mute Miss Sounds", "If enabled, mutes the sound of the note being missed.", value -> badOptions.muteMiss = value, badOptions.muteMiss);
 
-                var underlayOpacityItem = new NumberPreferenceItem(0, (120 * preferences.items.length) + 30, "Note Underlay Opacity",
+/*                var underlayOpacityItem = new NumberPreferenceItem(0, (120 * preferences.items.length) + 30, "Note Underlay Opacity",
                 badOptions.underlayOpacity, 0, 100, 5, 0,
                 value -> badOptions.underlayOpacity = Std.int(value),
                 value -> return badOptions.underlayOpacity + "%"
                 );
                 preferences.items.addItem("Note Underlay Opacity", underlayOpacityItem);
-                preferences.preferenceItems.add(underlayOpacityItem.lefthandText);
+                preferences.preferenceItems.add(underlayOpacityItem.lefthandText);*/
 
                 preferences.createPrefItemCheckbox("Custom Scroll Speed", "If enabled, the Scroll Speed Factor option will be used.", value -> badOptions.customScrollSpeed = value, badOptions.customScrollSpeed);
 
@@ -187,7 +188,6 @@ typedef BadSaveData = {
     popUpType:String,
     remindKeys:Bool,
     muteMiss:Bool,
-    underlayOpacity:Int,
     customScrollSpeed:Bool,
     scrollSpeedFactor:Float
 }

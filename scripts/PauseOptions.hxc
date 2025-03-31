@@ -35,9 +35,9 @@ class PauseOptions extends ScriptedModule {
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
         if (Std.isOfType(event.targetState, OptionsState)) {
-            DiscordClient.instance.setPresence({ state: "Setting up Options", details: null });
+            //DiscordClient.instance.setPresence({ state: "Setting up Options", details: null });
             // HUD Manager Entry
-            var options:OptionsMenu = event.targetState.get_currentPage();
+            var options:OptionsMenu = event.targetState.optionsCodex.get_currentPage();
             var exit = options.items.members[options.items.length - 1];
             exit.y += 200;
             options.items.remove(exit);
