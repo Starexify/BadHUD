@@ -38,12 +38,18 @@ class PauseOptions extends ScriptedModule {
             // HUD Manager Entry
             var options:OptionsMenu = event.targetState.optionsCodex.get_currentPage();
             for (optionEntries in options.items.members) optionEntries.y -= 80;
-            var exit = options.items.members[options.items.length - 1];
-            exit.y += 110;
-            options.items.remove(exit);
-            var hudManager = options.items.createItem(0, (options.items.length - 1) * 100 + 20, "HUD MANAGER", "bold", () -> FlxG.state.openSubState(ScriptedMusicBeatSubState.init("ui.options.HUDManagerState")));
+            var lastItems = [
+                options.items.members[options.items.length - 3], // ngLogin
+                options.items.members[options.items.length - 2], // clearSave
+                options.items.members[options.items.length - 1]  // exit
+            ];
+            lastItems[0].y += 100; // ngLogin
+            lastItems[1].y += 100; // clearSave
+            lastItems[2].y += 110; // exit
+            for (item in lastItems) options.items.remove(item);
+            var hudManager = options.items.createItem(0, (options.items.length - 3) * 100 + 20, "HUD MANAGER", "bold", () -> FlxG.state.openSubState(ScriptedMusicBeatSubState.init("ui.options.HUDManagerState")));
             hudManager.x = (FlxG.width - hudManager.width) / 2;
-            options.items.add(exit);
+            for (item in lastItems) options.items.add(item);
 
             if (wasPaused && pauseState != null) pauseState.startPauseMusic();
         }
