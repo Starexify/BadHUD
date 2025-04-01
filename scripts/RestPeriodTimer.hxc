@@ -9,9 +9,10 @@ import funkin.play.PlayState;
 import funkin.save.Save;
 
 import flixel.FlxSprite;
+import flixel.addons.display.FlxPieDialShape;
+import flixel.addons.display.FlxRadialGauge;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
-import flixel.util.FlxSpriteUtil;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 
@@ -20,11 +21,7 @@ class RestPeriodTimer extends ScriptedModule {
     var state:PlayState;
 
     var restBarBG:FunkinSprite;
-
-    var restBar:FunkinSprite;
-    var restBarThickness:Int = 13;
-    var restBarRadius:Float;
-
+    var restBar:FlxRadialGauge;
     var restText:FlxText;
 
     var restTime:Float;
@@ -54,7 +51,8 @@ class RestPeriodTimer extends ScriptedModule {
 
         if (restTime > restBarFadeOut && noteTimeDelta > restBarMinimum) {
             restText.text = Std.string(Math.round((restTime - restBarFadeOut) / 1000));
-            drawCurvedBar(restTime - restBarFadeOut, noteTimeDelta - restBarFadeOut);
+            restBar.amount = (badOptions.restBarType == "countdown") ? (restTime - restBarFadeOut) / (noteTimeDelta - restBarFadeOut) : 1 - ((restTime - restBarFadeOut) / (noteTimeDelta - restBarFadeOut));
+
             for (sprite in restBarSprites) if (!sprite.visible) sprite.visible = true;
 
             // Fade out the rest bar when time is less than 1.5s
@@ -67,54 +65,6 @@ class RestPeriodTimer extends ScriptedModule {
     override function onNoteMiss(event:NoteScriptEvent) { if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time); }
 
     // Helper Methods
-    function drawCurvedBar(currentRestTime:Float, totalRestTime:Float) {
-        if (restBar == null) return;
-        // Clear previous drawing
-        restBar.graphic.bitmap.fillRect(restBar.graphic.bitmap.rect, 0x00000000);
-
-        var percentage = (badOptions.restBarType == "countdown") ? currentRestTime / totalRestTime : 1 - (currentRestTime / totalRestTime);
-        var startAngle = -Math.PI / 2;
-        var endAngle = startAngle + (percentage * Math.PI * 2);
-
-        drawArc(restBar, restBarRadius, restBarThickness, startAngle, endAngle);
-    }
-
-    function drawArc(sprite:FlxSprite, radius:Float, thickness:Int, startAngle:Float, endAngle:Float) {
-        try {
-            // Clear previous drawing
-            sprite.graphic.bitmap.fillRect(sprite.graphic.bitmap.rect, 0x00000000);
-
-            FlxSpriteUtil.beginDraw(0x00000000, {
-                thickness: thickness,
-                color: 0xFFFFFFFF,
-                capsStyle: 0
-            });
-
-            var centerX = radius + thickness;
-            var centerY = radius + thickness;
-            var flashGfx = FlxSpriteUtil.flashGfx;
-
-            // Move to start point
-            var startX = centerX + radius * Math.cos(startAngle);
-            var startY = centerY + radius * Math.sin(startAngle);
-            flashGfx.moveTo(startX, startY);
-
-            // Draw arc segments
-            var segments = Math.ceil(Math.abs(endAngle - startAngle) / (Math.PI / 36));
-            for (i in 1...segments + 1) {
-                var angle = startAngle + (endAngle - startAngle) * (i / segments);
-                var x = centerX + radius * Math.cos(angle);
-                var y = centerY + radius * Math.sin(angle);
-                flashGfx.lineTo(x, y);
-            }
-
-            sprite.dirty = true;
-            FlxSpriteUtil.endDraw(sprite);
-        } catch (e:Dynamic) {
-            trace("[BadHUD] Error in drawArc: " + e);
-        }
-    }
-
     function getNextNoteAndTime(currentTime:Float):{note:SongNoteData, time:Float} {
         if (state.currentChart == null || state.currentChart.notes == null) return;
         for (note in state.currentChart.notes) if (note.getMustHitNote() && note.time > currentTime) return { note: note, time: note.time };
@@ -131,12 +81,12 @@ class RestPeriodTimer extends ScriptedModule {
         restText.scrollFactor.set();
         restText.zIndex = 802;
 
-        restBar = new FunkinSprite();
+        var restBarRadius:Int = Std.int(restBarBG.width / 2.05);
+        restBar = new FlxRadialGauge();
+        restBar.makeShapeGraphic(FlxPieDialShape.CIRCLE, restBarRadius, restBarRadius / 1.65, 0xFFFFFFFF);
         restBar.scrollFactor.set(0, 0);
         restBar.zIndex = 801;
-        restBarRadius = restBarBG.width / 2.5;
-        var restBarWidth = Std.int((restBarRadius + restBarThickness) * 2);
-        restBar.makeGraphic(restBarWidth, restBarWidth, 0x00000000, true);
+        restBar.alpha = badOptions.hudOpacity / 100;
 
         var settings = Save.instance.modOptions.get("restBarSettings");
         if (settings != null) {
@@ -154,7 +104,6 @@ class RestPeriodTimer extends ScriptedModule {
         var centerY = restBarBG.y + restBarBG.height / 2;
         restText.setPosition(centerX - restText.width / 2, centerY - restText.height / 2);
         restBar.setPosition(centerX - restBar.width / 2, centerY - restBar.height / 2);
-
 
         restBarSprites = [restBarBG, restBar, restText];
 

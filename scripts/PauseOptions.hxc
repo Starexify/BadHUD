@@ -1,4 +1,3 @@
-import funkin.api.discord.DiscordClient;
 import funkin.modding.base.ScriptedMusicBeatSubState;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ScriptedModule;

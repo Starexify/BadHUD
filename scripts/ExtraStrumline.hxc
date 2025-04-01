@@ -113,7 +113,7 @@ class ExtraStrumline extends ScriptedModule {
             fadeInKeybinds(noteHeigth);
         }
 
-        if (badOptions.middlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) state.opponentStrumline.background.set_alpha(0);
+        if (badOptions.middlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) state.opponentStrumline.background.visible = false;
     }
 
     override function onUpdate(event:UpdateScriptEvent) {

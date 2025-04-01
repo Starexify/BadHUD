@@ -20,6 +20,8 @@ import funkin.util.Constants;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
+import flixel.addons.display.FlxPieDialShape;
+import flixel.addons.display.FlxRadialGauge;
 import flixel.math.FlxAngle;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
@@ -69,7 +71,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var healthBar:FlxBar;
     var restBarBG:FunkinSprite;
     var restText:FlxText;
-    var restBar:FunkinSprite;
+    var restBar:FlxRadialGauge;
     var statsText:FlxText;
     var judgementsText:FlxText;
     var kpsText:FlxText;
@@ -178,6 +180,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         playerStrumline = new Strumline(noteStyle, true);
         playerStrumline.y = Preferences.downscroll ? FlxG.height - playerStrumline.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
         playerStrumline.visible = playerStrum;
+        playerStrumline.background.visible = false;
         if (badOptions.middlescroll) playerStrumline.screenCenter(0x01);
         else playerStrumline.x = FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET;
         add(playerStrumline);
@@ -188,8 +191,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
             opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
             opponentStrumline.visible = oppStrum;
+            opponentStrumline.background.visible = false;
             if (badOptions.middlescroll) {
-                opponentStrumline.background.alpha = 0;
                 var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
                 for (i in 2...4) {
                     var note = opponentStrumline.strumlineNotes.members[i];
@@ -328,13 +331,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         var draggableRestBar = addDraggableSprite(restBarBG, "restBar");
 
-        var restBarThickness:Int = 13;
-        var restBarRadius = restBarBG.width / 2.5;
-        var restBarWidth = Std.int((restBarRadius + restBarThickness) * 2);
-        restBar = new FunkinSprite();
-        restBar.makeGraphic(restBarWidth, restBarWidth, 0x00000000, true);
-
-        drawArc(restBar, restBarRadius, restBarThickness, -Math.PI / 2, -Math.PI / 2 + Math.PI);
+        var restBarRadius:Int = Std.int(restBarBG.width / 2.05);
+        restBar = new FlxRadialGauge();
+        restBar.makeShapeGraphic(FlxPieDialShape.CIRCLE, restBarRadius, restBarRadius / 1.4, 0xFFFFFFFF);
 
         add(restBarBG);
         add(restBar);
@@ -1123,38 +1122,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
             if (additionalSettings != null) additionalSettings(settings);
         } else { if (defaultPosition != null) defaultPosition(sprite); }
-    }
-
-    function drawArc(sprite:FlxSprite, radius:Float, thickness:Int, startAngle:Float, endAngle:Float) {
-        try {
-            FlxSpriteUtil.beginDraw(0x00000000, {
-                thickness: thickness,
-                color: 0xFFFFFFFF,
-                capsStyle: 0
-            });
-
-            var centerX = radius + thickness;
-            var centerY = radius + thickness;
-            var flashGfx = FlxSpriteUtil.flashGfx;
-
-            // Move to start point
-            var startX = centerX + radius * Math.cos(startAngle);
-            var startY = centerY + radius * Math.sin(startAngle);
-            flashGfx.moveTo(startX, startY);
-
-            // Draw arc segments
-            var segments = Math.ceil(Math.abs(endAngle - startAngle) / (Math.PI / 36));
-            for (i in 1...segments + 1) {
-                var angle = startAngle + (endAngle - startAngle) * (i / segments);
-                var x = centerX + radius * Math.cos(angle);
-                var y = centerY + radius * Math.sin(angle);
-                flashGfx.lineTo(x, y);
-            }
-
-            FlxSpriteUtil.endDraw(sprite);
-        } catch (e:Dynamic) {
-            trace("[BadHUD] Error in drawArc: " + e);
-        }
     }
 
     function populateKeybindsTable(tableView:TableView):Array<KeybindEntry> {
