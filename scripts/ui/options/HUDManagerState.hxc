@@ -189,6 +189,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
             opponentStrumline.visible = oppStrum;
             if (badOptions.middlescroll) {
+                opponentStrumline.background.alpha = 0;
                 var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
                 for (i in 2...4) {
                     var note = opponentStrumline.strumlineNotes.members[i];

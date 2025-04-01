@@ -54,7 +54,6 @@ class ExtraStrumline extends ScriptedModule {
         // Center player strumline
         if (badOptions.middlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) {
             state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
-
             // Place last 2 opponent notes on right side
             if (badOptions.opponentNoteOpacity != 0) {
                 var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
@@ -69,28 +68,22 @@ class ExtraStrumline extends ScriptedModule {
         else state.opponentStrumline.visible = false;
 
         // Note Underlay
-        /*if (badOptions.underlayOpacity > 0) {
-            laneUnderlay = new FlxSprite(0, 0).makeGraphic(Std.int(state.playerStrumline.get_width()), FlxG.height * 2);
-            laneUnderlay.x = state.playerStrumline.x;
-            laneUnderlay.color = 0x000000;
-            laneUnderlay.alpha = badOptions.underlayOpacity / 100;
+        if (Preferences.get_strumlineBackgroundOpacity() > 0) {
+            var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.04);
+            leftGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, Preferences.get_strumlineBackgroundOpacity() / 100, true);
+            leftGradient.x = state.playerStrumline.background.x - fadeRegionWidth;
 
-            var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
+            rightGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, Preferences.get_strumlineBackgroundOpacity() / 100, false);
+            rightGradient.x = state.playerStrumline.background.x + state.playerStrumline.background.width;
 
-            leftGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, badOptions.underlayOpacity / 100, true);
-            leftGradient.x = state.playerStrumline.x - fadeRegionWidth;
-
-            rightGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, badOptions.underlayOpacity / 100, false);
-            rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
-
-            underlaySprites = [laneUnderlay, leftGradient, rightGradient];
+            underlaySprites = [leftGradient, rightGradient];
             for (sprite in underlaySprites) {
                 sprite.scrollFactor.set();
                 sprite.zIndex = -1;
                 sprite.cameras = [state.camHUD];
                 state.add(sprite);
             }
-        }*/
+        }
 
         // Replace Rating PopUps
         state.remove(state.comboPopUps);
@@ -119,6 +112,8 @@ class ExtraStrumline extends ScriptedModule {
             }
             fadeInKeybinds(noteHeigth);
         }
+
+        if (badOptions.middlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) state.opponentStrumline.background.set_alpha(0);
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
