@@ -37,10 +37,11 @@ class PauseOptions extends ScriptedModule {
             //DiscordClient.instance.setPresence({ state: "Setting up Options", details: null });
             // HUD Manager Entry
             var options:OptionsMenu = event.targetState.optionsCodex.get_currentPage();
+            for (optionEntries in options.items.members) optionEntries.y -= 80;
             var exit = options.items.members[options.items.length - 1];
-            exit.y += 200;
+            exit.y += 110;
             options.items.remove(exit);
-            var hudManager = options.items.createItem(0, options.items.length * 100, "HUD MANAGER", "bold", () -> FlxG.state.openSubState(ScriptedMusicBeatSubState.init("ui.options.HUDManagerState")));
+            var hudManager = options.items.createItem(0, (options.items.length - 1) * 100 + 20, "HUD MANAGER", "bold", () -> FlxG.state.openSubState(ScriptedMusicBeatSubState.init("ui.options.HUDManagerState")));
             hudManager.x = (FlxG.width - hudManager.width) / 2;
             options.items.add(exit);
 
