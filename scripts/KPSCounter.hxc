@@ -64,10 +64,8 @@ class KPSCounter extends ScriptedModule {
         if (state == null || !badOptions.kpsCounter) return;
 
         var currentTime = FlxG.game.ticks / 1000;
-
         // Check for key presses
         var pressedKeys = [state.controls.NOTE_DOWN_P, state.controls.NOTE_UP_P, state.controls.NOTE_LEFT_P, state.controls.NOTE_RIGHT_P];
-
         for (pressedKey in pressedKeys) if (pressedKey) lastSecondKeyPresses.push(currentTime);
 
         // Remove key presses older than 1 second

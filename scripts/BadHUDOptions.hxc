@@ -6,11 +6,8 @@ import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.Module;
 import funkin.ui.options.OptionsState;
 import funkin.ui.options.PreferencesMenu;
-import funkin.ui.options.items.NumberPreferenceItem;
 
 import openfl.text.TextFormat;
-
-import haxe.Exception;
 
 import Main;
 import Std;
@@ -103,21 +100,8 @@ class BadHUDOptions extends Module {
 
                 preferences.createPrefItemCheckbox("Enable Keybind Reminder", "If enabled, a keybind reminder will appear above notes when loaded, then fade.", value -> badOptions.remindKeys = value, badOptions.remindKeys);
                 preferences.createPrefItemCheckbox("Mute Miss Sounds", "If enabled, mutes the sound of the note being missed.", value -> badOptions.muteMiss = value, badOptions.muteMiss);
-
-/*                var underlayOpacityItem = new NumberPreferenceItem(0, (120 * preferences.items.length) + 30, "Note Underlay Opacity",
-                badOptions.underlayOpacity, 0, 100, 5, 0,
-                value -> badOptions.underlayOpacity = Std.int(value),
-                value -> return badOptions.underlayOpacity + "%"
-                );
-                preferences.items.addItem("Note Underlay Opacity", underlayOpacityItem);
-                preferences.preferenceItems.add(underlayOpacityItem.lefthandText);*/
-
                 preferences.createPrefItemCheckbox("Custom Scroll Speed", "If enabled, the Scroll Speed Factor option will be used.", value -> badOptions.customScrollSpeed = value, badOptions.customScrollSpeed);
-
-                preferences.createPrefItemNumber("Scroll Speed Factor", "Adjust the speed of the incoming notes.",
-                value -> badOptions.scrollSpeedFactor = value,
-                value -> Std.string(badOptions.scrollSpeedFactor / 10),
-                Std.int(badOptions.scrollSpeedFactor), 1, 9999, 1, 0);
+                preferences.createPrefItemNumber("Scroll Speed Factor", "Adjust the speed of the incoming notes.", value -> badOptions.scrollSpeedFactor = value, value -> Std.string(badOptions.scrollSpeedFactor / 10), Std.int(badOptions.scrollSpeedFactor), 1, 9999, 1, 0);
             }
         }
     }

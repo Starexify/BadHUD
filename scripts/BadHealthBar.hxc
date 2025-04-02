@@ -34,7 +34,7 @@ class BadHealthBar extends ScriptedModule {
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
         var badHooks = ModuleHandler.getModule("BadHooks");
-        if (badHooks != null) state = badHooks.scriptGet("state");
+        if (badHooks != null) state = badHooks.scriptGet('state');
         if (state == null) return;
         if (new BadHooks().healthBarExcluded.indexOf(state.currentChart.songName) != -1) return;
         healthBarBG = state.healthBarBG;
@@ -45,8 +45,8 @@ class BadHealthBar extends ScriptedModule {
         currentP2 = state.currentStage.getDad();
 
         // Health Bar
-        var settings = Save.instance.modOptions.get("healthBarSettings");
         if (badOptions.healthBar) {
+            var settings = Save.instance.modOptions.get("healthBarSettings");
             if (settings != null) {
                 healthBarBG.angle = healthBar.angle = settings[4];
                 healthBarBG.scale.x = healthBar.scale.x = settings[2];
@@ -163,7 +163,7 @@ class BadHealthBar extends ScriptedModule {
     }
 
     function getDominantColor(sprite:FlxSprite, sampleRate:Int = 4) {
-        if (sprite == null || sprite.pixels == null) return;
+        if (sprite == null || sprite.pixels == null) return 0xFFFFFFFF;
 
         var colorData:Array<{color:Int, count:Int}> = [];
         var maxCount = 0;
@@ -179,19 +179,6 @@ class BadHealthBar extends ScriptedModule {
 
                 if (color == 0 || (color >>> 24) <= 13) continue;
                 if (color == 0xFFF000000 || color == 0x00FFFFFF) continue;
-
-                if (color == dominantColor) {
-                    for (data in colorData) {
-                        if (data.color == color) {
-                            data.count++;
-                            if (data.count > maxCount) {
-                                maxCount = data.count;
-                            }
-                            break;
-                        }
-                    }
-                    continue;
-                }
 
                 var found = false;
                 for (i in 0...colorData.length) {
@@ -213,7 +200,6 @@ class BadHealthBar extends ScriptedModule {
             }
         }
 
-        colorData = [];
         sprite.pixels.unlock();
         return dominantColor;
     }
