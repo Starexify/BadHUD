@@ -158,7 +158,7 @@ class BadHealthBar extends ScriptedModule {
         if (badOptions.iconColors) {
             var bfHealthColor = getDominantColor(iconP1, sampleRate);
             var opponentHealthColor = getDominantColor(iconP2, sampleRate);
-            healthBar.createFilledBar(opponentHealthColor, bfHealthColor);
+            if (healthBar != null) healthBar.createFilledBar(opponentHealthColor, bfHealthColor);
         }
     }
 
