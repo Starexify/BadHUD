@@ -30,6 +30,12 @@ class CustomScrollSpeed extends ScriptedModule {
         state.opponentStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
     }
 
+    override function onSongStart(event) {
+        if (!badOptions.customScrollSpeed) return;
+        state.playerStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
+        state.opponentStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
+    }
+
     override function onPause(event:PauseScriptEvent) {
         if (!badOptions.customScrollSpeed) return;
         // Binding with BadHUDOptions for size
