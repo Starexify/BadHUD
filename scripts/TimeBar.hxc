@@ -95,6 +95,7 @@ class TimeBar extends ScriptedModule {
     }
 
     override function onSongStart(event:ScriptEvent) {
+        if (!badOptions.timeBar) return;
         for (sprite in timeBarSprites)
             if (sprite != null && sprite.alpha != (badOptions.hudOpacity / 100))
                 FlxTween.tween(sprite, {alpha: badOptions.hudOpacity / 100}, 0.5, { ease: FlxEase.circOut, onComplete: tween -> state.refresh() });

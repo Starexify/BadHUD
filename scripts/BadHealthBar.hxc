@@ -61,6 +61,8 @@ class BadHealthBar extends ScriptedModule {
                 }
             }
 
+            // Icon Colored Health Bar
+            updateHealthIconsColor(3);
             state.healthBar.alpha = badOptions.hudOpacity / 100;
             state.healthBarBG.alpha = badOptions.hudOpacity / 100;
         } else {
@@ -124,9 +126,6 @@ class BadHealthBar extends ScriptedModule {
             }
         }
 
-        // Icon Colored Health Bar
-        updateHealthIconsColor(3);
-
         if (!state.isMinimalMode) {
             if (iconP1 != null) iconP1.alpha = badOptions.hudOpacity / 100;
             if (iconP2 != null) iconP2.alpha = badOptions.hudOpacity / 100;
@@ -149,9 +148,7 @@ class BadHealthBar extends ScriptedModule {
     // bop for icons, I think onBeatHit is better than onUpdate and fixes it ?
     override function onBeatHit(event:SongTimeScriptEvent) { if (state != null && !state.isMinimalMode) updateIconsPosition(); }
 
-    override function onUpdate(event:UpdateScriptEvent) {
-        if (state != null && !state.isMinimalMode) updateIconsPosition();
-    }
+    override function onUpdate(event:UpdateScriptEvent) { if (state != null && !state.isMinimalMode) updateIconsPosition(); }
 
     // Helper Methods
     function updateHealthIconsColor(sampleRate:Int) {
@@ -205,7 +202,7 @@ class BadHealthBar extends ScriptedModule {
     }
 
     function updateIconsPosition() {
-        if (iconP1 == null || iconP2 == null) return;
+        if (iconP1 == null || iconP2 == null || !badOptions.healthBar) return;
 
         // Rotate and move icons according to the Modified Bar !
         if (badOptions.healthIconPosition != "ends" && badOptions.healthIconPosition != "centered") {
