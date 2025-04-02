@@ -12,6 +12,7 @@ import funkin.play.notes.Strumline;
 import funkin.play.notes.notestyle.NoteStyle;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.ui.debug.charting.ChartEditorState;
 import funkin.util.Constants;
 import funkin.util.InputUtil;
 import funkin.save.Save;
@@ -28,7 +29,6 @@ import openfl.display.BitmapData;
 import haxe.Exception;
 
 import Std;
-import funkin.ui.debug.charting.ChartEditorState;
 
 class ExtraStrumline extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
