@@ -28,6 +28,7 @@ import openfl.display.BitmapData;
 import haxe.Exception;
 
 import Std;
+import funkin.ui.debug.charting.ChartEditorState;
 
 class ExtraStrumline extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -129,7 +130,7 @@ class ExtraStrumline extends ScriptedModule {
         }
     }
 
-    override function onNoteHit(event:HitNoteScriptEvent) { if (state != null && !state.isChartingMode && event.note.noteData.getMustHitNote()) popUpRatings(event.judgement); }
+    override function onNoteHit(event:HitNoteScriptEvent) { if (state != null && !Std.isOfType(event.targetState, ChartEditorState) && event.note.noteData.getMustHitNote()) popUpRatings(event.judgement); }
 
     override function onNoteMiss(event:NoteScriptEvent) { event.playSound = !badOptions.muteMiss; }
 

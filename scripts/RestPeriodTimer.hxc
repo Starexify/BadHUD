@@ -45,7 +45,7 @@ class RestPeriodTimer extends ScriptedModule {
         var restBarFadeOut = 1000; // 1s
         var restBarMinimum = 5000; // 5s
         var songPosition = state.conductorInUse.songPosition;
-        var incomingNoteTime = getNextNoteAndTime(songPosition) != null ? getNextNoteAndTime(songPosition).time : 0;
+        var incomingNoteTime = getNextNoteAndTime(songPosition).time ?? 0;
         var noteTimeDelta = incomingNoteTime - lastHitNoteTime;
         restTime = incomingNoteTime - songPosition;
 
