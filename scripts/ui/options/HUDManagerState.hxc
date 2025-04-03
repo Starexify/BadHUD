@@ -32,6 +32,7 @@ import flixel.util.FlxSpriteUtil;
 import haxe.ui.components.CheckBox;
 import haxe.ui.components.DropDown;
 import haxe.ui.components.Label;
+import haxe.ui.components.NumberStepper;
 import haxe.ui.components.OptionStepper;
 import haxe.ui.containers.Frame;
 import haxe.ui.containers.HBox;
@@ -47,7 +48,6 @@ import haxe.ui.data.ArrayDataSource;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.events.UIEvent;
 import haxe.ui.layouts.VerticalGridLayout;
-import haxe.ui.components.NumberStepper;
 
 class HUDManagerState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -559,15 +559,14 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             noteStyleBox.percentWidth = 100;
 
             var label = new Label();
-            label.text = "Note Style: \n(Only Visual!)";
-            label.percentWidth = 30;
+            label.text = "Note Style \n(Only Visual!)";
+            label.percentWidth = 40;
             label.verticalAlign = "center";
-            label.textAlign = "right";
 
             var noteStyleList:DropDown = new DropDown();
             noteStyleList.id = "noteStyleList";
             noteStyleList.value = ChartEditorDropdowns.populateDropdownWithNoteStyles(noteStyleList, noteStyle.id);
-            noteStyleList.percentWidth = 70;
+            noteStyleList.percentWidth = 60;
             noteStyleList.searchable = true;
             // Change NoteStyle and update the Draggable
             noteStyleList.onChange = (event:UIEvent) -> {
@@ -611,7 +610,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "popup", text: "Pop-Up"}
             ];
 
-            var ratingAnimationBox = createOptionBox("Animation Type:", badOptions.popUpType, ratingAnimations, value -> badOptions.popUpType = value);
+            var ratingAnimationBox = createOptionBox("Animation Type", badOptions.popUpType, ratingAnimations, value -> badOptions.popUpType = value);
 
             vbox.addComponent(noteStyleBox);
             vbox.addComponent(ratingAnimationBox);
@@ -627,7 +626,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "ends", text: "Ends"}
             ];
 
-            var iconsPositionBox = createOptionBox("Health Icons Position:", badOptions.healthIconPosition, iconPositions, value -> badOptions.healthIconPosition = value);
+            var iconsPositionBox = createOptionBox("Health Icons Position", badOptions.healthIconPosition, iconPositions, value -> badOptions.healthIconPosition = value);
             var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
             var coloredBarCheck = createCheckBox("Icon Colored Bar (May reduce performance!)", badOptions.iconColors, 100, (event:UIEvent) -> badOptions.iconColors = event.target.value);
 
@@ -654,8 +653,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "timeBarMinimalRounded", text: "Minimal Rounded"},
             ];
 
-            var displayBox = createOptionBox("Text Display:", badOptions.timeBarType, displayStyles, value -> badOptions.timeBarType = value);
-            var styleBox = createOptionBox("Bar Style:", badOptions.timeBarStyle, barStyles, value -> {
+            var displayBox = createOptionBox("Text Display", badOptions.timeBarType, displayStyles, value -> badOptions.timeBarType = value);
+            var styleBox = createOptionBox("Bar Style", badOptions.timeBarStyle, barStyles, value -> {
                 badOptions.timeBarStyle = value;
                 var selectedDraggableType:String = null;
                 for (draggable in draggableSprites) {
@@ -688,8 +687,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "countup", text: "Countup"},
             ];
 
-            var displayBox = createOptionBox("Display Type:", badOptions.restBarType, displayTypes, value -> badOptions.restBarType = value);
-            var startThreshold = createNumberBox("Start Threshold:", 2, 0.1, 1, badOptions.restBarStartThreshold, displayTypes, value -> badOptions.restBarStartThreshold = value);
+            var displayBox = createOptionBox("Display Type", badOptions.restBarType, displayTypes, value -> badOptions.restBarType = value);
+            var startThreshold = createNumberBox("Start Threshold", "s", 2, 0.1, 1, badOptions.restBarStartThreshold, value -> badOptions.restBarStartThreshold = value);
 
             vbox.addComponent(displayBox);
             vbox.addComponent(startThreshold);
@@ -702,19 +701,14 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "right", text: "Right"},
             ];
 
-            var textOrientationBox = createOptionBox(
-                "Text Orientation:",
-                badOptions.judgementsOrt,
-                textOrientation,
-                value -> {
-                    badOptions.judgementsOrt = value;
-                    switch (badOptions.judgementsOrt) {
-                        case "left": judgementsText.text = "Sicks: 0" + "\nGoods: 0" + "\nBads: 0" + "\nShits: 0";
-                        case "center": judgementsText.text = "Sicks: 0" + " | Goods: 0" + " | Bads: 0" + " | Shits: 0";
-                        case "right": judgementsText.text = "0 Sicks" + "\n0 Goods" + "\n0 Bads" + "\n0 Shits";
-                    }
+            var textOrientationBox = createOptionBox("Text Orientation", badOptions.judgementsOrt, textOrientation, value -> {
+                badOptions.judgementsOrt = value;
+                switch (badOptions.judgementsOrt) {
+                    case "left": judgementsText.text = "Sicks: 0" + "\nGoods: 0" + "\nBads: 0" + "\nShits: 0";
+                    case "center": judgementsText.text = "Sicks: 0" + " | Goods: 0" + " | Bads: 0" + " | Shits: 0";
+                    case "right": judgementsText.text = "0 Sicks" + "\n0 Goods" + "\n0 Bads" + "\n0 Shits";
                 }
-            );
+            });
 
             vbox.addComponent(textOrientationBox);
         }
@@ -725,33 +719,21 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "psych", text: "Psych Engine"},
                 {id: "osu", text: "osu!Mania"},
             ];
-
-            var accuracySystemBox = createOptionBox(
-                "Accuracy System:",
-                badOptions.accuracyType,
-                accuracySystem,
-                value -> badOptions.accuracyType = value
-            );
-
             var textOrientation:Array<BasicEntry> = [
                 {id: "left", text: "Left"},
                 {id: "center", text: "Center"},
                 {id: "right", text: "Right"},
             ];
 
-            var textOrientationBox = createOptionBox(
-                "Text Orientation:",
-                badOptions.statsOrt,
-                textOrientation,
-                value -> {
-                    badOptions.statsOrt = value;
-                    switch (badOptions.statsOrt) {
-                        case "left": statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: 0" + "\nCombo: 0";
-                        case "center": statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: 0";
-                        case "right": statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n0 Rating" + "\n0 Combo";
-                    }
+            var accuracySystemBox = createOptionBox("Accuracy System", badOptions.accuracyType, accuracySystem, value -> badOptions.accuracyType = value);
+            var textOrientationBox = createOptionBox("Text Orientation", badOptions.statsOrt, textOrientation, value -> {
+                badOptions.statsOrt = value;
+                switch (badOptions.statsOrt) {
+                    case "left": statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: 0" + "\nCombo: 0";
+                    case "center": statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: 0";
+                    case "right": statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n0 Rating" + "\n0 Combo";
                 }
-            );
+            });
 
             var commaSeparationCheck = createCheckBox("Comma Separated Score", badOptions.commaSeparatedScore, 100, (event:UIEvent) -> badOptions.commaSeparatedScore = event.target.value);
 
@@ -767,19 +749,14 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "right", text: "Right"},
             ];
 
-            var textOrientationBox = createOptionBox(
-                "Text Orientation:",
-                badOptions.kpsOrt,
-                textOrientation,
-                value -> {
-                    badOptions.kpsOrt = value;
-                    switch (badOptions.kpsOrt) {
-                        case "left": kpsText.text = "KPS: 0" + "\nMax KPS: 0";
-                        case "center": kpsText.text = "KPS: 0" + "| Max KPS: 0";
-                        case "right": kpsText.text = "0 KPS" + "\n0 Max KPS";
-                    }
+            var textOrientationBox = createOptionBox("Text Orientation", badOptions.kpsOrt, textOrientation, value -> {
+                badOptions.kpsOrt = value;
+                switch (badOptions.kpsOrt) {
+                    case "left": kpsText.text = "KPS: 0" + "\nMax KPS: 0";
+                    case "center": kpsText.text = "KPS: 0" + "| Max KPS: 0";
+                    case "right": kpsText.text = "0 KPS" + "\n0 Max KPS";
                 }
-            );
+            });
 
             vbox.addComponent(textOrientationBox);
         }
@@ -951,7 +928,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var label = new Label();
         label.text = labelText;
         label.percentWidth = 35;
-        label.textAlign = "right";
         label.verticalAlign = "center";
 
         var stepper:OptionStepper = new OptionStepper();
@@ -973,18 +949,17 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return box;
     }
 
-    function createNumberBox(labelText:String, min:Float, step:Float, precision:Int, currentValue:Float, options:Array<BasicEntry>, onChangeHandler:Float -> Void):HBox {
+    function createNumberBox(labelText:String, valueFormat:String, min:Float, step:Float, precision:Int, currentValue:Float, onChangeHandler:Float -> Void):HBox {
         var box = new HBox();
         box.percentWidth = 100;
 
         var label = new Label();
         label.text = labelText;
-        label.percentWidth = 35;
-        label.textAlign = "right";
+        label.percentWidth = 55;
         label.verticalAlign = "center";
 
         var stepper:NumberStepper = new NumberStepper();
-        stepper.percentWidth = 65;
+        stepper.percentWidth = 35;
         stepper.pos = currentValue;
         stepper.min = min;
         stepper.precision = precision;
@@ -993,8 +968,14 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var callback_persist = onChangeHandler;
         stepper.onChange = (event:UIEvent) -> callback_persist(stepper.pos);
 
+        var symbolLabel = new Label();
+        symbolLabel.text = valueFormat;
+        symbolLabel.percentWidth = 10;
+        symbolLabel.verticalAlign = "center";
+
         box.addComponent(label);
         box.addComponent(stepper);
+        box.addComponent(symbolLabel);
         return box;
     }
 
