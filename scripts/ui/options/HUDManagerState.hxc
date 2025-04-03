@@ -47,6 +47,7 @@ import haxe.ui.data.ArrayDataSource;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.events.UIEvent;
 import haxe.ui.layouts.VerticalGridLayout;
+import haxe.ui.components.NumberStepper;
 
 class HUDManagerState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -610,12 +611,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "popup", text: "Pop-Up"}
             ];
 
-            var ratingAnimationBox = createOptionBox(
-                "Animation Type:",
-                badOptions.popUpType,
-                ratingAnimations,
-                value -> badOptions.popUpType = value
-            );
+            var ratingAnimationBox = createOptionBox("Animation Type:", badOptions.popUpType, ratingAnimations, value -> badOptions.popUpType = value);
 
             vbox.addComponent(noteStyleBox);
             vbox.addComponent(ratingAnimationBox);
@@ -631,13 +627,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "ends", text: "Ends"}
             ];
 
-            var iconsPositionBox = createOptionBox(
-                "Health Icons Position:",
-                badOptions.healthIconPosition,
-                iconPositions,
-                value -> badOptions.healthIconPosition = value
-            );
-
+            var iconsPositionBox = createOptionBox("Health Icons Position:", badOptions.healthIconPosition, iconPositions, value -> badOptions.healthIconPosition = value);
             var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
             var coloredBarCheck = createCheckBox("Icon Colored Bar (May reduce performance!)", badOptions.iconColors, 100, (event:UIEvent) -> badOptions.iconColors = event.target.value);
 
@@ -664,39 +654,27 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "timeBarMinimalRounded", text: "Minimal Rounded"},
             ];
 
-            var displayBox = createOptionBox(
-                "Text Display:",
-                badOptions.timeBarType,
-                displayStyles,
-                value -> badOptions.timeBarType = value
-            );
-
-            var styleBox = createOptionBox(
-                "Bar Style:",
-                badOptions.timeBarStyle,
-                barStyles,
-                value -> {
-                    badOptions.timeBarStyle = value;
-                    var selectedDraggableType:String = null;
-                    for (draggable in draggableSprites) {
-                        if (draggable.isSelected) selectedDraggableType = draggable.spriteType;
-                        for (draggable in draggableSprites) if (draggable.spriteType == "timeBar") {
-                            for (linked in draggable.linkedSprites) remove(linked.sprite);
-                        }
-                    }
-                    draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "timeBar");
-                    initTimeBarSprite();
-                    if (selectedDraggableType != null) for (draggable in draggableSprites) {
-                        if (draggable.spriteType == selectedDraggableType) {
-                            draggable.isSelected = true;
-                            updateHighlight(draggable);
-                            updateText(draggable);
-                            break;
-                        }
+            var displayBox = createOptionBox("Text Display:", badOptions.timeBarType, displayStyles, value -> badOptions.timeBarType = value);
+            var styleBox = createOptionBox("Bar Style:", badOptions.timeBarStyle, barStyles, value -> {
+                badOptions.timeBarStyle = value;
+                var selectedDraggableType:String = null;
+                for (draggable in draggableSprites) {
+                    if (draggable.isSelected) selectedDraggableType = draggable.spriteType;
+                    for (draggable in draggableSprites) if (draggable.spriteType == "timeBar") {
+                        for (linked in draggable.linkedSprites) remove(linked.sprite);
                     }
                 }
-            );
-
+                draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "timeBar");
+                initTimeBarSprite();
+                if (selectedDraggableType != null) for (draggable in draggableSprites) {
+                    if (draggable.spriteType == selectedDraggableType) {
+                        draggable.isSelected = true;
+                        updateHighlight(draggable);
+                        updateText(draggable);
+                        break;
+                    }
+                }
+            });
             var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
 
             vbox.addComponent(displayBox);
@@ -710,14 +688,11 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "countup", text: "Countup"},
             ];
 
-            var displayBox = createOptionBox(
-                "Display Type:",
-                badOptions.restBarType,
-                displayTypes,
-                value -> badOptions.restBarType = value
-            );
+            var displayBox = createOptionBox("Display Type:", badOptions.restBarType, displayTypes, value -> badOptions.restBarType = value);
+            var startThreshold = createNumberBox("Start Threshold:", 2, 0.1, 1, badOptions.restBarStartThreshold, displayTypes, value -> badOptions.restBarStartThreshold = value);
 
             vbox.addComponent(displayBox);
+            vbox.addComponent(startThreshold);
         }
 
         if (draggable.spriteType == "judgementsText") {
@@ -998,6 +973,31 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return box;
     }
 
+    function createNumberBox(labelText:String, min:Float, step:Float, precision:Int, currentValue:Float, options:Array<BasicEntry>, onChangeHandler:Float -> Void):HBox {
+        var box = new HBox();
+        box.percentWidth = 100;
+
+        var label = new Label();
+        label.text = labelText;
+        label.percentWidth = 35;
+        label.textAlign = "right";
+        label.verticalAlign = "center";
+
+        var stepper:NumberStepper = new NumberStepper();
+        stepper.percentWidth = 65;
+        stepper.pos = currentValue;
+        stepper.min = min;
+        stepper.precision = precision;
+        stepper.step = step;
+
+        var callback_persist = onChangeHandler;
+        stepper.onChange = (event:UIEvent) -> callback_persist(stepper.pos);
+
+        box.addComponent(label);
+        box.addComponent(stepper);
+        return box;
+    }
+
     function updateHighlight(?draggable) {
         if (draggable == null || !draggable.isSelected) {
             highlightOutline.visible = false;
@@ -1183,12 +1183,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     function applyBoundaryConstraints(newX:Float, newY:Float, sprite:FlxSprite):{x:Float, y:Float} {
         // Fast path for unrotated sprites
-        if (sprite.angle % 360 == 0) {
-            return {
-                x: Math.max(0, Math.min(FlxG.width - sprite.width, newX)),
-                y: Math.max(0, Math.min(FlxG.height - sprite.height, newY))
-            };
-        }
+        if (sprite.angle % 360 == 0) return {
+            x: Math.max(0, Math.min(FlxG.width - sprite.width, newX)),
+            y: Math.max(0, Math.min(FlxG.height - sprite.height, newY))
+        };
 
         // Only calculate corners for rotated sprites
         var origX = sprite.x;
@@ -1218,10 +1216,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             pointY <= sprite.y + sprite.height;
         }
 
-        // Get corners for rotated sprite
         var corners = getRotatedCorners(sprite);
-
-        // Check if point is inside the rotated rectangle using point-in-polygon test
         return isPointInPolygon(pointX, pointY, corners);
     }
 

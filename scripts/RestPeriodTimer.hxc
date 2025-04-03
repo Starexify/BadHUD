@@ -43,13 +43,12 @@ class RestPeriodTimer extends ScriptedModule {
     override function onUpdate(event:UpdateScriptEvent) {
         if (state == null || !badOptions.restBar || restText == null) return;
         var restBarFadeOut = 1000; // 1s
-        var restBarMinimum = 5000; // 5s
         var songPosition = state.conductorInUse.songPosition;
         var incomingNoteTime = getNextNoteAndTime(songPosition)?.time ?? 0;
         var noteTimeDelta = incomingNoteTime - lastHitNoteTime;
         restTime = incomingNoteTime - songPosition;
 
-        if (restTime > restBarFadeOut && noteTimeDelta > restBarMinimum) {
+        if (restTime > restBarFadeOut && noteTimeDelta > badOptions.restBarStartThreshold * 1000) {
             restText.text = Std.string(Math.round((restTime - restBarFadeOut) / 1000));
             restBar.amount = (badOptions.restBarType == "countdown") ? (restTime - restBarFadeOut) / (noteTimeDelta - restBarFadeOut) : 1 - ((restTime - restBarFadeOut) / (noteTimeDelta - restBarFadeOut));
 
