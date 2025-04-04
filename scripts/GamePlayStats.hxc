@@ -54,13 +54,12 @@ class GamePlayStats extends ScriptedModule {
         if (new BadHooks().gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
 
         tallies = Highscore.tallies;
-        var textFont = new BadHUDOptions().font;
         var textSize = badOptions.hudFontSize;
 
         // Remove and Init HUD Elements
         state.remove(state.scoreText);
-        initStats(textSize, textFont);
-        initJudgements(textSize, textFont);
+        initStats(textSize, badOptions.hudFont);
+        initJudgements(textSize, badOptions.hudFont);
 
         if (PlayStatePlaylist.isStoryMode) talliesLevel = Highscore.talliesLevel;
     }

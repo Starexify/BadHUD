@@ -38,7 +38,7 @@ class KPSCounter extends ScriptedModule {
 
         // Create KPS Text
         kpsText = new FlxText();
-        kpsText.setFormat(Paths.font(new BadHUDOptions().font), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        kpsText.setFormat(Paths.font(badOptions.hudFont), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         kpsText.borderSize = 1.25;
 
         var settings = Save.instance.modOptions.get("kpsTextSettings");

@@ -104,7 +104,7 @@ class ExtraStrumline extends ScriptedModule {
                 var keyName = InputUtil.getKeyName(keyArray[0]);
                 var keybindText = new FlxText(staticNote.x, staticNote.y, staticNote.width, keyName);
                 keybindText.y = staticNote.y + staticNote.height / 2 - keybindText.height * staticNote.scale.y;
-                keybindText.setFormat(Paths.font(new BadHUDOptions().font), 32, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+                keybindText.setFormat(Paths.font(badOptions.hudFont), 32, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
                 keybindText.alpha = 0;
                 keybindText.cameras = [state.camHUD];
                 state.add(keybindText);

@@ -6,17 +6,21 @@ import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.Module;
 import funkin.ui.options.OptionsState;
 import funkin.ui.options.PreferencesMenu;
+import funkin.util.tools.StringTools;
 
 import openfl.text.TextFormat;
+
+import haxe.ds.StringMap;
+import haxe.io.Path;
 
 import Main;
 import Std;
 
 class BadHUDOptions extends Module {
     var badOptions:BadSaveData = Save.instance.modOptions.get("badOptions");
+    var fontOptions:StringMap<String>;
 
     // Hooks or smth like that for other classes
-    var font:String;
     var fontSize:Int;
 
     var saveObject:BadSaveData = {
@@ -40,7 +44,7 @@ class BadHUDOptions extends Module {
         kpsOrt: "left",
         kpsCounter: false,
         hudOpacity: 100,
-        hudFont: 0,
+        hudFont: "vcr",
         hudFontSize: 21,
         accuracyType: "vanilla",
         commaSeparatedScore: false,
@@ -55,17 +59,16 @@ class BadHUDOptions extends Module {
         super("BadHUDOptions", 1);
         // Default Options (First Start)
         if (!Save.instance.modOptions.exists("badOptions")) Save.instance.modOptions.set("badOptions", saveObject);
-        else switchFont();
         Save.instance.flush();
-
-        changeDebugDisplay(font);
+        switchFont(badOptions.hudFont);
+        changeDebugDisplay(badOptions.hudFont);
     }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
         if (Std.isOfType(event.targetState, OptionsState)) {
             var preferences:PreferencesMenu = event.targetState.optionsCodex.pages.get("preferences");
             if (preferences != null) {
-                switchFont();
+                switchFont(badOptions.hudFont);
                 Save.instance.flush();
 
                 preferences.createPrefItemCheckbox("Middlescroll", "If enabled, player notes will be centerd on the screen, and opponent's notes will be split.", value -> badOptions.middlescroll = value, badOptions.middlescroll);
@@ -75,25 +78,26 @@ class BadHUDOptions extends Module {
                 //preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold");
 
                 preferences.createPrefItemPercentage("HUD Opacity", "Adjust the opacity of the HUD.", value -> badOptions.hudOpacity = value, badOptions.hudOpacity);
-                preferences.createPrefItemEnum("HUD Font", "Select the font style for the HUD text.", [
-                    "0" => "VCR OSD Mono (Vanilla)",
-                    "1" => "VCR OSD Neue",
-                    "2" => "Minecraft",
-                    "3" => "Retro Gaming",
-                    "4" => "Roblox",
-                    "5" => "Super Mario 64",
-                    "6" => "New Super Mario Font U",
-                    "7" => "ModernDOS",
-                    "8" => "Euxoi",
-                    "9" => "House of Terror",
-                    "10" => "Determination",
-                    "11" => "Wii Sans 2",
-                    "12" => "fbUsv8C5eI"
-                ], value -> {
-                    badOptions.hudFont = Std.parseInt(value);
-                    switchFont();
-                    changeDebugDisplay(font);
-                }, Std.string(badOptions.hudFont));
+
+                var fontList:Array<String> = Assets.list("FONT");
+                fontOptions = new StringMap();
+                var excludedFonts = ["vcr", "VCR OSD Neue", "ModernDOS", "fbUsv8C5eI", "DS DIGI"];
+                for (font in fontList) {
+                    var fileName = Path.withoutDirectory(font);
+                    var displayName = fileName;
+                    displayName = StringTools.stripSuffix(displayName, ".ttf");
+                    displayName = StringTools.stripSuffix(displayName, ".TTF");
+                    displayName = StringTools.stripSuffix(displayName, ".otf");
+                    displayName = displayName.split("_").join(" ").split("-").join(" ");
+                    if (excludedFonts.contains(displayName) == -1) displayName = StringTools.toTitleCase(displayName);
+                    if (displayName == "vcr") displayName = "VCR OSD Mono (Vanilla)";
+                    fontOptions.set(fileName, displayName);
+                }
+                preferences.createPrefItemEnum("HUD Font", "Select the font style for the HUD text.", fontOptions, value -> {
+                    badOptions.hudFont = value;
+                    changeDebugDisplay(badOptions.hudFont);
+                    switchFont(value);
+                }, badOptions.hudFont);
                 preferences.createPrefItemNumber("HUD Font Size", "Adjust the size of the HUD text.", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
 
                 // Extras
@@ -114,34 +118,16 @@ class BadHUDOptions extends Module {
         }
     }
 
-    function switchFont() {
-        switch (badOptions.hudFont) {
-            case 0: font = "vcr.ttf";
-                fontSize = 21;
-            case 1: font = "VCRosdNEUE.ttf"; // 16px
-                fontSize = 21;
-            case 2: font = "Minecraft.ttf";
-                fontSize = 16;
-            case 3: font = "Retro Gaming.ttf"; // 11px
-                fontSize = 18;
-            case 4: font = "RobloxFont-Regular.ttf"; // ?px
-                fontSize = 28;
-            case 5: font = "Super Mario 64.ttf"; // ?px
-                fontSize = 24;
-            case 6: font = "New Super Mario Font U.ttf"; // ?px
-                fontSize = 24;
-            case 7: font = "ModernDOS.ttf"; // 16px
-                fontSize = 21;
-            case 8: font = "Euxoi.ttf";
-                fontSize = 28;
-            case 9: font = "House_Of_Terror.ttf"; // ?px
-                fontSize = 24;
-            case 10: font = "determination-regular.ttf";
-                fontSize = 24;
-            case 11: font = "wii_sans_v2_by_notsoartisty.ttf"; // ?px
-                fontSize = 24;
-            case 12: font = "fbUsv8C5eI.ttf"; // ?px
-                fontSize = 24;
+    function switchFont(value:String) {
+        switch (value) {
+            case "vcr.ttf": fontSize = 21;
+            case "VCR OSD Neue.ttf": fontSize = 21; // 16px
+            case "Minecraft.ttf": fontSize = 16;
+            case "Retro Gaming.ttf": fontSize = 18; // 11px
+            case "RobloxFont-Regular.ttf": fontSize = 28; // ?px
+            case "ModernDOS.ttf": fontSize = 21; // 16px
+            case "Euxoi.ttf": fontSize = 28;
+            default: fontSize = 24;
         }
     }
 }
@@ -167,7 +153,7 @@ typedef BadSaveData = {
     kpsOrt:String,
     kpsCounter:Bool,
     hudOpacity:Int,
-    hudFont:Int,
+    hudFont:String,
     hudFontSize:Int,
     accuracyType:String,
     commaSeparatedScore:Bool,

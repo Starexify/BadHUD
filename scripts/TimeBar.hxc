@@ -44,7 +44,7 @@ class TimeBar extends ScriptedModule {
     function initTimeBar() {
         timeText = new FlxText();
         var fontSize = badOptions.timeBarStyle == "timeBarPsychEngine" ? 32 : new BadHUDOptions().fontSize;
-        timeText.setFormat(Paths.font(new BadHUDOptions().font), fontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        timeText.setFormat(Paths.font(badOptions.hudFont), fontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
         timeText.borderSize = badOptions.timeBarStyle == "timeBarPsychEngine" ? 2 : 1.75;
         timeText.scrollFactor.set();
         if (!state.isMinimalMode) timeText.zIndex = state.iconP1.zIndex + 1;
