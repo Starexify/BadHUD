@@ -84,7 +84,7 @@ class TimeBar extends ScriptedModule {
 
         for (sprite in timeBarSprites) if (sprite != null) {
             sprite.alpha = 0;
-            sprite.cameras = [state.camHUD];
+            sprite.camera = state.camHUD;
         }
 
         if (badOptions.timeBarStyle != "off") {

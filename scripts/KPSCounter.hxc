@@ -56,7 +56,7 @@ class KPSCounter extends ScriptedModule {
 
         kpsText.zIndex = 851;
         kpsText.scrollFactor.set();
-        kpsText.cameras = [state.camHUD];
+        kpsText.camera = state.camHUD;
         state.add(kpsText);
     }
 

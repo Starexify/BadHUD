@@ -92,7 +92,7 @@ class GamePlayStats extends ScriptedModule {
         }
         statsText.scrollFactor.set();
         statsText.zIndex = 851;
-        statsText.cameras = [state.camHUD];
+        statsText.camera = state.camHUD;
         state.add(statsText);
     }
 
@@ -115,7 +115,7 @@ class GamePlayStats extends ScriptedModule {
         }
         judgementsText.zIndex = 851;
         judgementsText.scrollFactor.set();
-        judgementsText.cameras = [state.camHUD];
+        judgementsText.camera = state.camHUD;
         state.add(judgementsText);
     }
 

@@ -3,6 +3,7 @@ import funkin.Paths;
 import funkin.PlayerSettings;
 import funkin.Preferences;
 import funkin.data.notestyle.NoteStyleRegistry;
+import funkin.graphics.FunkinSprite;
 import funkin.input.PreciseInputManager;
 import funkin.modding.base.ScriptedFlxSpriteGroup;
 import funkin.modding.events.ScriptEvent;
@@ -18,7 +19,6 @@ import funkin.util.InputUtil;
 import funkin.save.Save;
 
 import flixel.FlxG;
-import flixel.FlxSprite;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
 import flixel.tweens.FlxEase;
@@ -34,10 +34,10 @@ class ExtraStrumline extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var state:PlayState;
 
-    var laneUnderlay:FlxSprite;
-    var leftGradient:FlxSprite;
-    var rightGradient:FlxSprite;
-    var underlaySprites:Array<FlxSprite>;
+    var laneUnderlay:FunkinSprite;
+    var leftGradient:FunkinSprite;
+    var rightGradient:FunkinSprite;
+    var underlaySprites:Array<FunkinSprite>;
 
     var keybindTexts:Array<FlxText> = [];
 
@@ -70,18 +70,21 @@ class ExtraStrumline extends ScriptedModule {
 
         // Note Underlay
         if (Preferences.get_strumlineBackgroundOpacity() > 0) {
+            state.playerStrumline.background.visible = false;
+            laneUnderlay = new FunkinSprite(state.playerStrumline.x - Strumline.BACKGROUND_PAD).makeSolidColor(Std.int(state.playerStrumline.width + Strumline.BACKGROUND_PAD * 2), FlxG.height, 0xFF000000);
+            laneUnderlay.alpha = Preferences.strumlineBackgroundOpacity / 100;
             var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.04);
-            leftGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, Preferences.get_strumlineBackgroundOpacity() / 100, true);
-            leftGradient.x = state.playerStrumline.background.x - fadeRegionWidth;
+            leftGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, Preferences.strumlineBackgroundOpacity / 100, true);
+            leftGradient.x = laneUnderlay.x - fadeRegionWidth;
 
-            rightGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, Preferences.get_strumlineBackgroundOpacity() / 100, false);
-            rightGradient.x = state.playerStrumline.background.x + state.playerStrumline.background.width;
+            rightGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, Preferences.strumlineBackgroundOpacity / 100, false);
+            rightGradient.x = laneUnderlay.x + laneUnderlay.width;
 
-            underlaySprites = [leftGradient, rightGradient];
+            underlaySprites = [laneUnderlay, leftGradient, rightGradient];
             for (sprite in underlaySprites) {
                 sprite.scrollFactor.set();
                 sprite.zIndex = -1;
-                sprite.cameras = [state.camHUD];
+                sprite.camera = state.camHUD;
                 state.add(sprite);
             }
         }
@@ -92,7 +95,7 @@ class ExtraStrumline extends ScriptedModule {
         if (noteStyle == null) noteStyle = NoteStyleRegistry.instance.fetchDefault();
         ratingsPopUps = ScriptedFlxSpriteGroup.init("RatingPopUps");
         ratingsPopUps.scriptSet("noteStyle", noteStyle);
-        ratingsPopUps.cameras = [state.camHUD];
+        ratingsPopUps.camera = state.camHUD;
         ratingsPopUps.zIndex = 900;
         state.add(ratingsPopUps);
 
@@ -106,7 +109,7 @@ class ExtraStrumline extends ScriptedModule {
                 keybindText.y = staticNote.y + staticNote.height / 2 - keybindText.height * staticNote.scale.y;
                 keybindText.setFormat(Paths.font(badOptions.hudFont), 32, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
                 keybindText.alpha = 0;
-                keybindText.cameras = [state.camHUD];
+                keybindText.camera = state.camHUD;
                 state.add(keybindText);
                 keybindTexts.push(keybindText);
                 noteHeigth = Std.int(staticNote.height);
@@ -120,8 +123,8 @@ class ExtraStrumline extends ScriptedModule {
     override function onUpdate(event:UpdateScriptEvent) {
         if (state == null) return;
         try {
-            //if (badOptions.underlayOpacity > 0) updatePosition();
-            if (badOptions.middlescroll && !badOptions.oppNotes) {
+            if (Preferences.strumlineBackgroundOpacity > 0) updatePosition();
+            if (badOptions.middlescroll && badOptions.opponentNoteOpacity > 0) {
                 if (state.currentStage != null && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) updateOpponentNotes();
                 else if (state.isMinimalMode) updateOpponentNotes();
             }
@@ -137,24 +140,26 @@ class ExtraStrumline extends ScriptedModule {
     override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) { event.playSound = !badOptions.muteMiss; }
 
     // Gradient Underlay
-    function createGradient(width:Int, height:Int, alphaStart:Float, alphaEnd:Float, isLeftToRight:Bool = true):FlxSprite {
-        var gradientSprite = new FlxSprite();
-        var bitmap = new BitmapData(width, height, true, 0x0);
+    function createGradient(width:Int, height:Int, alphaStart:Float, alphaEnd:Float, isLeftToRight:Bool = true):FunkinSprite {
+        var gradientSprite = new FunkinSprite();
+        var bitmap = new BitmapData(2, 1, true, 0x0);
 
-        for (x in 0...width) {
-            // If isLeftToRight is true, fades left to right. If false, fades right to left
-            var progress = isLeftToRight ? (x / width) : (1.0 - (x / width));
-            var alpha = alphaStart + (alphaEnd - alphaStart) * progress;
-            alpha = Math.max(0, Math.min(alpha, 1));
-            var color = (Std.int(alpha * 255) << 24) | 0x000000;
+        var leftAlpha = isLeftToRight ? alphaStart : alphaEnd;
+        leftAlpha = Math.max(0, Math.min(leftAlpha, 1));
+        var leftColor = (Std.int(leftAlpha * 255) << 24) | 0x000000;
 
-            for (y in 0...height) {
-                bitmap.setPixel32(x, y, color);
-            }
-        }
+        var rightAlpha = isLeftToRight ? alphaEnd : alphaStart;
+        rightAlpha = Math.max(0, Math.min(rightAlpha, 1));
+        var rightColor = (Std.int(rightAlpha * 255) << 24) | 0x000000;
 
-        gradientSprite.pixels = bitmap;
-        gradientSprite.dirty = true;
+        bitmap.setPixel32(0, 0, leftColor);
+        bitmap.setPixel32(1, 0, rightColor);
+
+        gradientSprite.loadBitmapData(bitmap, false);
+
+        gradientSprite.scale.set(width / 2, height);
+        gradientSprite.updateHitbox();
+
         return gradientSprite;
     }
 
@@ -194,13 +199,13 @@ class ExtraStrumline extends ScriptedModule {
     }
 
     function updatePosition() {
-        if (laneUnderlay == null || laneUnderlay.x == state.playerStrumline.x) return;
+        if (laneUnderlay == null || laneUnderlay.x == state.playerStrumline.x - Strumline.BACKGROUND_PAD) return;
         trace("[BadHud] Updating Note Underlay Position");
-        var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.05);
+        var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.04);
 
         laneUnderlay.x = state.playerStrumline.x;
-        leftGradient.x = state.playerStrumline.x - fadeRegionWidth;
-        rightGradient.x = state.playerStrumline.x + state.playerStrumline.width;
+        leftGradient.x = laneUnderlay.x - fadeRegionWidth;
+        rightGradient.x = laneUnderlay.x + laneUnderlay.width;
     }
 
     function fadeInKeybinds(noteHeight:Float) {

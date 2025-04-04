@@ -41,8 +41,10 @@ class BadHealthBar extends ScriptedModule {
         healthBar = state.healthBar;
         iconP1 = state.iconP1;
         iconP2 = state.iconP2;
-        currentP1 = state.currentStage.getBoyfriend();
-        currentP2 = state.currentStage.getDad();
+        if (state.currentStage != null) {
+            currentP1 = state.currentStage.getBoyfriend();
+            currentP2 = state.currentStage.getDad();
+        }
 
         // Health Bar
         if (badOptions.healthBar) {
@@ -135,6 +137,7 @@ class BadHealthBar extends ScriptedModule {
     }
 
     override function onSongEvent(event:SongEventScriptEvent) {
+        if (state.currentStage == null) return;
         var newP1 = state.currentStage.getBoyfriend();
         var newP2 = state.currentStage.getDad();
 

@@ -352,7 +352,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             case "center": statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: ?";
             case "right": statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n? Rating" + "\n0 Combo";
         }
-        statsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        statsText.setFormat(Paths.font(badOptions.hudFont), badOptions.hudFontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         statsText.borderSize = 1.25;
         positionUIElement(statsText, "statsTextSettings", settings -> {
             statsText.alignment = statsText.x >= FlxG.width / 2 ? "right" : "left";
@@ -369,7 +369,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (judgementsText != null) remove(judgementsText);
         if (!badOptions.judgementsBool) return;
         judgementsText = new FlxText();
-        judgementsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        judgementsText.setFormat(Paths.font(badOptions.hudFont), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         judgementsText.borderSize = 1.25;
 
         switch (badOptions.judgementsOrt) {
@@ -394,7 +394,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (kpsText != null) remove(kpsText);
         if (!badOptions.kpsCounter) return;
         kpsText = new FlxText();
-        kpsText.setFormat(Paths.font(badHUDOptions.font), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        kpsText.setFormat(Paths.font(badOptions.hudFont), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         kpsText.borderSize = 1.25;
 
         switch (badOptions.kpsOrt) {

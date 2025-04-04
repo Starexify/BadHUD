@@ -107,7 +107,7 @@ class RestPeriodTimer extends ScriptedModule {
         restBarSprites = [restBarBG, restBar, restText];
 
         for (sprite in restBarSprites) if (sprite != null) {
-            sprite.cameras = [state.camHUD];
+            sprite.camera = state.camHUD;
             sprite.visible = false;
             sprite.alpha = badOptions.hudOpacity / 100;
             state.add(sprite);

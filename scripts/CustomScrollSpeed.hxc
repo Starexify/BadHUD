@@ -46,7 +46,7 @@ class CustomScrollSpeed extends ScriptedModule {
         speedText.setFormat(Paths.font(badOptions.hudFont), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         speedText.scrollFactor.set(0, 0);
         speedText.alignment = "right";
-        speedText.cameras = [state.camHUD];
+        speedText.camera = state.camHUD;
         speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + badOptions.scrollSpeedFactor / 10;
         state.add(speedText);
     }

@@ -20,9 +20,6 @@ class BadHUDOptions extends Module {
     var badOptions:BadSaveData = Save.instance.modOptions.get("badOptions");
     var fontOptions:StringMap<String>;
 
-    // Hooks or smth like that for other classes
-    var fontSize:Int;
-
     var saveObject:BadSaveData = {
         middlescroll: false,
         opponentNoteOpacity: 100,
@@ -55,12 +52,15 @@ class BadHUDOptions extends Module {
         scrollSpeedFactor: 18
     };
 
+    // Hooks or smth like that for other classes
+    var fontSize:Int;
+
     function new() {
         super("BadHUDOptions", 1);
         // Default Options (First Start)
         if (!Save.instance.modOptions.exists("badOptions")) Save.instance.modOptions.set("badOptions", saveObject);
         Save.instance.flush();
-        switchFont(badOptions.hudFont);
+        switchFontSize(badOptions.hudFont);
         changeDebugDisplay(badOptions.hudFont);
     }
 
@@ -68,7 +68,7 @@ class BadHUDOptions extends Module {
         if (Std.isOfType(event.targetState, OptionsState)) {
             var preferences:PreferencesMenu = event.targetState.optionsCodex.pages.get("preferences");
             if (preferences != null) {
-                switchFont(badOptions.hudFont);
+                switchFontSize(badOptions.hudFont);
                 Save.instance.flush();
 
                 preferences.createPrefItemCheckbox("Middlescroll", "If enabled, player notes will be centerd on the screen, and opponent's notes will be split.", value -> badOptions.middlescroll = value, badOptions.middlescroll);
@@ -96,7 +96,7 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemEnum("HUD Font", "Select the font style for the HUD text.", fontOptions, value -> {
                     badOptions.hudFont = value;
                     changeDebugDisplay(badOptions.hudFont);
-                    switchFont(value);
+                    switchFontSize(value);
                 }, badOptions.hudFont);
                 preferences.createPrefItemNumber("HUD Font Size", "Adjust the size of the HUD text.", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
 
@@ -118,7 +118,7 @@ class BadHUDOptions extends Module {
         }
     }
 
-    function switchFont(value:String) {
+    function switchFontSize(value:String) {
         switch (value) {
             case "vcr.ttf": fontSize = 21;
             case "VCR OSD Neue.ttf": fontSize = 21; // 16px
