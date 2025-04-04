@@ -123,7 +123,6 @@ class ExtraStrumline extends ScriptedModule {
     override function onUpdate(event:UpdateScriptEvent) {
         if (state == null) return;
         try {
-            if (Preferences.strumlineBackgroundOpacity > 0) updatePosition();
             if (badOptions.middlescroll && badOptions.opponentNoteOpacity > 0) {
                 if (state.currentStage != null && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) updateOpponentNotes();
                 else if (state.isMinimalMode) updateOpponentNotes();
@@ -196,16 +195,6 @@ class ExtraStrumline extends ScriptedModule {
             note.x = state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].x + (state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].width - note.width) * 0.5;
             note.alpha = badOptions.opponentNoteOpacity / 100;
         }
-    }
-
-    function updatePosition() {
-        if (laneUnderlay == null || laneUnderlay.x == state.playerStrumline.x - Strumline.BACKGROUND_PAD) return;
-        trace("[BadHud] Updating Note Underlay Position");
-        var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.04);
-
-        laneUnderlay.x = state.playerStrumline.x;
-        leftGradient.x = laneUnderlay.x - fadeRegionWidth;
-        rightGradient.x = laneUnderlay.x + laneUnderlay.width;
     }
 
     function fadeInKeybinds(noteHeight:Float) {
