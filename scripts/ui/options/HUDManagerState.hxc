@@ -30,6 +30,7 @@ import flixel.ui.FlxBarFillDirection;
 import flixel.util.FlxSpriteUtil;
 
 import haxe.ui.components.CheckBox;
+import haxe.ui.components.ColorPicker;
 import haxe.ui.components.DropDown;
 import haxe.ui.components.Label;
 import haxe.ui.components.NumberStepper;
@@ -47,6 +48,7 @@ import haxe.ui.core.Screen;
 import haxe.ui.data.ArrayDataSource;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.events.UIEvent;
+import haxe.ui.layouts.HorizontalGridLayout;
 import haxe.ui.layouts.VerticalGridLayout;
 
 class HUDManagerState extends ScriptedMusicBeatSubState {
@@ -470,11 +472,14 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         visualsTab.addComponent(strumlineBox);
 
-        var settingsTab:Box = new Box();
+        var settingsTab:VBox = new VBox();
         settingsTab.text = "HUD Settings";
         settingsTab.percentWidth = 100;
-        settingsTab.layout = new VerticalGridLayout();
-        settingsTab.layout.columns = 2;
+
+        var checkboxContainer = new Box();
+        checkboxContainer.percentWidth = 100;
+        checkboxContainer.layout = new VerticalGridLayout();
+        checkboxContainer.layout.columns = 2;
 
         var healthBarBox:CheckBox = createCheckBox("Enable Health Bar", badOptions.healthBar, 50, (event:UIEvent) -> {
             badOptions.healthBar = event.target.value;
@@ -520,12 +525,28 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             updateText();
         });
 
-        settingsTab.addComponent(healthBarBox);
-        settingsTab.addComponent(statsTextBox);
-        settingsTab.addComponent(timeBarBox);
-        settingsTab.addComponent(judgementsTextBox);
-        settingsTab.addComponent(restBarBox);
-        settingsTab.addComponent(kpsCounterBox);
+        checkboxContainer.addComponent(healthBarBox);
+        checkboxContainer.addComponent(statsTextBox);
+        checkboxContainer.addComponent(timeBarBox);
+        checkboxContainer.addComponent(judgementsTextBox);
+        checkboxContainer.addComponent(restBarBox);
+        checkboxContainer.addComponent(kpsCounterBox);
+
+
+        var colorFrame:Frame = new Frame();
+        colorFrame.text = "Strumline Background Color";
+        colorFrame.percentWidth = 100;
+        colorFrame.padding = 5;
+
+        var colorPicker:ColorPicker = new ColorPicker();
+        colorPicker.percentWidth = 100;
+        colorPicker.onChange = (event:UIEvent) -> badOptions.strumBgColor = event.target.currentColor;
+        colorPicker.onClick = (event:MouseEvent) -> isSearching = true;
+        colorPicker.onMouseOut = (event:MouseEvent) -> isSearching = false;
+        colorFrame.addComponent(colorPicker);
+
+        settingsTab.addComponent(checkboxContainer);
+        settingsTab.addComponent(colorFrame);
 
         tabView.addComponent(keybindsTab);
         tabView.addComponent(visualsTab);
@@ -902,21 +923,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     // Util Methods
     function createCheckBox(text:String, value:Bool, width:Float, onChange:UIEvent -> Void):CheckBox {
-        var checkbox:CheckBox = null;
+        var checkbox = checkboxPool.length > 0 ? checkboxPool.pop() : new CheckBox();
 
-        if (checkboxPool.length > 0) {
-            checkbox = checkboxPool.pop();
-            checkbox.text = text;
-            checkbox.selected = value;
-            checkbox.percentWidth = width;
-            checkbox.onChange = onChange;
-        } else {
-            checkbox = new CheckBox();
-            checkbox.text = text;
-            checkbox.selected = value;
-            checkbox.percentWidth = width;
-            checkbox.onChange = onChange;
-        }
+        checkbox.text = text;
+        checkbox.selected = value;
+        checkbox.percentWidth = width;
+        checkbox.onChange = onChange;
 
         return checkbox;
     }

@@ -49,7 +49,8 @@ class BadHUDOptions extends Module {
         remindKeys: true,
         muteMiss: true,
         customScrollSpeed: true,
-        scrollSpeedFactor: 18
+        scrollSpeedFactor: 18,
+        strumBgColor: 0xFF000000
     };
 
     // Hooks or smth like that for other classes
@@ -161,5 +162,6 @@ typedef BadSaveData = {
     remindKeys:Bool,
     muteMiss:Bool,
     customScrollSpeed:Bool,
-    scrollSpeedFactor:Float
+    scrollSpeedFactor:Float,
+    strumBgColor:Int
 }

@@ -29,6 +29,7 @@ import openfl.display.BitmapData;
 import haxe.Exception;
 
 import Std;
+import StringTools;
 
 class ExtraStrumline extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -71,7 +72,7 @@ class ExtraStrumline extends ScriptedModule {
         // Note Underlay
         if (Preferences.get_strumlineBackgroundOpacity() > 0) {
             state.playerStrumline.background.visible = false;
-            laneUnderlay = new FunkinSprite(state.playerStrumline.x - Strumline.BACKGROUND_PAD).makeSolidColor(Std.int(state.playerStrumline.width + Strumline.BACKGROUND_PAD * 2), FlxG.height, 0xFF000000);
+            laneUnderlay = new FunkinSprite(state.playerStrumline.x - Strumline.BACKGROUND_PAD).makeSolidColor(Std.int(state.playerStrumline.width + Strumline.BACKGROUND_PAD * 2), FlxG.height, Std.parseInt("0xFF" + (badOptions.strumBgColor == 0 ? "000000" : StringTools.hex(badOptions.strumBgColor))));
             laneUnderlay.alpha = Preferences.strumlineBackgroundOpacity / 100;
             var fadeRegionWidth = Std.int(state.playerStrumline.width * 0.04);
             leftGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, Preferences.strumlineBackgroundOpacity / 100, true);
@@ -145,11 +146,11 @@ class ExtraStrumline extends ScriptedModule {
 
         var leftAlpha = isLeftToRight ? alphaStart : alphaEnd;
         leftAlpha = Math.max(0, Math.min(leftAlpha, 1));
-        var leftColor = (Std.int(leftAlpha * 255) << 24) | 0x000000;
+        var leftColor = (Std.int(leftAlpha * 255) << 24) | Std.parseInt(badOptions.strumBgColor);
 
         var rightAlpha = isLeftToRight ? alphaEnd : alphaStart;
         rightAlpha = Math.max(0, Math.min(rightAlpha, 1));
-        var rightColor = (Std.int(rightAlpha * 255) << 24) | 0x000000;
+        var rightColor = (Std.int(rightAlpha * 255) << 24) | Std.parseInt(badOptions.strumBgColor);
 
         bitmap.setPixel32(0, 0, leftColor);
         bitmap.setPixel32(1, 0, rightColor);
