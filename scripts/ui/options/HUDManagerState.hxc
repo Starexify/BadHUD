@@ -29,6 +29,7 @@ import flixel.ui.FlxBar;
 import flixel.ui.FlxBarFillDirection;
 import flixel.util.FlxSpriteUtil;
 
+import haxe.ui.RuntimeComponentBuilder;
 import haxe.ui.components.CheckBox;
 import haxe.ui.components.ColorPicker;
 import haxe.ui.components.DropDown;
@@ -419,6 +420,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     function initToolbox() {
         WindowManager.instance.reset();
+        var handlerWindow = RuntimeComponentBuilder.fromAsset(Paths.ui("base-style"));
+        if (handlerWindow == null) return;
 
         toolboxWindow = new Window();
         toolboxWindow.width = 420;
@@ -747,9 +750,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             var textOrientationBox = createOptionBox("Text Orientation", badOptions.statsOrt, textOrientation, value -> {
                 badOptions.statsOrt = value;
                 switch (badOptions.statsOrt) {
-                    case "left": statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: 0" + "\nCombo: 0";
-                    case "center": statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: 0";
-                    case "right": statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n0 Rating" + "\n0 Combo";
+                    case "left": statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: ?" + "\nCombo: 0";
+                    case "center": statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: ?";
+                    case "right": statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n? Rating" + "\n0 Combo";
                 }
             });
 
@@ -770,9 +773,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             var textOrientationBox = createOptionBox("Text Orientation", badOptions.kpsOrt, textOrientation, value -> {
                 badOptions.kpsOrt = value;
                 switch (badOptions.kpsOrt) {
-                    case "left": kpsText.text = "KPS: 0" + "\nMax KPS: 0";
-                    case "center": kpsText.text = "KPS: 0" + "| Max KPS: 0";
-                    case "right": kpsText.text = "0 KPS" + "\n0 Max KPS";
+                    case "left": kpsText.text = "KPS: 0" + "\nMax KPS: 99";
+                    case "center": kpsText.text = "KPS: 0" + "| Max KPS: 99";
+                    case "right": kpsText.text = "0 KPS" + "\n99 Max KPS";
                 }
             });
 
