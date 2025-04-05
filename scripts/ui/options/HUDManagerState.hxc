@@ -48,7 +48,6 @@ import haxe.ui.core.Screen;
 import haxe.ui.data.ArrayDataSource;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.events.UIEvent;
-import haxe.ui.layouts.HorizontalGridLayout;
 import haxe.ui.layouts.VerticalGridLayout;
 
 class HUDManagerState extends ScriptedMusicBeatSubState {
@@ -94,6 +93,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var isHolding:Bool = false;
     var prevPersistentUpdate:Bool;
 
+    var pressArray:Array<Bool> = [];
+    var holdArray:Array<Bool> = [];
+    var releaseArray:Array<Bool> = [];
+
     override function create() {
         super.create();
 
@@ -134,6 +137,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var mouseY = FlxG.mouse.y;
         var hoveredDraggable = null;
         var toolboxActive = !isOverToolbox || toolboxWindow.hidden;
+        pressArray = [controls.UI_LEFT_P, controls.UI_DOWN_P, controls.UI_UP_P, controls.UI_RIGHT_P];
+        holdArray = [controls.UI_LEFT, controls.UI_DOWN, controls.UI_UP, controls.UI_RIGHT];
+        releaseArray = [controls.UI_LEFT_R, controls.UI_DOWN_R, controls.UI_UP_R, controls.UI_RIGHT_R];
 
         // Find hovered Sprite and handle selection
         if (toolboxActive) {
@@ -161,18 +167,21 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         // Handling the sprite movement
         for (draggable in draggableSprites) {
-            if (draggable.isDragging) handleDragging(draggable, mouseX, mouseY);
-            else if (draggable.isSelected) handleSelected(draggable);
+            if (!isSearching) {
+                if (draggable.isDragging) handleDragging(draggable, mouseX, mouseY);
+                else if (draggable.isSelected) handleSelected(draggable);
 
-            if (draggable.isSelected || draggable.isDragging) updateHighlight(draggable);
+                if (draggable.isSelected || draggable.isDragging) updateHighlight(draggable);
+            }
         }
 
+        handleNotePress();
         handleCursor(hoveredDraggable);
 
         if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
 
         // Exit to OptionsState (Doesn't work with Pause Options)
-        if (controls.BACK && !isSearching) FlxG.switchState(() -> new OptionsState());
+        if (FlxG.keys.justPressed.ESCAPE && !isSearching) FlxG.switchState(() -> new OptionsState());
 
         super.update(elapsed);
     }
@@ -195,13 +204,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
             opponentStrumline.visible = oppStrum;
             opponentStrumline.background.visible = false;
-            if (badOptions.middlescroll) {
-                var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
-                for (i in 2...4) {
-                    var note = opponentStrumline.strumlineNotes.members[i];
-                    note.x = FlxG.width - opponentStrumline.width + rightXOffset + Strumline.NOTE_SPACING * (i - 2);
-                }
-            }
+            positionMiddlescrollNotes(opponentStrumline);
             add(opponentStrumline);
         }
     }
@@ -419,8 +422,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         toolboxWindow = new Window();
         toolboxWindow.width = 420;
-        toolboxWindow.x = 120;
-        toolboxWindow.y = FlxG.height / 4;
+        toolboxWindow.x = 130;
+        toolboxWindow.y = FlxG.height / 5;
         toolboxWindow.title = "HUD Manager Panel";
         toolboxWindow.maximizable = false;
         toolboxWindow.maximized = true;
@@ -439,7 +442,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         keybindsTab.percentWidth = 100;
 
         var keybindsTable:TableView = new TableView();
-        keybindsTable.id = "keybindsTable";
         keybindsTable.percentWidth = 100;
 
         // Add Columns
@@ -485,7 +487,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             badOptions.healthBar = event.target.value;
             initHealthBarSprite();
             if (!badOptions.healthBar) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "healthBar");
-            initStrumlines();
+            positionMiddlescrollNotes(opponentStrumline);
             updateHighlight();
             updateText();
         });
@@ -532,7 +534,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         checkboxContainer.addComponent(restBarBox);
         checkboxContainer.addComponent(kpsCounterBox);
 
-
         var colorFrame:Frame = new Frame();
         colorFrame.text = "Strumline Background Color";
         colorFrame.percentWidth = 100;
@@ -540,7 +541,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         var colorPicker:ColorPicker = new ColorPicker();
         colorPicker.percentWidth = 100;
-        colorPicker.onChange = (event:UIEvent) -> badOptions.strumBgColor = event.target.currentColor;
+        colorPicker.onChange = (event:UIEvent) -> badOptions.strumBgColor = colorPicker.currentColor;
+        colorPicker.registerEvent(UIEvent.INITIALIZE, () -> colorPicker.currentColor = badOptions.strumBgColor);
         colorPicker.onClick = (event:MouseEvent) -> isSearching = true;
         colorPicker.onMouseOut = (event:MouseEvent) -> isSearching = false;
         colorFrame.addComponent(colorPicker);
@@ -557,10 +559,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     function showContextMenu(mouseX:Float, mouseY:Float, draggable) {
         Screen.instance.removeComponent(contextMenu);
-        if (mouseDownHandler != null) {
-            Screen.instance.unregisterEvent(MouseEvent.MOUSE_DOWN, mouseDownHandler);
-            mouseDownHandler = null;
-        }
 
         contextMenu = new Menu();
         contextMenu.width = 300;
@@ -607,7 +605,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                     }
                 }
             }
-
             noteStyleList.searchField.onClick = (event:MouseEvent) -> isSearching = true;
             noteStyleList.registerEvent(UIEvent.CLOSE, (event:UIEvent) -> isSearching = false);
 
@@ -820,9 +817,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function handleSelected(draggable:DraggableSprite) {
-        var pressArray:Array<Bool> = [controls.UI_LEFT_P, controls.UI_DOWN_P, controls.UI_UP_P, controls.UI_RIGHT_P];
-        var holdArray:Array<Bool> = [controls.UI_LEFT, controls.UI_DOWN, controls.UI_UP, controls.UI_RIGHT];
-
         var holdDelayThreshold:Float = 0.25;
         var moveSpeed:Float = 10;
         if (FlxG.keys.pressed.CONTROL) moveSpeed = 0.5;
@@ -907,6 +901,18 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         }
 
         updateText(draggable);
+    }
+
+    function handleNotePress() {
+        if (playerStrumline == null || isSearching) return;
+        var notePressArray:Array<Bool> = [controls.NOTE_LEFT_P, controls.NOTE_DOWN_P, controls.NOTE_UP_P, controls.NOTE_RIGHT_P];
+        var noteHoldArray:Array<Bool> = [controls.NOTE_LEFT, controls.NOTE_DOWN, controls.NOTE_UP, controls.NOTE_RIGHT];
+        var noteReleaseArray:Array<Bool> = [controls.NOTE_LEFT_R, controls.NOTE_DOWN_R, controls.NOTE_UP_R, controls.NOTE_RIGHT_R];
+        for (i in 0...pressArray.length) {
+            if (pressArray[i] || notePressArray[i]) playerStrumline.playConfirm(i);
+            else if (holdArray[i] || noteHoldArray[i]) playerStrumline.holdConfirm(i);
+            if (releaseArray[i] || noteReleaseArray[i]) playerStrumline.playStatic(i);
+        }
     }
 
     function handleCursor(hoveredDraggable) {
@@ -1121,7 +1127,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         tableView.dataSource.clear();
         var keybinds:Array<KeybindEntry> = [
             {action: "Show Guide", keybind: "F1"},
-            {action: "Return to Options", keybind: "BACK/F5"},
+            {action: "Return to Options", keybind: "Esc/F5"},
             {action: "Open Sprite Context Menu", keybind: "Right Mouse Button"},
             {action: "Drag / Select Sprite", keybind: "Left Mouse Button"},
             {action: "Rotate Sprite", keybind: "Alt + Right Mouse Button"},
@@ -1131,6 +1137,15 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         for (keybind in keybinds) tableView.dataSource.add(keybind);
         return keybinds;
+    }
+
+    function positionMiddlescrollNotes(strumline:Strumline) {
+        if (!badOptions.middlescroll || badOptions.opponentNoteOpacity <= 0) return;
+        var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
+        for (i in 2...4) {
+            var note = strumline.strumlineNotes.members[i];
+            note.x = FlxG.width - strumline.width + rightXOffset + Strumline.NOTE_SPACING * (i - 2);
+        }
     }
 
     function setupWelcomeMusic() {
@@ -1267,7 +1282,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return {minX: minX, minY: minY, maxX: maxX, maxY: maxY};
     }
 
-    // Cleanup
+// Cleanup
     override function close() {
         cleanup();
         super.close();
@@ -1279,6 +1294,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function cleanup() {
+        Screen.instance.unregisterEvent(MouseEvent.MOUSE_DOWN, mouseDownHandler);
         Cursor.hide();
         if (welcomeMusic != null) welcomeMusic.destroy();
         if (FlxG.sound.music != null) FlxG.sound.music.resume();

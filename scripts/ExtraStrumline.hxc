@@ -57,13 +57,7 @@ class ExtraStrumline extends ScriptedModule {
         if (badOptions.middlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) {
             state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
             // Place last 2 opponent notes on right side
-            if (badOptions.opponentNoteOpacity != 0) {
-                var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
-                for (i in 2...4) {
-                    var note = state.opponentStrumline.strumlineNotes.members[i];
-                    note.x = FlxG.width - state.opponentStrumline.width + rightXOffset + Strumline.NOTE_SPACING * (i - 2);
-                }
-            }
+            positionMiddlescrollNotes(state.opponentStrumline);
         }
 
         if (badOptions.opponentNoteOpacity > 0) state.opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
@@ -216,6 +210,15 @@ class ExtraStrumline extends ScriptedModule {
                 })
             });
             index++;
+        }
+    }
+
+    function positionMiddlescrollNotes(strumline:Strumline) {
+        if (!badOptions.middlescroll || badOptions.opponentNoteOpacity <= 0) return;
+        var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
+        for (i in 2...4) {
+            var note = strumline.strumlineNotes.members[i];
+            note.x = FlxG.width - strumline.width + rightXOffset + Strumline.NOTE_SPACING * (i - 2);
         }
     }
 
