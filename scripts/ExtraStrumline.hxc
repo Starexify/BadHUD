@@ -45,6 +45,8 @@ class ExtraStrumline extends ScriptedModule {
     var ratingsPopUps:RatingPopUps;
     var noteStyle:NoteStyle;
 
+    var noteScaling = 0.5;
+
     function new() {
         super("ExtraStrumline", 3);
     }
@@ -59,7 +61,6 @@ class ExtraStrumline extends ScriptedModule {
         // Center player strumline
         if (badOptions.middlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) {
             state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
-            // Place last 2 opponent notes on right side
             placeOpponentNotes(state.opponentStrumline);
         }
 
@@ -113,7 +114,7 @@ class ExtraStrumline extends ScriptedModule {
             fadeInKeybinds(noteHeigth);
         }
 
-        if (badOptions.middlescroll && badOptions.oppMiddlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) state.opponentStrumline.background.visible = false;
+        if (badOptions.oppMiddlescroll) state.opponentStrumline.background.visible = false;
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
@@ -169,11 +170,12 @@ class ExtraStrumline extends ScriptedModule {
 
     function updateOpponentNotes() {
         // Transparent Opponent Strumline
-        for (staticNote in state.opponentStrumline.strumlineNotes.members) staticNote.alpha = badOptions.opponentNoteOpacity / 100;
+        if (badOptions.oppMiddlescroll) for (note in state.opponentStrumline.strumlineNotes.members) note.alpha = badOptions.opponentNoteOpacity / 100;
 
         // Incoming Notes
         for (note in state.opponentStrumline.notes.members) {
             if (note == null || !note.alive) continue;
+            if (!badOptions.oppMiddlescroll) note.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling);
             note.x = state.opponentStrumline.strumlineNotes.members[note.direction].x + (state.opponentStrumline.strumlineNotes.members[note.direction].width - note.width) * 0.5;
             note.alpha = badOptions.opponentNoteOpacity / 100;
         }
@@ -181,6 +183,7 @@ class ExtraStrumline extends ScriptedModule {
         // Hold Notes
         for (note in state.opponentStrumline.holdNotes.members) {
             if (note == null || !note.alive) continue;
+            if (!badOptions.oppMiddlescroll) note.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling);
             note.x = state.opponentStrumline.strumlineNotes.members[note.noteDirection].x + (state.opponentStrumline.strumlineNotes.members[note.noteDirection].width - note.width) * 0.5;
             note.alpha = badOptions.opponentNoteOpacity / 100;
         }
@@ -188,6 +191,7 @@ class ExtraStrumline extends ScriptedModule {
         // Hold Covers / Hold Splashes
         for (note in state.opponentStrumline.noteHoldCovers.members) {
             if (note == null || !note.alive) continue;
+            if (!badOptions.oppMiddlescroll) note.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling);
             note.x = state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].x + (state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].width - note.width) * 0.5;
             note.alpha = badOptions.opponentNoteOpacity / 100;
         }
@@ -196,12 +200,12 @@ class ExtraStrumline extends ScriptedModule {
     function fadeInKeybinds(noteHeight:Float) {
         var index = 0;
         for (text in keybindTexts) {
-            var textYDirI = Preferences.downscroll ? text.y - noteHeight / 2 : text.y + noteHeight * 2;
+            var textYDirI = Preferences.downscroll ? text.y - noteHeight / 2 : text.y + noteHeight / 2;
             var textYDirII = Preferences.downscroll ? text.y + 20 : text.y - 20;
             FlxTween.tween(text, {y: textYDirI, alpha: 1}, 1, {
                 ease: FlxEase.circOut,
                 startDelay: 0.5 + (0.2 * index),
-                onComplete: _ -> FlxTween.tween(text, {y: textYDirII, alpha: 0}, 0.8, {
+                onComplete: tween -> FlxTween.tween(text, {y: textYDirII, alpha: 0}, 0.8, {
                     ease: FlxEase.circIn,
                     onComplete: _ -> {
                         text.destroy();
@@ -218,16 +222,14 @@ class ExtraStrumline extends ScriptedModule {
         if (!badOptions.middlescroll || badOptions.opponentNoteOpacity <= 0) return;
         if (badOptions.oppMiddlescroll) {
             var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
-            for (i in 2...4) {
-                var note = strumline.strumlineNotes.members[i];
-                note.x = FlxG.width - strumline.width + rightXOffset + Strumline.NOTE_SPACING * (i - 2);
-            }
+            for (i in 2...4) strumline.strumlineNotes.members[i].x = FlxG.width - strumline.width + rightXOffset + Strumline.NOTE_SPACING * (i - 2);
         } else {
-            strumline.y = Preferences.downscroll ? strumline.y - 150 : strumline.y + 200;
-            var scaling = 0.5;
-            strumline.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * scaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * scaling);
-            var noteSpacing = Strumline.NOTE_SPACING - Strumline.NOTE_SPACING * scaling;
+            strumline.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling);
+            var yPos = Preferences.downscroll ? FlxG.height - 350 : 200;
+            strumline.y = yPos;
+            var noteSpacing = Strumline.NOTE_SPACING - Strumline.NOTE_SPACING * noteScaling;
             for (note in strumline.strumlineNotes.members) {
+                FlxTween.cancelTweensOf(note);
                 note.x = strumline.x;
                 note.x += switch (note.direction % Strumline.KEY_COUNT) {
                     case 0: 0;
@@ -236,8 +238,13 @@ class ExtraStrumline extends ScriptedModule {
                     case 3: (3 * noteSpacing);
                     default: 0;
                 };
-                note.x -= ((note.width - Strumline.STRUMLINE_SIZE) / 2) * scaling;
-                note.x -= Strumline.NUDGE * scaling;
+                note.x -= ((note.width - Strumline.STRUMLINE_SIZE) / 2) * noteScaling;
+                note.x -= Strumline.NUDGE * noteScaling;
+                note.y -= 10;
+                FlxTween.tween(note, {y: yPos, alpha: badOptions.opponentNoteOpacity / 100}, 1, {
+                    ease: FlxEase.circOut, startDelay: 0.5 + (0.2 * note.direction),
+                    onComplete: tween -> note.y = yPos
+                });
             }
         }
     }

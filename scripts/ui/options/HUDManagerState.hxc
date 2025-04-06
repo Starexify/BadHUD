@@ -1160,6 +1160,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         } else {
             var scaling = 0.5;
             strumline.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * scaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * scaling);
+            strumline.y = Preferences.downscroll ? FlxG.height - 350 : 200;
             var noteSpacing = Strumline.NOTE_SPACING - Strumline.NOTE_SPACING * scaling;
             for (note in strumline.strumlineNotes.members) {
                 note.x = strumline.x;
