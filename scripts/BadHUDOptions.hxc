@@ -22,6 +22,7 @@ class BadHUDOptions extends Module {
 
     var saveObject:BadSaveData = {
         middlescroll: false,
+        oppMiddlescroll: true,
         opponentNoteOpacity: 100,
         healthBar: true,
         healthIconPosition: "vanilla",
@@ -135,6 +136,7 @@ class BadHUDOptions extends Module {
 
 typedef BadSaveData = {
     middlescroll:Bool,
+    oppMiddlescroll:Bool,
     opponentNoteOpacity:Int,
     healthBar:Bool,
     healthIconPosition:String,

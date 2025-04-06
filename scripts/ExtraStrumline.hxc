@@ -43,6 +43,7 @@ class ExtraStrumline extends ScriptedModule {
     var keybindTexts:Array<FlxText> = [];
 
     var ratingsPopUps:RatingPopUps;
+    var noteStyle:NoteStyle;
 
     function new() {
         super("ExtraStrumline", 3);
@@ -52,12 +53,14 @@ class ExtraStrumline extends ScriptedModule {
         var badHooks:ScriptedModule = ModuleHandler.getModule("BadHooks");
         if (badHooks != null) state = badHooks.scriptGet("state");
         if (state == null) return;
+        noteStyle = NoteStyleRegistry.instance.fetchEntry(state.currentChart.noteStyle);
+        if (noteStyle == null) noteStyle = NoteStyleRegistry.instance.fetchDefault();
 
         // Center player strumline
         if (badOptions.middlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) {
             state.playerStrumline.x = FlxG.width / 2 - state.playerStrumline.width / 2;
             // Place last 2 opponent notes on right side
-            positionMiddlescrollNotes(state.opponentStrumline);
+            placeOpponentNotes(state.opponentStrumline);
         }
 
         if (badOptions.opponentNoteOpacity > 0) state.opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
@@ -86,8 +89,6 @@ class ExtraStrumline extends ScriptedModule {
 
         // Replace Rating PopUps
         state.remove(state.comboPopUps);
-        var noteStyle:NoteStyle = NoteStyleRegistry.instance.fetchEntry(state.currentChart.noteStyle);
-        if (noteStyle == null) noteStyle = NoteStyleRegistry.instance.fetchDefault();
         ratingsPopUps = ScriptedFlxSpriteGroup.init("RatingPopUps");
         ratingsPopUps.scriptSet("noteStyle", noteStyle);
         ratingsPopUps.camera = state.camHUD;
@@ -112,7 +113,7 @@ class ExtraStrumline extends ScriptedModule {
             fadeInKeybinds(noteHeigth);
         }
 
-        if (badOptions.middlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) state.opponentStrumline.background.visible = false;
+        if (badOptions.middlescroll && badOptions.oppMiddlescroll && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) state.opponentStrumline.background.visible = false;
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
@@ -213,12 +214,31 @@ class ExtraStrumline extends ScriptedModule {
         }
     }
 
-    function positionMiddlescrollNotes(strumline:Strumline) {
+    function placeOpponentNotes(strumline:Strumline) {
         if (!badOptions.middlescroll || badOptions.opponentNoteOpacity <= 0) return;
-        var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
-        for (i in 2...4) {
-            var note = strumline.strumlineNotes.members[i];
-            note.x = FlxG.width - strumline.width + rightXOffset + Strumline.NOTE_SPACING * (i - 2);
+        if (badOptions.oppMiddlescroll) {
+            var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
+            for (i in 2...4) {
+                var note = strumline.strumlineNotes.members[i];
+                note.x = FlxG.width - strumline.width + rightXOffset + Strumline.NOTE_SPACING * (i - 2);
+            }
+        } else {
+            strumline.y = Preferences.downscroll ? strumline.y - 150 : strumline.y + 200;
+            var scaling = 0.5;
+            strumline.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * scaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * scaling);
+            var noteSpacing = Strumline.NOTE_SPACING - Strumline.NOTE_SPACING * scaling;
+            for (note in strumline.strumlineNotes.members) {
+                note.x = strumline.x;
+                note.x += switch (note.direction % Strumline.KEY_COUNT) {
+                    case 0: 0;
+                    case 1: (1 * noteSpacing);
+                    case 2: (2 * noteSpacing);
+                    case 3: (3 * noteSpacing);
+                    default: 0;
+                };
+                note.x -= ((note.width - Strumline.STRUMLINE_SIZE) / 2) * scaling;
+                note.x -= Strumline.NUDGE * scaling;
+            }
         }
     }
 

@@ -202,10 +202,11 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             opponentStrumline = new Strumline(noteStyle, true);
             opponentStrumline.x = Constants.STRUMLINE_X_OFFSET;
             opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
+            if (!badOptions.oppMiddlescroll) opponentStrumline.y = Preferences.downscroll ? opponentStrumline.y - 150 : opponentStrumline.y + 200;
             opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
             opponentStrumline.visible = oppStrum;
             opponentStrumline.background.visible = false;
-            positionMiddlescrollNotes(opponentStrumline);
+            placeOpponentNotes(opponentStrumline);
             add(opponentStrumline);
         }
     }
@@ -426,7 +427,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         toolboxWindow = new Window();
         toolboxWindow.width = 420;
         toolboxWindow.x = 130;
-        toolboxWindow.y = FlxG.height / 5;
+        toolboxWindow.y = FlxG.height / 8;
         toolboxWindow.title = "HUD Manager Panel";
         toolboxWindow.maximizable = false;
         toolboxWindow.maximized = true;
@@ -490,7 +491,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             badOptions.healthBar = event.target.value;
             initHealthBarSprite();
             if (!badOptions.healthBar) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "healthBar");
-            positionMiddlescrollNotes(opponentStrumline);
+            placeOpponentNotes(opponentStrumline);
             updateHighlight();
             updateText();
         });
@@ -529,6 +530,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             updateHighlight();
             updateText();
         });
+        var splitOpponentNotesBox:CheckBox = createCheckBox("Split Opponent Notes", badOptions.oppMiddlescroll, 50, (event:UIEvent) -> {
+            badOptions.oppMiddlescroll = event.target.value;
+            initStrumlines();
+        });
 
         checkboxContainer.addComponent(healthBarBox);
         checkboxContainer.addComponent(statsTextBox);
@@ -536,6 +541,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         checkboxContainer.addComponent(judgementsTextBox);
         checkboxContainer.addComponent(restBarBox);
         checkboxContainer.addComponent(kpsCounterBox);
+        if (badOptions.middlescroll) checkboxContainer.addComponent(splitOpponentNotesBox);
 
         var colorFrame:Frame = new Frame();
         colorFrame.text = "Strumline Background Color";
@@ -1142,12 +1148,31 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return keybinds;
     }
 
-    function positionMiddlescrollNotes(strumline:Strumline) {
+    function placeOpponentNotes(strumline:Strumline) {
         if (!badOptions.middlescroll || badOptions.opponentNoteOpacity <= 0) return;
-        var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
-        for (i in 2...4) {
-            var note = strumline.strumlineNotes.members[i];
-            note.x = FlxG.width - strumline.width + rightXOffset + Strumline.NOTE_SPACING * (i - 2);
+        if (badOptions.oppMiddlescroll) {
+            strumline.scale.set(noteStyle.getNoteScale(), noteStyle.getNoteScale());
+            var rightXOffset = badOptions.healthBar ? Constants.STRUMLINE_X_OFFSET : 150;
+            for (i in 2...4) {
+                var note = strumline.strumlineNotes.members[i];
+                note.x = FlxG.width - strumline.width + rightXOffset + Strumline.NOTE_SPACING * (i - 2);
+            }
+        } else {
+            var scaling = 0.5;
+            strumline.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * scaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * scaling);
+            var noteSpacing = Strumline.NOTE_SPACING - Strumline.NOTE_SPACING * scaling;
+            for (note in strumline.strumlineNotes.members) {
+                note.x = strumline.x;
+                note.x += switch (note.direction % Strumline.KEY_COUNT) {
+                    case 0: 0;
+                    case 1: (1 * noteSpacing);
+                    case 2: (2 * noteSpacing);
+                    case 3: (3 * noteSpacing);
+                    default: 0;
+                };
+                note.x -= ((note.width - Strumline.STRUMLINE_SIZE) / 2) * scaling;
+                note.x -= Strumline.NUDGE * scaling;
+            }
         }
     }
 
