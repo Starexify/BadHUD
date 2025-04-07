@@ -28,7 +28,6 @@ import openfl.display.BitmapData;
 
 import haxe.Exception;
 
-import Std;
 import StringTools;
 
 class ExtraStrumline extends ScriptedModule {
