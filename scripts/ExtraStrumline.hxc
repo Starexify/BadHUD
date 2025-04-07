@@ -1,5 +1,4 @@
 import funkin.Highscore;
-import funkin.Paths;
 import funkin.PlayerSettings;
 import funkin.Preferences;
 import funkin.data.notestyle.NoteStyleRegistry;

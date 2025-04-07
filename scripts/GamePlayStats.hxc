@@ -1,5 +1,4 @@
 import funkin.Highscore;
-import funkin.Paths;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
 import funkin.modding.module.ScriptedModule;

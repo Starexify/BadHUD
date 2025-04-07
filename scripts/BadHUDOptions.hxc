@@ -1,5 +1,3 @@
-import funkin.Assets;
-import funkin.Paths;
 import funkin.Preferences;
 import funkin.save.Save;
 import funkin.modding.events.ScriptEvent;

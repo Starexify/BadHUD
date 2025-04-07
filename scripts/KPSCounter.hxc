@@ -1,4 +1,3 @@
-import funkin.Paths;
 import funkin.Preferences;
 import funkin.play.PauseSubState;
 import funkin.modding.events.ScriptEvent;

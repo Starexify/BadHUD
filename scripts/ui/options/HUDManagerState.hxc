@@ -1,6 +1,5 @@
 package ui.options;
 
-import funkin.Paths;
 import funkin.Preferences;
 import funkin.audio.FunkinSound;
 import funkin.data.notestyle.NoteStyleRegistry;
