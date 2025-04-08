@@ -14,7 +14,7 @@ import haxe.io.Path;
 import Main;
 
 class BadHUDOptions extends Module {
-    var badOptions:BadSaveData = Save.instance.modOptions.get("badOptions");
+    var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var fontOptions:StringMap<String>;
 
     var saveObject:BadSaveData = {
@@ -39,14 +39,14 @@ class BadHUDOptions extends Module {
         kpsOrt: "left",
         kpsCounter: false,
         hudOpacity: 100,
-        hudFont: "vcr",
+        hudFont: "vcr.ttf",
         hudFontSize: 21,
         accuracyType: "vanilla",
         commaSeparatedScore: false,
         popUpType: "vanilla",
         remindKeys: true,
         muteMiss: true,
-        customScrollSpeed: true,
+        customScrollSpeed: false,
         scrollSpeedFactor: 18,
         strumBgColor: 0xFF000000
     };
@@ -58,9 +58,11 @@ class BadHUDOptions extends Module {
         super("BadHUDOptions", 1);
         // Default Options (First Start)
         if (!Save.instance.modOptions.exists("badOptions")) Save.instance.modOptions.set("badOptions", saveObject);
+        else {
+            switchFontSize(badOptions.hudFont);
+            changeDebugDisplay(badOptions.hudFont);
+        }
         Save.instance.flush();
-        switchFontSize(badOptions.hudFont);
-        changeDebugDisplay(badOptions.hudFont);
     }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
