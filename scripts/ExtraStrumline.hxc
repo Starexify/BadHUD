@@ -116,15 +116,9 @@ class ExtraStrumline extends ScriptedModule {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null) return;
-        try {
-            if (badOptions.middlescroll && badOptions.opponentNoteOpacity > 0) {
-                if (state.currentStage != null && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) updateOpponentNotes();
-                else if (state.isMinimalMode) updateOpponentNotes();
-            }
-        } catch (e:Exception) {
-            throw trace("[BadHUD] " + e);
-        }
+        if (state == null || !badOptions.middlescroll || badOptions.opponentNoteOpacity <= 0) return;
+        try {if ((state.currentStage != null && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) || state.isMinimalMode) updateOpponentNotes();}
+        catch (e:Exception) throw trace("[BadHUD] " + e);
     }
 
     override function onNoteHit(event:HitNoteScriptEvent) { if (state != null && !Std.isOfType(event.targetState, ChartEditorState) && event.note.noteData.getMustHitNote()) popUpRatings(event.judgement); }
@@ -159,7 +153,7 @@ class ExtraStrumline extends ScriptedModule {
 
     // Helper Methods
     function popUpRatings(judgement:String, ?combo:Int) {
-        if (judgement == "miss" || badOptions.popUpType == "off") return;
+        if (judgement == "miss" || badOptions.popUpType == "off" || ratingsPopUps == null) return;
         ratingsPopUps.scriptCall("displayJudgement", [judgement]);
 
         if (combo == null) combo = Highscore.tallies.combo;
@@ -262,8 +256,10 @@ class ExtraStrumline extends ScriptedModule {
         if (laneUnderlay != null) laneUnderlay.destroy();
         if (leftGradient != null) leftGradient.destroy();
         if (rightGradient != null) rightGradient.destroy();
+        if (ratingsPopUps != null) ratingsPopUps.destroy();
         laneUnderlay = null;
         leftGradient = null;
         rightGradient = null;
+        ratingsPopUps = null;
     }
 }
