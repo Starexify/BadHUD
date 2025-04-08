@@ -34,6 +34,7 @@ class ExtraStrumline extends ScriptedModule {
     var state:PlayState;
 
     var laneUnderlay:FunkinSprite;
+    var oppLaneUnderlay:FunkinSprite;
     var leftGradient:FunkinSprite;
     var rightGradient:FunkinSprite;
     var underlaySprites:Array<FunkinSprite>;
@@ -66,7 +67,7 @@ class ExtraStrumline extends ScriptedModule {
         else state.opponentStrumline.visible = false;
 
         // Note Underlay
-        if (Preferences.get_strumlineBackgroundOpacity() > 0) {
+        if (Preferences.strumlineBackgroundOpacity > 0) {
             state.playerStrumline.background.visible = false;
             laneUnderlay = new FunkinSprite(state.playerStrumline.x - Strumline.BACKGROUND_PAD).makeSolidColor(Std.int(state.playerStrumline.width + Strumline.BACKGROUND_PAD * 2), FlxG.height, Std.parseInt("0xFF" + (badOptions.strumBgColor == 0 ? "000000" : StringTools.hex(badOptions.strumBgColor))));
             laneUnderlay.alpha = Preferences.strumlineBackgroundOpacity / 100;
@@ -112,19 +113,30 @@ class ExtraStrumline extends ScriptedModule {
             fadeInKeybinds(noteHeigth);
         }
 
-        if (badOptions.oppMiddlescroll) state.opponentStrumline.background.visible = false;
+        state.opponentStrumline.background.visible = false;
+        if (badOptions.middlescroll && !badOptions.oppMiddlescroll) {
+            oppLaneUnderlay = new FunkinSprite();
+            if (badOptions.middlescroll) {
+                oppLaneUnderlay.x = state.opponentStrumline.x + (state.opponentStrumline.width / 4 - Strumline.NOTE_SPACING / 4) * noteScaling - Strumline.BACKGROUND_PAD * noteScaling;
+                oppLaneUnderlay.makeSolidColor(Std.int(state.opponentStrumline.width * noteScaling + (Strumline.BACKGROUND_PAD * noteScaling) * 2), FlxG.height, Std.parseInt("0xFF" + (badOptions.strumBgColor == 0 ? "000000" : StringTools.hex(badOptions.strumBgColor))));
+            } else {
+                oppLaneUnderlay.x = state.opponentStrumline.x - Strumline.BACKGROUND_PAD;
+                oppLaneUnderlay.makeSolidColor(Std.int(state.opponentStrumline.width + Strumline.BACKGROUND_PAD * 2), FlxG.height, Std.parseInt("0xFF" + (badOptions.strumBgColor == 0 ? "000000" : StringTools.hex(badOptions.strumBgColor))));
+            }
+            oppLaneUnderlay.alpha = Preferences.strumlineBackgroundOpacity / 100;
+            oppLaneUnderlay.scrollFactor.set();
+            oppLaneUnderlay.zIndex = -1;
+            oppLaneUnderlay.camera = state.camHUD;
+            state.add(oppLaneUnderlay);
+        }
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null) return;
+        if (state == null || badOptions.opponentNoteOpacity <= 0) return;
         try {
-            if (badOptions.middlescroll && badOptions.opponentNoteOpacity > 0) {
-                if (state.currentStage != null && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) updateOpponentNotes();
-                else if (state.isMinimalMode) updateOpponentNotes();
-            }
-        } catch (e:Exception) {
-            throw trace("[BadHUD] " + e);
+            if ((state.currentStage != null && new BadHooks().strumlineExcluded.indexOf(state.currentChart.songName) == -1) || state.isMinimalMode) updateOpponentNotes();
         }
+        catch (e:Exception) throw trace("[BadHUD] " + e);
     }
 
     override function onNoteHit(event:HitNoteScriptEvent) { if (state != null && !Std.isOfType(event.targetState, ChartEditorState) && event.note.noteData.getMustHitNote()) popUpRatings(event.judgement); }
@@ -159,7 +171,7 @@ class ExtraStrumline extends ScriptedModule {
 
     // Helper Methods
     function popUpRatings(judgement:String, ?combo:Int) {
-        if (judgement == "miss" || badOptions.popUpType == "off") return;
+        if (judgement == "miss" || badOptions.popUpType == "off" || ratingsPopUps == null) return;
         ratingsPopUps.scriptCall("displayJudgement", [judgement]);
 
         if (combo == null) combo = Highscore.tallies.combo;
@@ -168,12 +180,12 @@ class ExtraStrumline extends ScriptedModule {
 
     function updateOpponentNotes() {
         // Transparent Opponent Strumline
-        if (badOptions.oppMiddlescroll) for (note in state.opponentStrumline.strumlineNotes.members) note.alpha = badOptions.opponentNoteOpacity / 100;
+        for (note in state.opponentStrumline.strumlineNotes.members) note.alpha = badOptions.opponentNoteOpacity / 100;
 
         // Incoming Notes
         for (note in state.opponentStrumline.notes.members) {
             if (note == null || !note.alive) continue;
-            if (!badOptions.oppMiddlescroll) note.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling);
+            if (badOptions.middlescroll && !badOptions.oppMiddlescroll) note.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling);
             note.x = state.opponentStrumline.strumlineNotes.members[note.direction].x + (state.opponentStrumline.strumlineNotes.members[note.direction].width - note.width) * 0.5;
             note.alpha = badOptions.opponentNoteOpacity / 100;
         }
@@ -181,7 +193,7 @@ class ExtraStrumline extends ScriptedModule {
         // Hold Notes
         for (note in state.opponentStrumline.holdNotes.members) {
             if (note == null || !note.alive) continue;
-            if (!badOptions.oppMiddlescroll) note.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling);
+            if (badOptions.middlescroll && !badOptions.oppMiddlescroll) note.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling);
             note.x = state.opponentStrumline.strumlineNotes.members[note.noteDirection].x + (state.opponentStrumline.strumlineNotes.members[note.noteDirection].width - note.width) * 0.5;
             note.alpha = badOptions.opponentNoteOpacity / 100;
         }
@@ -189,7 +201,7 @@ class ExtraStrumline extends ScriptedModule {
         // Hold Covers / Hold Splashes
         for (note in state.opponentStrumline.noteHoldCovers.members) {
             if (note == null || !note.alive) continue;
-            if (!badOptions.oppMiddlescroll) note.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling);
+            if (badOptions.middlescroll && !badOptions.oppMiddlescroll) note.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling);
             note.x = state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].x + (state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].width - note.width) * 0.5;
             note.alpha = badOptions.opponentNoteOpacity / 100;
         }
@@ -262,8 +274,12 @@ class ExtraStrumline extends ScriptedModule {
         if (laneUnderlay != null) laneUnderlay.destroy();
         if (leftGradient != null) leftGradient.destroy();
         if (rightGradient != null) rightGradient.destroy();
+        if (oppLaneUnderlay != null) oppLaneUnderlay.destroy();
+        if (ratingsPopUps != null) ratingsPopUps.destroy();
         laneUnderlay = null;
         leftGradient = null;
         rightGradient = null;
+        oppLaneUnderlay = null;
+        ratingsPopUps = null;
     }
 }

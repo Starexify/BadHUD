@@ -201,7 +201,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             opponentStrumline = new Strumline(noteStyle, true);
             opponentStrumline.x = Constants.STRUMLINE_X_OFFSET;
             opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
-            if (!badOptions.oppMiddlescroll) opponentStrumline.y = Preferences.downscroll ? opponentStrumline.y - 150 : opponentStrumline.y + 200;
+            if (badOptions.middleScroll && !badOptions.oppMiddlescroll) opponentStrumline.y = Preferences.downscroll ? opponentStrumline.y - 150 : opponentStrumline.y + 200;
             opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
             opponentStrumline.visible = oppStrum;
             opponentStrumline.background.visible = false;
