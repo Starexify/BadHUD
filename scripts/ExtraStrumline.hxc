@@ -114,7 +114,7 @@ class ExtraStrumline extends ScriptedModule {
         }
 
         state.opponentStrumline.background.visible = false;
-        if (badOptions.middlescroll && !badOptions.oppMiddlescroll) {
+        if (badOptions.middlescroll && !badOptions.oppMiddlescroll && badOptions.opponentNoteOpacity > 0) {
             oppLaneUnderlay = new FunkinSprite();
             if (badOptions.middlescroll) {
                 oppLaneUnderlay.x = state.opponentStrumline.x + (state.opponentStrumline.width / 4 - Strumline.NOTE_SPACING / 4) * noteScaling - Strumline.BACKGROUND_PAD * noteScaling;
@@ -275,11 +275,9 @@ class ExtraStrumline extends ScriptedModule {
         if (leftGradient != null) leftGradient.destroy();
         if (rightGradient != null) rightGradient.destroy();
         if (oppLaneUnderlay != null) oppLaneUnderlay.destroy();
-        if (ratingsPopUps != null) ratingsPopUps.destroy();
         laneUnderlay = null;
         leftGradient = null;
         rightGradient = null;
         oppLaneUnderlay = null;
-        ratingsPopUps = null;
     }
 }

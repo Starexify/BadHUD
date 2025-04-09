@@ -76,7 +76,7 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemPercentage("Opponent Notes Opacity", "Adjust the opacity of the opponent's notes.", value -> badOptions.opponentNoteOpacity = value, badOptions.opponentNoteOpacity);
 
                 // HUD Customization
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold");
+                preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold", () -> false);
                 preferences.preferenceDesc.push("");
                 preferences.createPrefItemPercentage("HUD Opacity", "Adjust the opacity of the HUD.", value -> badOptions.hudOpacity = value, badOptions.hudOpacity);
 
@@ -102,7 +102,7 @@ class BadHUDOptions extends Module {
                 preferences.createPrefItemNumber("HUD Font Size", "Adjust the size of the HUD text.", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
 
                 // Extras
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold");
+                preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold", () -> false);
                 preferences.preferenceDesc.push("");
 
                 preferences.createPrefItemCheckbox("Enable Keybind Reminder", "If enabled, a keybind reminder will appear above notes when loaded, then fade away   .", value -> badOptions.remindKeys = value, badOptions.remindKeys);
