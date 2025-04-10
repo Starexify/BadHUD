@@ -115,7 +115,7 @@ class TimeBar extends ScriptedModule {
     }
 
     // Cleanup stuff
-    override function onSongRetry(event:ScriptEvent) { for (sprite in timeBarSprites) if (sprite != null) sprite.visible = false; }
+    override function onSongRetry(event:ScriptEvent) { if (timeBarSprites != null) for (sprite in timeBarSprites) if (sprite != null) sprite.visible = false; }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
 
