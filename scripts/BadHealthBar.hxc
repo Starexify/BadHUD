@@ -15,6 +15,7 @@ import flixel.ui.FlxBar;
 
 class BadHealthBar extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
+    var badHooks:Null<BadHooks>;
     var state:PlayState;
     var currentP1:BaseCharacter = null;
     var currentP2:BaseCharacter = null;
@@ -28,13 +29,14 @@ class BadHealthBar extends ScriptedModule {
 
     function new() {
         super("BadHealthBar");
+        badHooks = new BadHooks();
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        var badHooks = ModuleHandler.getModule("BadHooks");
-        if (badHooks != null) state = badHooks.scriptGet('state');
+        var badHooksModule = ModuleHandler.getModule("BadHooks");
+        if (badHooksModule != null) state = badHooksModule.scriptGet('state');
         if (state == null) return;
-        if (new BadHooks().healthBarExcluded.indexOf(state.currentChart.songName) != -1) return;
+        if (badHooks.healthBarExcluded.indexOf(state.currentChart.songName) != -1) return;
         healthBarBG = state.healthBarBG;
         healthBar = state.healthBar;
         iconP1 = state.iconP1;

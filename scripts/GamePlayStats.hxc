@@ -17,6 +17,7 @@ import flixel.util.FlxStringUtil;
 
 class GamePlayStats extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
+    var badHooks:Null<BadHooks>;
     var state:PlayState;
 
     var statsText:FlxText;
@@ -41,13 +42,16 @@ class GamePlayStats extends ScriptedModule {
     var totalNotes:Int = 0;
     var totalNotesPlayed:Int = 0;
 
-    function new() { super("GamePlayStats"); }
+    function new() {
+        super("GamePlayStats");
+        badHooks = new BadHooks();
+    }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        var badHooks = ModuleHandler.getModule("BadHooks");
-        if (badHooks != null) state = badHooks.scriptGet("state");
+        var badHooksModule = ModuleHandler.getModule("BadHooks");
+        if (badHooksModule != null) state = badHooksModule.scriptGet("state");
         if (state == null) return;
-        if (new BadHooks().gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        if (badHooks.gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
 
         tallies = Highscore.tallies;
         var textSize = badOptions.hudFontSize;
@@ -61,7 +65,7 @@ class GamePlayStats extends ScriptedModule {
     }
 
     override function onCountdownStart(event:CountdownScriptEvent) {
-        if (new BadHooks().gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        if (badHooks.gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
         totalNotes = tallies.totalNotes;
         if (PlayStatePlaylist.isStoryMode) totalNotes += talliesLevel.totalNotes;
         updateScore();
@@ -196,7 +200,7 @@ class GamePlayStats extends ScriptedModule {
                 case "psych":
                     ratingPercent = Math.min(100, Math.max(0, 100 - ((sicks * 0 + goods * 0.33 + bads * 0.67 + shits * 1) / totalNotes) * 100));
                     ratingPercent = Math.round(ratingPercent * 100) / 100;
-                    for (rating in new BadHooks().ratings) if (ratingPercent >= rating.min && ratingPercent <= rating.max) ratingName = rating.name;
+                    for (rating in badHooks.ratings) if (ratingPercent >= rating.min && ratingPercent <= rating.max) ratingName = rating.name;
                 case "osu":
                     ratingPercent = Math.min(100, Math.max(0, ((300 * (tallies.totalNotes + sicks) + 200 * goods + 100 * bads + 50 * shits) / (300 * (tallies.totalNotes + sicks + goods + bads + shits + missed))) * 100));
                     ratingPercent = Math.round(ratingPercent * 100) / 100;
@@ -267,7 +271,7 @@ class GamePlayStats extends ScriptedModule {
 
     override function onNoteHit(event:HitNoteScriptEvent) {
         if (!event.note.noteData.getMustHitNote() || state == null) return;
-        if (new BadHooks().gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        if (badHooks.gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
 
         if (combo >= 0) combo = tallies.combo + 1;
 
@@ -284,14 +288,14 @@ class GamePlayStats extends ScriptedModule {
     }
 
     override function onNoteMiss(event:NoteScriptEvent) {
-        if (new BadHooks().gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        if (badHooks.gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
         combo = 0;
         if (missed >= 0) missed = PlayStatePlaylist.isStoryMode ? talliesLevel.missed + tallies.missed + 1 : tallies.missed + 1;
         updateScore();
     }
 
     override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) {
-        if (new BadHooks().gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        if (badHooks.gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
         updateScore();
     }
 
