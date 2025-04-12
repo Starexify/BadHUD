@@ -1,7 +1,7 @@
 import funkin.Preferences;
 import funkin.save.Save;
 import funkin.modding.events.ScriptEvent;
-import funkin.modding.module.Module;
+import funkin.modding.module.ScriptedModule;
 import funkin.ui.options.OptionsState;
 import funkin.ui.options.PreferencesMenu;
 import funkin.util.tools.StringTools;
@@ -12,12 +12,13 @@ import haxe.ds.StringMap;
 import haxe.io.Path;
 
 import Main;
+import funkin.util.ReflectUtil;
 
-class BadHUDOptions extends Module {
+class BadHUDOptions extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var fontOptions:StringMap<String>;
 
-    var saveObject:BadSaveData = {
+    var saveData:BadSaveData = {
         middlescroll: false,
         oppMiddlescroll: true,
         opponentNoteOpacity: 100,
@@ -57,12 +58,16 @@ class BadHUDOptions extends Module {
     function new() {
         super("BadHUDOptions", 1);
         // Default Options (First Start)
-        if (!Save.instance.modOptions.exists("badOptions")) Save.instance.modOptions.set("badOptions", saveObject);
+        if (!Save.instance.modOptions.exists("badOptions")) Save.instance.modOptions.set("badOptions", saveData);
         else {
+            for (field in ReflectUtil.getAnonymousFieldsOf(saveData)) {
+                if (!ReflectUtil.hasAnonymousField(badOptions, field)) ReflectUtil.setAnonymousField(badOptions, field, ReflectUtil.getAnonymousField(saveData, field));
+            }
             switchFontSize(badOptions.hudFont);
             changeDebugDisplay(badOptions.hudFont);
         }
         Save.instance.flush();
+        badOptions = Save.instance.modOptions.get("badOptions");
     }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
