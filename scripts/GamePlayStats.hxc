@@ -14,6 +14,7 @@ import flixel.text.FlxTextFormat;
 import flixel.text.FlxTextFormatMarkerPair;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxStringUtil;
+import funkin.Conductor;
 
 class GamePlayStats extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -30,6 +31,7 @@ class GamePlayStats extends ScriptedModule {
     var ratingFC:String;
 
     var songScore:Int;
+    var formatPairs:Array<FlxTextFormatMarkerPair>;
 
     var tallies:Tallies;
     var talliesLevel:Tallies;
@@ -41,6 +43,12 @@ class GamePlayStats extends ScriptedModule {
     var combo:Int = 0;
     var totalNotes:Int = 0;
     var totalNotesPlayed:Int = 0;
+
+    var lastScore:Int = -1;
+    var lastMissed:Int = -1;
+    var lastCombo:Int = -1;
+    var lastRatingString:String = "";
+    var lastStatsOrt:String = "";
 
     function new() {
         super("GamePlayStats");
@@ -78,6 +86,15 @@ class GamePlayStats extends ScriptedModule {
         statsText = new FlxText();
         statsText.setFormat(Paths.font(textFont), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         statsText.borderSize = 1.25;
+        if (badOptions.accuracyType == "vanilla") formatPairs = [
+            new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFF25C), "<$>"), // P+
+            new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFA9FF), "<p>"), // P
+            new FlxTextFormatMarkerPair(new FlxTextFormat(0xFDFCB7), "<e>"), // E
+            new FlxTextFormatMarkerPair(new FlxTextFormat(0xEBF7FF), "<&>"), // G
+            new FlxTextFormatMarkerPair(new FlxTextFormat(0xED9C7A), "<g>"), // G
+            new FlxTextFormatMarkerPair(new FlxTextFormat(0x6B8CFF), "<l>"), // L
+        ];
+
         var settings = Save.instance.modOptions.get("statsTextSettings");
         if (settings != null) {
             statsText.angle = settings[4];
@@ -148,8 +165,7 @@ class GamePlayStats extends ScriptedModule {
                 case "left": judgementsText.text = "Sicks: " + sicks + " (" + (sicks - talliesLevel.sick) + ")" + "\nGoods: " + goods + " (" + (goods - talliesLevel.good) + ")" + "\nBads: " + bads + " (" + (bads - talliesLevel.bad) + ")" + "\nShits: " + shits + " (" + (shits - talliesLevel.shit) + ")";
                 case "center": judgementsText.text = "Sicks: " + sicks + " (" + (sicks - talliesLevel.sick) + ")" + " | Goods: " + goods + " (" + (goods - talliesLevel.good) + ")" + " | Bads: " + bads + " (" + (bads - talliesLevel.bad) + ")" + " | Shits: " + shits + " (" + (shits - talliesLevel.shit) + ")";
                 case "right": judgementsText.text = "(" + (sicks - talliesLevel.sick) + ") " + sicks + " Sicks\n" + "(" + (goods - talliesLevel.good) + ") " + goods + " Goods\n" + "(" + (bads - talliesLevel.bad) + ") " + bads + " Bads\n" + "(" + (shits - talliesLevel.shit) + ") " + shits + " Shits";
-            }
-            else switch (badOptions.judgementsOrt) {
+            } else switch (badOptions.judgementsOrt) {
                 case "left": judgementsText.text = "Sicks: " + sicks + "\nGoods: " + goods + "\nBads: " + bads + "\nShits: " + shits;
                 case "center": judgementsText.text = "Sicks: " + sicks + " | Goods: " + goods + " | Bads: " + bads + " | Shits: " + shits;
                 case "right": judgementsText.text = sicks + " Sicks\n" + goods + " Goods\n" + bads + " Bads\n" + shits + " Shits";
@@ -160,28 +176,32 @@ class GamePlayStats extends ScriptedModule {
 
         if (statsText != null) {
             var ratingString = totalNotesPlayed != 0 ? ratingPercent + "% - " + ratingFC : ratingName;
-            var tempScore:String = "Score: " + songScore + " | Combo Breaks: " + missed + " | Rating: " + ratingString;
-            switch (badOptions.statsOrt) {
-                case "left": tempScore = "Score: " + songScore + "\nCombo Breaks: " + missed + "\nRating: " + ratingString + "\nCombo: " + combo;
-                case "center":
-                    if (badOptions.accuracyType == "psych") ratingString = totalNotesPlayed != 0 ? ratingName + " (" + ratingPercent + "%) - " + ratingFC : ratingName;
-                    tempScore = "Score: " + songScore + " | Combo Breaks: " + missed + " | Rating: " + ratingString;
-                case "right": tempScore = songScore + " Score\n" + missed + " Combo Breaks\n" + ratingString + " Rating\n" + combo + " Combo";
+
+            // Check if anything important has changed
+            if (songScore != lastScore || missed != lastMissed || ratingString != lastRatingString || combo != lastCombo || badOptions.statsOrt != lastStatsOrt) {
+                var tempScore:String = "Score: " + songScore + " | Combo Breaks: " + missed + " | Rating: " + ratingString;
+                switch (badOptions.statsOrt) {
+                    case "left": tempScore = "Score: " + songScore + "\nCombo Breaks: " + missed + "\nRating: " + ratingString + "\nCombo: " + combo;
+                    case "center":
+                        if (badOptions.accuracyType == "psych") ratingString = totalNotesPlayed != 0 ? ratingName + " (" + ratingPercent + "%) - " + ratingFC : ratingName;
+                        tempScore = "Score: " + songScore + " | Combo Breaks: " + missed + " | Rating: " + ratingString;
+                    case "right": tempScore = songScore + " Score\n" + missed + " Combo Breaks\n" + ratingString + " Rating\n" + combo + " Combo";
+                }
+
+                statsText.text = tempScore;
+                if (badOptions.accuracyType == "vanilla" && formatPairs != null) statsText.applyMarkup(tempScore, formatPairs);
+
+                var settings = Save.instance.modOptions.get("statsTextSettings");
+                if (settings != null) if (statsText.alignment == "right" && badOptions.statsOrt != "center") statsText.x = settings[0] - statsText.width;
+
+                // Update cached values
+                lastScore = songScore;
+                lastMissed = missed;
+                lastRatingString = ratingString;
+                lastCombo = combo;
+                lastStatsOrt = badOptions.statsOrt;
             }
-            statsText.text = tempScore;
-            if (badOptions.accuracyType == "vanilla") {
-                var formatPairs = [
-                    new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFF25C), "<$>"), // P+
-                    new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFA9FF), "<p>"), // P
-                    new FlxTextFormatMarkerPair(new FlxTextFormat(0xFDFCB7), "<e>"), // E
-                    new FlxTextFormatMarkerPair(new FlxTextFormat(0xEBF7FF), "<&>"), // G
-                    new FlxTextFormatMarkerPair(new FlxTextFormat(0xED9C7A), "<g>"), // G
-                    new FlxTextFormatMarkerPair(new FlxTextFormat(0x6B8CFF), "<l>"), // L
-                ];
-                statsText.applyMarkup(tempScore, formatPairs);
-            }
-            var settings = Save.instance.modOptions.get("statsTextSettings");
-            if (settings != null) if (statsText.alignment == "right" && badOptions.statsOrt != "center") statsText.x = settings[0] - statsText.width;
+
             if (bopScoreOnMiss) scoreBopOnMiss();
         }
     }
@@ -266,8 +286,9 @@ class GamePlayStats extends ScriptedModule {
         }
     }
 
-    // Events for updating score and judgements
-    override function onUpdate(event:UpdateScriptEvent) { if (state != null) updateScore(); }
+    override function onStepHit(event:SongTimeScriptEvent) {
+        if (state != null) updateScore();
+    }
 
     override function onNoteHit(event:HitNoteScriptEvent) {
         if (!event.note.noteData.getMustHitNote() || state == null) return;
