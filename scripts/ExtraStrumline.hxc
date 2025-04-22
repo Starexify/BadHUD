@@ -125,12 +125,12 @@ class ExtraStrumline extends ScriptedModule {
 
         // Opponent Strumline Background
         state.opponentStrumline.background.visible = false;
-        if (badOptions.opponentNoteOpacity > 0) {
+        if (badOptions.opponentNoteOpacity > 0 && state.opponentStrumline.visible == true) {
             if (badOptions.middlescroll && !badOptions.oppMiddlescroll) {
                 oppLaneUnderlay = new FunkinSprite();
                 oppLaneUnderlay.x = state.opponentStrumline.x;
-                trace("[BadHUD] Strum X: " + state.opponentStrumline.x);
                 oppLaneUnderlay.makeSolidColor(Std.int(state.opponentStrumline.width * noteScaling + (Strumline.BACKGROUND_PAD * noteScaling) * 2), FlxG.height, Std.parseInt("0xFF" + (badOptions.strumBgColor == 0 ? "000000" : StringTools.hex(badOptions.strumBgColor))));
+                if (state.opponentStrumline.noteStyle.id == Constants.DEFAULT_NOTE_STYLE) oppLaneUnderlay.x += 30;
                 oppLaneUnderlay.alpha = Preferences.strumlineBackgroundOpacity / 100;
                 oppLaneUnderlay.scrollFactor.set();
                 oppLaneUnderlay.zIndex = -1;
@@ -150,14 +150,14 @@ class ExtraStrumline extends ScriptedModule {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null || badOptions.opponentNoteOpacity <= 0 || badHooks.strumlineExcluded.indexOf(state.currentChart.songName) != -1) return;
+        if (state == null || badOptions.opponentNoteOpacity <= 0 || state.opponentStrumline.visible == false || badHooks.strumlineExcluded.indexOf(state.currentChart.songName) != -1) return;
         try {
             if (state.currentStage != null) {
                 // Opponent Hold Covers / Splashes
                 for (note in state.opponentStrumline.noteHoldCovers.members) {
                     if (note == null || !note.alive) continue;
                     note.alpha = badOptions.opponentNoteOpacity / 100;
-                    if (badOptions.middlescroll && !badOptions.oppMiddlescroll)note.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling);
+                    if (badOptions.middlescroll && !badOptions.oppMiddlescroll) note.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling);
                     note.x = state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].x
                     + ((state.opponentStrumline.strumlineNotes.members[note.holdNote.noteDirection].width - note.width) * 0.5)
                     + noteStyle.getHoldCoverOffsets()[0] * note.scale.x

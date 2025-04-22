@@ -14,7 +14,6 @@ import flixel.text.FlxTextFormat;
 import flixel.text.FlxTextFormatMarkerPair;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxStringUtil;
-import funkin.Conductor;
 
 class GamePlayStats extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
