@@ -616,16 +616,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             noteStyleList.searchField.onClick = (event:MouseEvent) -> isSearching = true;
             noteStyleList.registerEvent(UIEvent.CLOSE, (event:UIEvent) -> isSearching = false);
 
-            mouseDownHandler = (event:MouseEvent) -> {
-                var components = Screen.instance.findComponentsUnderPoint(event.screenX, event.screenY);
-                for (c in components) {
-                    if (c.hasClass("popup")) {
-                        event.cancel();
-                        break;
-                    }
-                }
-            };
-            Screen.instance.registerEvent(MouseEvent.MOUSE_DOWN, mouseDownHandler);
+            // Prevent closing the context menu when the Note Style Dropdown is open
+            contextMenu.registerEvent(UIEvent.BEFORE_CLOSE, (event:UIEvent) -> if (noteStyleList.dropDownOpen) event.cancel(););
 
             noteStyleBox.addComponent(label);
             noteStyleBox.addComponent(noteStyleList);
@@ -1310,7 +1302,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return {minX: minX, minY: minY, maxX: maxX, maxY: maxY};
     }
 
-// Cleanup
+    // Cleanup
     override function close() {
         cleanup();
         super.close();
@@ -1322,7 +1314,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function cleanup() {
-        Screen.instance.unregisterEvent(MouseEvent.MOUSE_DOWN, mouseDownHandler);
         Cursor.hide();
         if (welcomeMusic != null) welcomeMusic.destroy();
         if (FlxG.sound.music != null) FlxG.sound.music.resume();
