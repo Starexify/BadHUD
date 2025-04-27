@@ -617,7 +617,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             noteStyleList.registerEvent(UIEvent.CLOSE, (event:UIEvent) -> isSearching = false);
 
             // Prevent closing the context menu when the Note Style Dropdown is open
-            contextMenu.registerEvent(UIEvent.BEFORE_CLOSE, (event:UIEvent) -> if (noteStyleList.dropDownOpen) event.cancel(););
+            contextMenu.registerEvent(UIEvent.BEFORE_CLOSE, (event:UIEvent) -> if (noteStyleList.dropDownOpen) event.cancel());
 
             noteStyleBox.addComponent(label);
             noteStyleBox.addComponent(noteStyleList);
