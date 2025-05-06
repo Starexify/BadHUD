@@ -190,7 +190,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     function initStrumlines() {
         if (playerStrumline != null) remove(playerStrumline);
         playerStrumline = new Strumline(noteStyle, true);
-        playerStrumline.y = Preferences.downscroll ? FlxG.height - playerStrumline.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
+        playerStrumline.y = Preferences.downscroll ? FlxG.height - playerStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
         playerStrumline.visible = playerStrum;
         playerStrumline.background.visible = false;
         if (badOptions.middlescroll) playerStrumline.screenCenter(0x01);
@@ -200,8 +200,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             if (opponentStrumline != null) remove(opponentStrumline);
             opponentStrumline = new Strumline(noteStyle, true);
             opponentStrumline.x = Constants.STRUMLINE_X_OFFSET;
-            opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET : Constants.STRUMLINE_Y_OFFSET;
-            if (badOptions.middleScroll && !badOptions.oppMiddlescroll) opponentStrumline.y = Preferences.downscroll ? opponentStrumline.y - 150 : opponentStrumline.y + 200;
+            opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
+            if (badOptions.middleScroll && !badOptions.oppMiddlescroll)
+                opponentStrumline.y = Preferences.downscroll ? opponentStrumline.y - 150 : opponentStrumline.y + 200;
             opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
             opponentStrumline.visible = oppStrum;
             opponentStrumline.background.visible = false;
