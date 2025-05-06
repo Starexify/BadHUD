@@ -425,7 +425,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (handlerWindow == null) return;
 
         toolboxWindow = new Window();
-        toolboxWindow.width = 420;
+        toolboxWindow.width = 460;
         toolboxWindow.x = 130;
         toolboxWindow.y = FlxG.height / 8;
         toolboxWindow.title = "HUD Manager Panel";
@@ -433,10 +433,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         toolboxWindow.maximized = true;
 
         toolboxWindow.onMouseOver = (event:MouseEvent) -> {
-            isOverToolbox = true;
-            Cursor.cursorMode = CursorMode.Default;
+            if (!isOverToolbox) {
+                isOverToolbox = true;
+                Cursor.cursorMode = CursorMode.Default;
+            }
         }
-        toolboxWindow.onMouseOut = (event:MouseEvent) -> isOverToolbox = false;
+        toolboxWindow.onMouseOut = (event:MouseEvent) -> if (isOverToolbox) isOverToolbox = false;
 
         var tabView:TabView = new TabView();
         tabView.percentWidth = 100;
@@ -470,8 +472,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var strumlineBox = new HBox();
         strumlineBox.percentWidth = 100;
 
-        var playerNotes:CheckBox = createCheckBox("Enable Player Strumline", playerStrum, 50, (event:UIEvent) -> if (playerStrumline != null) playerStrumline.visible = playerStrum = event.target.value);
-        var oppNotes:CheckBox = createCheckBox("Enable Opponent Strumline", oppStrum, 50, (event:UIEvent) -> if (opponentStrumline != null) opponentStrumline.visible = oppStrum = event.target.value);
+        var playerNotes:CheckBox = createCheckBox("Enable Player Strumline", "If disabled, hides the player strumline in the HUD Manager.", playerStrum, 50, (event:UIEvent) -> if (playerStrumline != null) playerStrumline.visible = playerStrum = event.target.value);
+        var oppNotes:CheckBox = createCheckBox("Enable Opponent Strumline", "If disabled, hides the opponent strumline in the HUD Manager.", oppStrum, 50, (event:UIEvent) -> if (opponentStrumline != null) opponentStrumline.visible = oppStrum = event.target.value);
 
         strumlineBox.addComponent(playerNotes);
         strumlineBox.addComponent(oppNotes);
@@ -487,7 +489,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         checkboxContainer.layout = new VerticalGridLayout();
         checkboxContainer.layout.columns = 2;
 
-        var healthBarBox:CheckBox = createCheckBox("Enable Health Bar", badOptions.healthBar, 50, (event:UIEvent) -> {
+        var healthBarBox:CheckBox = createCheckBox("Enable Health Bar", "If disabled, hides the Health Bar of the in-game HUD.", badOptions.healthBar, 50, (event:UIEvent) -> {
             badOptions.healthBar = event.target.value;
             initHealthBarSprite();
             if (!badOptions.healthBar) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "healthBar");
@@ -495,42 +497,42 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             updateHighlight();
             updateText();
         });
-        var statsTextBox:CheckBox = createCheckBox("Enable Stats", badOptions.statsBool, 50, (event:UIEvent) -> {
+        var statsTextBox:CheckBox = createCheckBox("Enable Stats", "If disabled, hides the Statistics Text of the in-game HUD.", badOptions.statsBool, 50, (event:UIEvent) -> {
             badOptions.statsBool = event.target.value;
             initStats();
             if (!badOptions.statsBool) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "statsText");
             updateHighlight();
             updateText();
         });
-        var timeBarBox:CheckBox = createCheckBox("Enable Time Bar", badOptions.timeBar, 50, (event:UIEvent) -> {
+        var timeBarBox:CheckBox = createCheckBox("Enable Time Bar", "If disabled, hides the Time Bar of the in-game HUD.", badOptions.timeBar, 50, (event:UIEvent) -> {
             badOptions.timeBar = event.target.value;
             initTimeBarSprite();
             if (!badOptions.timeBar) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "timeBar");
             updateHighlight();
             updateText();
         });
-        var judgementsTextBox:CheckBox = createCheckBox("Enable Judgements", badOptions.judgementsBool, 50, (event:UIEvent) -> {
+        var judgementsTextBox:CheckBox = createCheckBox("Enable Judgements", "If disabled, hides the Judgements Text of the in-game HUD.", badOptions.judgementsBool, 50, (event:UIEvent) -> {
             badOptions.judgementsBool = event.target.value;
             initJudgements();
             if (!badOptions.judgementsBool) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "judgementsText");
             updateHighlight();
             updateText();
         });
-        var restBarBox:CheckBox = createCheckBox("Enable Rest Bar", badOptions.restBar, 50, (event:UIEvent) -> {
+        var restBarBox:CheckBox = createCheckBox("Enable Rest Bar", "If disabled, hides the Rest Bar of the in-game HUD.", badOptions.restBar, 50, (event:UIEvent) -> {
             badOptions.restBar = event.target.value;
             initRestBarSprite();
             if (!badOptions.restBar) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "restBar");
             updateHighlight();
             updateText();
         });
-        var kpsCounterBox:CheckBox = createCheckBox("Enable KPS Counter", badOptions.kpsCounter, 50, (event:UIEvent) -> {
+        var kpsCounterBox:CheckBox = createCheckBox("Enable KPS Counter", "If disabled, hides the KPS Counter of the in-game HUD.", badOptions.kpsCounter, 50, (event:UIEvent) -> {
             badOptions.kpsCounter = event.target.value;
             initKPS();
             if (!badOptions.kpsCounter) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "kpsText");
             updateHighlight();
             updateText();
         });
-        var splitOpponentNotesBox:CheckBox = createCheckBox("Split Opponent Notes", badOptions.oppMiddlescroll, 50, (event:UIEvent) -> {
+        var splitOpponentNotesBox:CheckBox = createCheckBox("Split Opponent Notes", "Splits the Opponent Notes on the left and right sides. (Only when using Middlescroll!)", badOptions.oppMiddlescroll, 50, (event:UIEvent) -> {
             badOptions.oppMiddlescroll = event.target.value;
             initStrumlines();
         });
@@ -541,7 +543,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         checkboxContainer.addComponent(judgementsTextBox);
         checkboxContainer.addComponent(restBarBox);
         checkboxContainer.addComponent(kpsCounterBox);
-        if (badOptions.middlescroll) checkboxContainer.addComponent(splitOpponentNotesBox);
+        if (badOptions.middlescroll && badOptions.opponentNoteOpacity != 0) checkboxContainer.addComponent(splitOpponentNotesBox);
 
         var colorFrame:Frame = new Frame();
         colorFrame.text = "Strumline Background Color";
@@ -570,7 +572,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         Screen.instance.removeComponent(contextMenu);
 
         contextMenu = new Menu();
-        contextMenu.width = 300;
+        contextMenu.width = 350;
         contextMenu.x = Math.max(0, Math.min(mouseX, FlxG.width - contextMenu.width));
         contextMenu.y = mouseY;
 
@@ -593,6 +595,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
             var noteStyleList:DropDown = new DropDown();
             noteStyleList.id = "noteStyleList";
+            noteStyleList.tooltip = "Choose the style of the rating pop-up to show in the HUD Manager.";
             noteStyleList.value = ChartEditorDropdowns.populateDropdownWithNoteStyles(noteStyleList, noteStyle.id);
             noteStyleList.percentWidth = 60;
             noteStyleList.searchable = true;
@@ -629,7 +632,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "popup", text: "Pop-Up"}
             ];
 
-            var ratingAnimationBox = createOptionBox("Animation Type", badOptions.popUpType, ratingAnimations, value -> badOptions.popUpType = value);
+            var ratingAnimationBox = createOptionBox("Animation Type", "The pop-up animation that the ratings will use when appearing.", badOptions.popUpType, ratingAnimations, value -> badOptions.popUpType = value);
 
             vbox.addComponent(noteStyleBox);
             vbox.addComponent(ratingAnimationBox);
@@ -645,9 +648,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "ends", text: "Ends"}
             ];
 
-            var iconsPositionBox = createOptionBox("Health Icons Position", badOptions.healthIconPosition, iconPositions, value -> badOptions.healthIconPosition = value);
-            var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
-            var coloredBarCheck = createCheckBox("Icon Colored Bar (May reduce performance!)", badOptions.iconColors, 100, (event:UIEvent) -> badOptions.iconColors = event.target.value);
+            var iconsPositionBox = createOptionBox("Health Icons Position", "Changes the position of the health icons on the Health Bar.", badOptions.healthIconPosition, iconPositions, value -> badOptions.healthIconPosition = value);
+            var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", "If enabled, the bars will move be smoother.", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
+            var coloredBarCheck = createCheckBox("Icon Colored Bar (May reduce performance!)", "If enabled, the health bar will be colored corresponding to the health icons.", badOptions.iconColors, 100, (event:UIEvent) -> badOptions.iconColors = event.target.value);
 
             vbox.addComponent(iconsPositionBox);
             vbox.addComponent(coloredBarCheck);
@@ -672,8 +675,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "timeBarMinimalRounded", text: "Minimal Rounded"},
             ];
 
-            var displayBox = createOptionBox("Text Display", badOptions.timeBarType, displayStyles, value -> badOptions.timeBarType = value);
-            var styleBox = createOptionBox("Bar Style", badOptions.timeBarStyle, barStyles, value -> {
+            var displayBox = createOptionBox("Text Display", "Changes the display of the time text on the bar.", badOptions.timeBarType, displayStyles, value -> badOptions.timeBarType = value);
+            var styleBox = createOptionBox("Bar Style", "Changes how the the bar looks like.", badOptions.timeBarStyle, barStyles, value -> {
                 badOptions.timeBarStyle = value;
                 var selectedDraggableType:String = null;
                 for (draggable in draggableSprites) {
@@ -693,7 +696,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                     }
                 }
             });
-            var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
+            var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", "If enabled, the bars will move be smoother.", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
 
             vbox.addComponent(displayBox);
             vbox.addComponent(styleBox);
@@ -706,8 +709,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "countup", text: "Countup"},
             ];
 
-            var displayBox = createOptionBox("Display Type", badOptions.restBarType, displayTypes, value -> badOptions.restBarType = value);
-            var startThreshold = createNumberBox("Start Threshold", "s", 2, 0.1, 1, badOptions.restBarStartThreshold, value -> badOptions.restBarStartThreshold = value);
+            var displayBox = createOptionBox("Display Type", "Changes the way the rest bar is displaying the rest time.", badOptions.restBarType, displayTypes, value -> badOptions.restBarType = value);
+            var startThreshold = createNumberBox("Start Threshold", "The rest time at which the bar begins to display.", "s", 2, 0.1, 1, badOptions.restBarStartThreshold, value -> badOptions.restBarStartThreshold = value);
 
             vbox.addComponent(displayBox);
             vbox.addComponent(startThreshold);
@@ -720,7 +723,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "right", text: "Right"},
             ];
 
-            var textOrientationBox = createOptionBox("Text Orientation", badOptions.judgementsOrt, textOrientation, value -> {
+            var textOrientationBox = createOptionBox("Text Orientation", "Changes the orientation of the text.", badOptions.judgementsOrt, textOrientation, value -> {
                 badOptions.judgementsOrt = value;
                 switch (badOptions.judgementsOrt) {
                     case "left": judgementsText.text = "Sicks: 0" + "\nGoods: 0" + "\nBads: 0" + "\nShits: 0";
@@ -744,8 +747,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "right", text: "Right"},
             ];
 
-            var accuracySystemBox = createOptionBox("Accuracy System", badOptions.accuracyType, accuracySystem, value -> badOptions.accuracyType = value);
-            var textOrientationBox = createOptionBox("Text Orientation", badOptions.statsOrt, textOrientation, value -> {
+            var accuracySystemBox = createOptionBox("Accuracy System", "Changes the accuracy system used.", badOptions.accuracyType, accuracySystem, value -> badOptions.accuracyType = value);
+            var textOrientationBox = createOptionBox("Text Orientation", "Changes the orientation of the text.", badOptions.statsOrt, textOrientation, value -> {
                 badOptions.statsOrt = value;
                 switch (badOptions.statsOrt) {
                     case "left": statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: ?" + "\nCombo: 0";
@@ -754,7 +757,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 }
             });
 
-            var commaSeparationCheck = createCheckBox("Comma Separated Score", badOptions.commaSeparatedScore, 100, (event:UIEvent) -> badOptions.commaSeparatedScore = event.target.value);
+            var commaSeparationCheck = createCheckBox("Comma Separated Score", "If enabled, the score is showing separated by commas.", badOptions.commaSeparatedScore, 100, (event:UIEvent) -> badOptions.commaSeparatedScore = event.target.value);
 
             vbox.addComponent(accuracySystemBox);
             vbox.addComponent(textOrientationBox);
@@ -768,7 +771,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 {id: "right", text: "Right"},
             ];
 
-            var textOrientationBox = createOptionBox("Text Orientation", badOptions.kpsOrt, textOrientation, value -> {
+            var textOrientationBox = createOptionBox("Text Orientation", "Changes the orientation of the text.", badOptions.kpsOrt, textOrientation, value -> {
                 badOptions.kpsOrt = value;
                 switch (badOptions.kpsOrt) {
                     case "left": kpsText.text = "KPS: 0" + "\nMax KPS: 99";
@@ -929,10 +932,11 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     // Util Methods
-    function createCheckBox(text:String, value:Bool, width:Float, onChange:UIEvent -> Void):CheckBox {
+    function createCheckBox(text:String, tooltip:String, value:Bool, width:Float, onChange:UIEvent -> Void):CheckBox {
         var checkbox = checkboxPool.length > 0 ? checkboxPool.pop() : new CheckBox();
 
         checkbox.text = text;
+        checkbox.tooltip = tooltip;
         checkbox.selected = value;
         checkbox.percentWidth = width;
         checkbox.onChange = onChange;
@@ -940,7 +944,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return checkbox;
     }
 
-    function createOptionBox(labelText:String, currentValue:String, options:Array<BasicEntry>, onChangeHandler:String -> Void):HBox {
+    function createOptionBox(labelText:String, tooltip:String, currentValue:String, options:Array<BasicEntry>, onChangeHandler:String -> Void):HBox {
         var box = new HBox();
         box.percentWidth = 100;
 
@@ -950,6 +954,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         label.verticalAlign = "center";
 
         var stepper:OptionStepper = new OptionStepper();
+        stepper.tooltip = tooltip;
         stepper.percentWidth = 65;
         stepper.dataSource = new ArrayDataSource();
         for (option in options) stepper.dataSource.add(option);
@@ -968,7 +973,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return box;
     }
 
-    function createNumberBox(labelText:String, valueFormat:String, min:Float, step:Float, precision:Int, currentValue:Float, onChangeHandler:Float -> Void):HBox {
+    function createNumberBox(labelText:String, tooltip:String, valueFormat:String, min:Float, step:Float, precision:Int, currentValue:Float, onChangeHandler:Float -> Void):HBox {
         var box = new HBox();
         box.percentWidth = 100;
 
@@ -983,6 +988,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         stepper.min = min;
         stepper.precision = precision;
         stepper.step = step;
+        stepper.tooltip = tooltip;
 
         var callback_persist = onChangeHandler;
         stepper.onChange = (event:UIEvent) -> callback_persist(stepper.pos);
