@@ -536,6 +536,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             badOptions.oppMiddlescroll = event.target.value;
             initStrumlines();
         });
+        var strumlineHeight = createNumberBox("Strumline Height", "Sets the y position/height of the strumlines.", "px", 0, 1, 0, Constants.STRUMLINE_Y_OFFSET, value -> {
+            badOptions.strumHeight = value;
+            Constants.STRUMLINE_Y_OFFSET = badOptions.strumHeight;
+            if (badOptions.oppMiddlescroll) opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
+            playerStrumline.y = Preferences.downscroll ? FlxG.height - playerStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
+        });
 
         checkboxContainer.addComponent(healthBarBox);
         checkboxContainer.addComponent(statsTextBox);
@@ -559,6 +565,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         colorFrame.addComponent(colorPicker);
 
         settingsTab.addComponent(checkboxContainer);
+        settingsTab.addComponent(strumlineHeight);
         settingsTab.addComponent(colorFrame);
 
         tabView.addComponent(keybindsTab);

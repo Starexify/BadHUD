@@ -4,6 +4,8 @@ import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ScriptedModule;
 import funkin.ui.options.OptionsState;
 import funkin.ui.options.PreferencesMenu;
+import funkin.util.Constants;
+import funkin.util.ReflectUtil;
 import funkin.util.tools.StringTools;
 
 import openfl.text.TextFormat;
@@ -12,7 +14,6 @@ import haxe.ds.StringMap;
 import haxe.io.Path;
 
 import Main;
-import funkin.util.ReflectUtil;
 
 class BadHUDOptions extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -49,7 +50,8 @@ class BadHUDOptions extends ScriptedModule {
         muteMiss: true,
         customScrollSpeed: false,
         scrollSpeedFactor: 18,
-        strumBgColor: 0xFF000000
+        strumBgColor: 0xFF000000,
+        strumHeight: 24
     };
 
     // Hooks or smth like that for other classes
@@ -65,6 +67,7 @@ class BadHUDOptions extends ScriptedModule {
             }
             switchFontSize(badOptions.hudFont);
             changeDebugDisplay(badOptions.hudFont);
+            Constants.STRUMLINE_Y_OFFSET = badOptions.strumHeight;
         }
         Save.instance.flush();
         badOptions = Save.instance.modOptions.get("badOptions");
@@ -170,5 +173,6 @@ typedef BadSaveData = {
     muteMiss:Bool,
     customScrollSpeed:Bool,
     scrollSpeedFactor:Float,
-    strumBgColor:Int
+    strumBgColor:Int,
+    strumHeight:Int
 }
