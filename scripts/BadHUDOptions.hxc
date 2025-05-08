@@ -100,13 +100,17 @@ class BadHUDOptions extends ScriptedModule {
                     displayName = displayName.split("_").join(" ").split("-").join(" ");
                     if (excludedFonts.contains(displayName) == -1) displayName = StringTools.toTitleCase(displayName);
                     if (displayName == "vcr") displayName = "VCR OSD Mono (Vanilla)";
-                    fontOptions.set(fileName, displayName);
+                    fontOptions.set(displayName, fileName);
                 }
+                var prefDisplayName = StringTools.stripSuffix(badOptions.hudFont, ".ttf");
+                prefDisplayName = StringTools.stripSuffix(prefDisplayName, ".TTF");
+                prefDisplayName = StringTools.stripSuffix(prefDisplayName, ".otf");
                 preferences.createPrefItemEnum("HUD Font", "Select the font style for the HUD text.", fontOptions, (key, value) -> {
-                    badOptions.hudFont = key;
+                    trace(key + ", " + value);
+                    badOptions.hudFont = value;
                     changeDebugDisplay(badOptions.hudFont);
-                    switchFontSize(key);
-                }, badOptions.hudFont);
+                    switchFontSize(value);
+                }, prefDisplayName);
                 preferences.createPrefItemNumber("HUD Font Size", "Adjust the size of the HUD text.", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
 
                 // Extras
