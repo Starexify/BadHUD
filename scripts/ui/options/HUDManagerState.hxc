@@ -29,6 +29,7 @@ import flixel.ui.FlxBarFillDirection;
 import flixel.util.FlxSpriteUtil;
 
 import haxe.ui.RuntimeComponentBuilder;
+import haxe.ui.components.Button;
 import haxe.ui.components.CheckBox;
 import haxe.ui.components.ColorPicker;
 import haxe.ui.components.DropDown;
@@ -146,7 +147,19 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             var i = draggableSprites.length;
             while (i-- > 0) {
                 var draggable = draggableSprites[i];
-                if (isPointInsideRotatedSprite(mouseX, mouseY, draggable.sprite)) {
+                var isHovering = isPointInsideRotatedSprite(mouseX, mouseY, draggable.sprite);
+
+                // Also check linked sprites if parent sprite isn't hovered
+                if (!isHovering && draggable.linkedSprites != null) {
+                    for (linked in draggable.linkedSprites) {
+                        if (isPointInsideRotatedSprite(mouseX, mouseY, linked.sprite)) {
+                            isHovering = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (isHovering) {
                     hoveredDraggable = draggable;
                     break;
                 }
@@ -154,16 +167,39 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         }
 
         if (hoveredDraggable != null && FlxG.mouse.justPressed) {
+            // Reset selection status for all sprites
             for (draggable in draggableSprites) {
                 draggable.isSelected = (draggable == hoveredDraggable);
                 draggable.isDragging = (draggable == hoveredDraggable);
             }
+
+            // Set the clicked sprite as selected
             hoveredDraggable.isSelected = true;
             hoveredDraggable.isDragging = true;
-            hoveredDraggable.dragOffsetX = mouseX - hoveredDraggable.sprite.x;
-            hoveredDraggable.dragOffsetY = mouseY - hoveredDraggable.sprite.y;
-            prevAlpha = hoveredDraggable.sprite.alpha;
-        } else if (hoveredDraggable != null && hoveredDraggable.isSelected && FlxG.mouse.justPressedRight) showContextMenu(mouseX, mouseY, hoveredDraggable);
+
+            // Determine which sprite was actually clicked (main or linked)
+            var clickedSprite = hoveredDraggable.sprite;
+            if (!isPointInsideRotatedSprite(mouseX, mouseY, hoveredDraggable.sprite) && hoveredDraggable.linkedSprites != null) {
+                for (linked in hoveredDraggable.linkedSprites) {
+                    if (isPointInsideRotatedSprite(mouseX, mouseY, linked.sprite)) {
+                        // Adjust offset to maintain the same relative position between main and linked sprite
+                        var diffX = linked.sprite.x - hoveredDraggable.sprite.x;
+                        var diffY = linked.sprite.y - hoveredDraggable.sprite.y;
+                        hoveredDraggable.dragOffsetX = mouseX - linked.sprite.x + diffX;
+                        hoveredDraggable.dragOffsetY = mouseY - linked.sprite.y + diffY;
+                        prevAlpha = linked.sprite.alpha;
+                        clickedSprite = linked.sprite;
+                        break;
+                    }
+                }
+            } else {
+                // Regular dragging from main sprite
+                hoveredDraggable.dragOffsetX = mouseX - hoveredDraggable.sprite.x;
+                hoveredDraggable.dragOffsetY = mouseY - hoveredDraggable.sprite.y;
+                prevAlpha = hoveredDraggable.sprite.alpha;
+            }
+        } else if (hoveredDraggable != null && hoveredDraggable.isSelected && FlxG.mouse.justPressedRight)
+            showContextMenu(mouseX, mouseY, hoveredDraggable);
 
         // Handling the sprite movement
         for (draggable in draggableSprites) {
@@ -575,8 +611,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         WindowManager.instance.addWindow(toolboxWindow);
     }
 
-    function showContextMenu(mouseX:Float, mouseY:Float, draggable) {
+    function showContextMenu(mouseX:Float, mouseY:Float, draggable:DraggableSprite) {
         Screen.instance.removeComponent(contextMenu);
+        var spriteType = draggable.spriteType;
 
         contextMenu = new Menu();
         contextMenu.width = 350;
@@ -791,7 +828,53 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         }
 
         frame.addComponent(vbox);
+
+        var resetContainer = new VBox();
+        resetContainer.percentWidth = 100;
+        resetContainer.paddingBottom = 5;
+
+        var resetButton:Button = new Button();
+        resetButton.text = "Reset Element Position";
+        resetButton.tooltip = "Reset this HUD Element to its default position settings.";
+        resetButton.horizontalAlign = "center";
+        resetButton.percentWidth = 60;
+        resetButton.onClick = (event:MouseEvent) -> {
+            Save.instance.modOptions.remove(spriteType + "Settings");
+
+            draggableSprites = draggableSprites.filter(oldDraggable -> oldDraggable.spriteType != spriteType);
+            switch (spriteType) {
+                case "judgement", "combo":
+                    draggableSprites = draggableSprites.filter(oldDraggable -> oldDraggable.spriteType != "judgement" && oldDraggable.spriteType != "combo");
+                    initPopUps();
+                case "healthBar":
+                    initHealthBarSprite();
+                case "timeBar":
+                    initTimeBarSprite();
+                case "restBar":
+                    initRestBarSprite();
+                case "statsText":
+                    initStats();
+                case "judgementsText":
+                    initJudgements();
+                case "kpsText":
+                    initKPS();
+            }
+
+            for (newDraggable in draggableSprites) {
+                if (newDraggable.spriteType == spriteType) {
+                    newDraggable.isSelected = true;
+                    updateHighlight(newDraggable);
+                    updateText(newDraggable);
+                    break;
+                }
+            }
+
+            contextMenu.hide();
+        }
+
+        resetContainer.addComponent(resetButton);
         contextMenu.addComponent(frame);
+        contextMenu.addComponent(resetContainer);
         Screen.instance.addComponent(contextMenu);
     }
 
@@ -1011,28 +1094,55 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return box;
     }
 
-    function updateHighlight(?draggable) {
+    function updateHighlight(?draggable:DraggableSprite) {
         if (draggable == null || !draggable.isSelected) {
             highlightOutline.visible = false;
             return;
         }
 
-        // Only create/recreate the graphic when needed
-        var targetWidth = Std.int(draggable.sprite.width + (5 * 2));
-        var targetHeight = Std.int(draggable.sprite.height + (5 * 2));
+        // Start with the main sprite's bounds
+        var minX = draggable.sprite.x;
+        var maxX = draggable.sprite.x + draggable.sprite.width;
+        var minY = draggable.sprite.y;
+        var maxY = draggable.sprite.y + draggable.sprite.height;
+
+        // Include all linked sprites in the bounds
+        if (draggable.linkedSprites != null && draggable.linkedSprites.length > 0) {
+            for (linkedSprite in draggable.linkedSprites) {
+                if (linkedSprite != null && linkedSprite.sprite != null) {
+                    var spriteX = linkedSprite.sprite.x;
+                    var spriteY = linkedSprite.sprite.y;
+                    var spriteMaxX = spriteX + linkedSprite.sprite.width;
+                    var spriteMaxY = spriteY + linkedSprite.sprite.height;
+
+                    // Update bounds if needed
+                    minX = Math.min(minX, spriteX);
+                    maxX = Math.max(maxX, spriteMaxX);
+                    minY = Math.min(minY, spriteY);
+                    maxY = Math.max(maxY, spriteMaxY);
+                }
+            }
+        }
+
+        // Calculate total width and height with padding
+        var totalWidth = maxX - minX;
+        var totalHeight = maxY - minY;
+        var padding = 5;
+        var targetWidth = Std.int(totalWidth + (padding * 2));
+        var targetHeight = Std.int(totalHeight + (padding * 2));
 
         // Only recreate when dimensions change
         if (!highlightInitialized || highlightOutline.width != targetWidth || highlightOutline.height != targetHeight) {
             highlightOutline.makeGraphic(targetWidth, targetHeight, 0x00000000, true);
             FlxSpriteUtil.drawRect(highlightOutline, 0, 0, highlightOutline.width, highlightOutline.height, 0x00000000,
-            {color: 0xFF339933, thickness: 2});
+            {color: 0xFF339933, thickness: 3});
             highlightInitialized = true;
         }
 
-        // Just reposition the outline
-        highlightOutline.x = draggable.sprite.x - 5;
-        highlightOutline.y = draggable.sprite.y - 5;
-        highlightOutline.angle = draggable.sprite.angle;
+        // Position the highlight at the min bounds minus padding
+        highlightOutline.x = minX - padding;
+        highlightOutline.y = minY - padding;
+        highlightOutline.angle = draggable.sprite.angle; // Use the main sprite's angle
         highlightOutline.visible = true;
     }
 
@@ -1216,7 +1326,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return !outOfBounds;
     }
 
-    function calculateDragPosition(draggable:DraggableSprite, mouseX:Float, mouseY:Float):{x:Float, y:Float} {
+    function calculateDragPosition(draggable:DraggableSprite, mouseX:Float, mouseY:Float) {
         var newX = mouseX - draggable.dragOffsetX;
         var newY = mouseY - draggable.dragOffsetY;
 
