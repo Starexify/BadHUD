@@ -25,9 +25,11 @@ class TimeBar extends ScriptedModule {
     var timeText:FlxText;
 
     var timeBarSprites:Array<FlxSprite>;
+    var badHUDOptions;
 
     function new() {
         super("TimeBar");
+        badHUDOptions = new BadHUDOptions();
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
@@ -40,11 +42,12 @@ class TimeBar extends ScriptedModule {
 
     function initTimeBar() {
         timeText = new FlxText();
-        var fontSize = badOptions.timeBarStyle == "timeBarPsychEngine" ? 32 : new BadHUDOptions().fontSize;
+        var fontSize = badOptions.timeBarStyle == "timeBarPsychEngine" ? 32 : badHUDOptions.fontSize;
         timeText.setFormat(Paths.font(badOptions.hudFont), fontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
         timeText.borderSize = badOptions.timeBarStyle == "timeBarPsychEngine" ? 2 : 1.75;
         timeText.scrollFactor.set();
         if (!state.isMinimalMode) timeText.zIndex = state.iconP1.zIndex + 1;
+        else timeText.zIndex = 801;
 
         timeBarBG = new FunkinSprite();
         timeBarBG.loadTexture(badOptions.timeBarStyle);
@@ -56,7 +59,7 @@ class TimeBar extends ScriptedModule {
         timeBar = new FlxBar(0, 0, null, Std.int(timeBarBG.width - 5), Std.int(timeBarBG.height - timeBarHeight));
         timeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
         timeBar.scrollFactor.set();
-        timeBar.zIndex = badOptions.timeBarStyle == "timeBarPsychEngine" ? 801 : 799;
+        timeBar.zIndex = 799;
 
         var settings = Save.instance.modOptions.get("timeBarSettings");
         if (settings != null) {
@@ -67,7 +70,7 @@ class TimeBar extends ScriptedModule {
             timeText.setPosition(settings[0] - timeText.width / 2, settings[1] - timeText.height / 2);
         } else {
             timeText.screenCenter(0x01);
-            timeText.y = Preferences.downscroll ? FlxG.height * 0.95 : FlxG.height * 0.05;
+            timeText.y = Preferences.downscroll ? FlxG.height * 0.95 : FlxG.height * 0.03;
         }
 
         var centerX = timeText.x + timeText.width / 2;

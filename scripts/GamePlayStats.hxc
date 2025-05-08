@@ -1,4 +1,5 @@
 import funkin.Highscore;
+import funkin.Preferences;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
 import funkin.modding.module.ScriptedModule;
@@ -104,7 +105,8 @@ class GamePlayStats extends ScriptedModule {
             statsText.alignment = settings[0] >= FlxG.width / 2 ? "right" : "left";
         } else {
             statsText.screenCenter(0x01);
-            statsText.y = (badOptions.healthBar && Save.instance.modOptions.get("healthBarSettings") != null) ? state.healthBarBG.y + 45 : 40;
+            var yPos = Preferences.downscroll ? 40 : FlxG.height * 0.95;
+            statsText.y = (badOptions.healthBar || Save.instance.modOptions.get("healthBarSettings") != null) ? state.healthBarBG.y + 45 : yPos;
         }
         statsText.scrollFactor.set();
         statsText.zIndex = 851;
