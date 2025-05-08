@@ -42,6 +42,8 @@ import haxe.ui.containers.TableView;
 import haxe.ui.containers.TabView;
 import haxe.ui.containers.Box;
 import haxe.ui.containers.VBox;
+import haxe.ui.containers.dialogs.Dialog;
+import haxe.ui.containers.dialogs.MessageBox;
 import haxe.ui.containers.menus.Menu;
 import haxe.ui.containers.windows.Window;
 import haxe.ui.containers.windows.WindowManager;
@@ -50,6 +52,7 @@ import haxe.ui.data.ArrayDataSource;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.events.UIEvent;
 import haxe.ui.layouts.VerticalGridLayout;
+import flixel.util.FlxTimer;
 
 class HUDManagerState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -87,6 +90,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     var contextMenu:Menu;
     var isSearching:Bool = false;
+    var openedDialog:Bool = false;
     var mouseDownHandler = null;
 
     var prevAlpha:Float;
@@ -203,7 +207,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         // Handling the sprite movement
         for (draggable in draggableSprites) {
-            if (!isSearching) {
+            if (!isSearching && !openedDialog) {
                 if (draggable.isDragging) handleDragging(draggable, mouseX, mouseY);
                 else if (draggable.isSelected) handleSelected(draggable);
 
@@ -211,13 +215,15 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             }
         }
 
-        handleNotePress();
-        handleCursor(hoveredDraggable);
+        if (!openedDialog) {
+            handleNotePress();
+            handleCursor(hoveredDraggable);
+        }
 
         if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
 
         // Exit to OptionsState (Doesn't work with Pause Options)
-        if (FlxG.keys.justPressed.ESCAPE && !isSearching) FlxG.switchState(() -> new OptionsState());
+        if (FlxG.keys.justPressed.ESCAPE && !isSearching && !openedDialog) FlxG.switchState(() -> new OptionsState());
 
         super.update(elapsed);
     }
@@ -595,7 +601,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var colorPicker:ColorPicker = new ColorPicker();
         colorPicker.percentWidth = 100;
         colorPicker.onChange = (event:UIEvent) -> badOptions.strumBgColor = colorPicker.currentColor;
-        colorPicker.registerEvent(UIEvent.INITIALIZE, () -> colorPicker.currentColor = badOptions.strumBgColor);
+        colorPicker.registerEvent(UIEvent.INITIALIZE, (event:UIEvent) -> colorPicker.currentColor = badOptions.strumBgColor);
         colorPicker.onClick = (event:MouseEvent) -> isSearching = true;
         colorPicker.onMouseOut = (event:MouseEvent) -> isSearching = false;
         colorFrame.addComponent(colorPicker);
@@ -833,42 +839,57 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         resetContainer.percentWidth = 100;
         resetContainer.paddingBottom = 5;
 
+        var resetDialog = new MessageBox();
+        resetDialog.title = "Confirm Reset of HUD Element ?";
+        trace(resetDialog.iconImage);
+        resetDialog.text = "You are about to PERMANENTLY reset this HUD Element to its default position settings.\n\n⚠️ This action CANNOT be undone!\n\nAre you absolutely sure you want to proceed?";
+        resetDialog.type = "yesno";
+        resetDialog.iconImage.styleString = "resource: 'haxeui-core/styles/shared/warning-large.png'";
+        resetDialog.width = 400;
+        resetDialog.height = 200;
+
         var resetButton:Button = new Button();
         resetButton.text = "Reset Element Position";
-        resetButton.tooltip = "Reset this HUD Element to its default position settings.";
         resetButton.horizontalAlign = "center";
         resetButton.percentWidth = 60;
         resetButton.onClick = (event:MouseEvent) -> {
-            Save.instance.modOptions.remove(spriteType + "Settings");
+            resetDialog.showDialog();
+            openedDialog = true;
+        }
 
-            draggableSprites = draggableSprites.filter(oldDraggable -> oldDraggable.spriteType != spriteType);
-            switch (spriteType) {
-                case "judgement", "combo":
-                    draggableSprites = draggableSprites.filter(oldDraggable -> oldDraggable.spriteType != "judgement" && oldDraggable.spriteType != "combo");
-                    initPopUps();
-                case "healthBar":
-                    initHealthBarSprite();
-                case "timeBar":
-                    initTimeBarSprite();
-                case "restBar":
-                    initRestBarSprite();
-                case "statsText":
-                    initStats();
-                case "judgementsText":
-                    initJudgements();
-                case "kpsText":
-                    initKPS();
-            }
+        resetDialog.onDialogClosed = (event:DialogEvent) -> {
+            openedDialog = false;
+            if (event.button == "{{yes}}") {
+                Save.instance.modOptions.remove(spriteType + "Settings");
 
-            for (newDraggable in draggableSprites) {
-                if (newDraggable.spriteType == spriteType) {
-                    newDraggable.isSelected = true;
-                    updateHighlight(newDraggable);
-                    updateText(newDraggable);
-                    break;
+                draggableSprites = draggableSprites.filter(oldDraggable -> oldDraggable.spriteType != spriteType);
+                switch (spriteType) {
+                    case "judgement", "combo":
+                        draggableSprites = draggableSprites.filter(oldDraggable -> oldDraggable.spriteType != "judgement" && oldDraggable.spriteType != "combo");
+                        initPopUps();
+                    case "healthBar":
+                        initHealthBarSprite();
+                    case "timeBar":
+                        initTimeBarSprite();
+                    case "restBar":
+                        initRestBarSprite();
+                    case "statsText":
+                        initStats();
+                    case "judgementsText":
+                        initJudgements();
+                    case "kpsText":
+                        initKPS();
+                }
+
+                for (newDraggable in draggableSprites) {
+                    if (newDraggable.spriteType == spriteType) {
+                        newDraggable.isSelected = true;
+                        updateHighlight(newDraggable);
+                        updateText(newDraggable);
+                        break;
+                    }
                 }
             }
-
             contextMenu.hide();
         }
 
