@@ -5,6 +5,7 @@ import funkin.modding.module.ModuleHandler;
 import funkin.modding.module.ScriptedModule;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.play.notes.Strumline;
 import funkin.save.Save;
 
 import flixel.FlxSprite;
@@ -43,7 +44,7 @@ class RestPeriodTimer extends ScriptedModule {
         if (state == null || !badOptions.restBar || restText == null) return;
         var restBarFadeOut = 1000; // 1s
         var songPosition = state.conductorInUse.songPosition;
-        var incomingNoteTime = getNextNoteAndTime(songPosition)?.time ?? 0;
+        var incomingNoteTime = Std.int(getNextNoteAndTime(songPosition)?.time ?? 0);
         var noteTimeDelta = incomingNoteTime - lastHitNoteTime;
         restTime = incomingNoteTime - songPosition;
 
@@ -58,14 +59,14 @@ class RestPeriodTimer extends ScriptedModule {
         }
     }
 
-    override function onNoteHit(event:HitNoteScriptEvent) { if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time); }
+    override function onNoteHit(event:HitNoteScriptEvent) { if (event.note.noteData.getMustHitNote(Strumline.KEY_COUNT)) lastHitNoteTime = Std.int(event.note.noteData.time); }
 
-    override function onNoteMiss(event:NoteScriptEvent) { if (event.note.noteData.getMustHitNote()) lastHitNoteTime = Std.int(event.note.noteData.time); }
+    override function onNoteMiss(event:NoteScriptEvent) { if (event.note.noteData.getMustHitNote(Strumline.KEY_COUNT)) lastHitNoteTime = Std.int(event.note.noteData.time); }
 
     // Helper Methods
     function getNextNoteAndTime(currentTime:Float):{note:SongNoteData, time:Float} {
         if (state.currentChart == null || state.currentChart.notes == null) return;
-        for (note in state.currentChart.notes) if (note.getMustHitNote() && note.time > currentTime) return { note: note, time: note.time };
+        for (note in state.currentChart.notes) if (note.time > currentTime && note.getMustHitNote(Strumline.KEY_COUNT)) return { note: note, time: note.time };
     }
 
     function initRestBar() {
