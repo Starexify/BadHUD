@@ -183,6 +183,7 @@ class ExtraStrumline extends ScriptedModule {
                     if (badOptions.middlescroll && !badOptions.oppMiddlescroll) {
                         event.note.holdNoteSprite.scale.set(noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling, noteStyle.getNoteScale() - noteStyle.getNoteScale() * noteScaling);
                         event.note.holdNoteSprite.graphicWidth *= noteScaling;
+                        event.note.holdNoteSprite.updateClipping();
                     }
                     event.note.holdNoteSprite.x = event.note.x + ((event.note.width - event.note.holdNoteSprite.graphicWidth) * 0.5);
                 }
