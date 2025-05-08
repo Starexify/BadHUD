@@ -2,15 +2,15 @@ import funkin.Paths;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
 import funkin.modding.module.ScriptedModule;
+import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.save.Save;
 
 import flixel.FlxG;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
-import funkin.play.PauseSubState;
-import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
 
 class CustomScrollSpeed extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -40,15 +40,13 @@ class CustomScrollSpeed extends ScriptedModule {
     override function onSubStateOpenEnd(event:SubStateScriptEvent) {
         if (!badOptions.customScrollSpeed) return;
         if (Std.isOfType(event.targetState, PauseSubState)) {
-            var pauseState:PauseSubState = event.targetState;
-
             // Create Scroll Speed Text Element
             speedText = new FlxText(20, 0, FlxG.width - 40);
             speedText.setFormat(Paths.font(badOptions.hudFont), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
             speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + badOptions.scrollSpeedFactor / 10;
             speedText.y = FlxG.height - speedText.height;
             speedText.alignment = "right";
-            pauseState.add(speedText);
+            event.targetState.add(speedText);
 
             FlxTween.tween(speedText, {alpha: 1, y: speedText.y - 5}, 1.8, {ease: FlxEase.quartOut});
         }

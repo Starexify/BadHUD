@@ -106,8 +106,9 @@ class ExtraStrumline extends ScriptedModule {
                 var keyArray = PreciseInputManager.getKeysForDirection(PlayerSettings.player1.controls, staticNote.direction);
                 var keyName = InputUtil.getKeyName(keyArray[0]);
                 var keybindText = new FlxText(staticNote.x, staticNote.y, staticNote.width, keyName);
-                keybindText.y = staticNote.y + staticNote.height * 0.5 - keybindText.height * staticNote.scale.y;
                 keybindText.setFormat(Paths.font(badOptions.hudFont), 32, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+                keybindText.y = staticNote.y + staticNote.height * 0.5;
+                keybindText.y += Preferences.downscroll ? -keybindText.height : keybindText.height;
                 keybindText.alpha = 0;
                 keybindText.camera = state.camHUD;
                 state.add(keybindText);
@@ -228,14 +229,14 @@ class ExtraStrumline extends ScriptedModule {
     function fadeInKeybinds(noteHeight:Float) {
         var index = 0;
         for (text in keybindTexts) {
-            var textYDirI = Preferences.downscroll ? text.y - noteHeight * 0.5 : text.y + noteHeight * 0.5;
-            var textYDirII = Preferences.downscroll ? text.y + 20 : text.y - 20;
-            FlxTween.tween(text, {y: textYDirI, alpha: 1}, 1, {
+            var textYDirI = Preferences.downscroll ? -noteHeight * 0.5 : noteHeight * 0.5;
+            var textYDirII = Preferences.downscroll ? 20 : -20;
+            FlxTween.tween(text, {y: text.y + textYDirI, alpha: 1}, 1, {
                 ease: FlxEase.circOut,
                 startDelay: 0.5 + (0.2 * index),
-                onComplete: tween -> FlxTween.tween(text, {y: textYDirII, alpha: 0}, 0.8, {
+                onComplete: tween -> FlxTween.tween(text, {y: text.y + textYDirII, alpha: 0}, 0.8, {
                     ease: FlxEase.circIn,
-                    onComplete: _ -> {
+                    onComplete: tween -> {
                         text.destroy();
                         state.remove(text);
                         keybindTexts = [];

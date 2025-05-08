@@ -75,7 +75,7 @@ class PauseOptions extends ScriptedModule {
             var menuEntries = pauseState.currentMenuEntries;
             menuEntries.insert(menuEntries.length - 1, {
                 text: "Options",
-                callback: subState -> openOptionsCallback
+                callback: openOptionsCallback
             });
 
             pauseState.clearAndAddMenuEntries();
