@@ -41,7 +41,7 @@ class PauseOptions extends ScriptedModule {
             var lastItems = [
                 options.items.members[options.items.length - 3], // ngLogin
                 options.items.members[options.items.length - 2], // clearSave
-                options.items.members[options.items.length - 1]  // exit
+                options.items.members[options.items.length - 1] // exit
             ];
             lastItems[0].y += 100; // ngLogin
             lastItems[1].y += 100; // clearSave
@@ -75,7 +75,7 @@ class PauseOptions extends ScriptedModule {
             var menuEntries = pauseState.currentMenuEntries;
             menuEntries.insert(menuEntries.length - 1, {
                 text: "Options",
-                callback: openOptionsCallback
+                callback: subState -> openOptionsCallback
             });
 
             pauseState.clearAndAddMenuEntries();
@@ -83,16 +83,14 @@ class PauseOptions extends ScriptedModule {
         }
     }
 
-    function openOptionsCallback() {
+    function openOptionsCallback(subState:PauseSubState) {
         wasPaused = true;
-        if (pauseState == null) return;
+        if (subState == null) return;
         // Fade out animation
         var duration = 0.4;
-        for (entry in pauseState.currentMenuEntries.copy()) {
-            if (entry.sprite != null) {
-                if (entry.text == "Options") FlxTween.tween(entry.sprite, { alpha: 0 }, duration, { ease: FlxEase.quadOut });
-                else entry.sprite.visible = false;
-            }
+        for (entry in subState.currentMenuEntries.copy()) {
+            if (entry.text == "Options") FlxTween.tween(entry?.sprite, { alpha: 0 }, duration, { ease: FlxEase.quadOut });
+            else entry?.sprite.visible = false;
         }
         FlxG.camera.fade(0xFF000000, duration, false, () -> FlxG.switchState(() -> new OptionsState()));
     }

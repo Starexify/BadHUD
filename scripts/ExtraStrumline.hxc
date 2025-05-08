@@ -40,9 +40,6 @@ class ExtraStrumline extends ScriptedModule {
     var rightGradient:FunkinSprite;
     var underlaySprites:Array<FunkinSprite>;
 
-    var initStrumline:Bool = false;
-    var firstLoad:Bool = true;
-
     var keybindTexts:Array<FlxText> = [];
 
     var ratingsPopUps:RatingPopUps;
@@ -63,9 +60,6 @@ class ExtraStrumline extends ScriptedModule {
         if (state == null) return;
         noteStyle = NoteStyleRegistry.instance.fetchEntry(state.currentChart.noteStyle);
         if (noteStyle == null) noteStyle = NoteStyleRegistry.instance.fetchDefault();
-
-        initStrumline = firstLoad;
-        if (firstLoad) firstLoad = false;
 
         // Center player strumline
         if (badOptions.middlescroll && badHooks.strumlineExcluded.indexOf(state.currentChart.songName) == -1) {
@@ -276,8 +270,8 @@ class ExtraStrumline extends ScriptedModule {
                 - (Strumline.NUDGE * noteScaling)
                 + (noteStyle.getStrumlineOffsets()[0] * noteScaling);
 
-                if (initStrumline) {
-                    note.y = strumline.y + noteStyle.getStrumlineOffsets()[1];
+                note.y = strumline.y + noteStyle.getStrumlineOffsets()[1];
+                if (!state.needsReset) {
                     FlxTween.tween(note, {y: note.y, alpha: badOptions.opponentNoteOpacity / 100}, 1, {
                         onStart: tween -> note.y -= 10, ease: FlxEase.circOut, startDelay: 0.5 + (0.2 * note.direction)
                     });
@@ -289,11 +283,11 @@ class ExtraStrumline extends ScriptedModule {
     // Cleanup Stuff
     override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
 
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) cleanup(); firstLoad = true; }
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) cleanup(); }
 
     override function onSongRetry(event:ScriptEvent) { cleanup(); }
 
-    override function onSongEnd(event:ScriptEvent) { cleanup(); firstLoad = true; }
+    override function onSongEnd(event:ScriptEvent) { cleanup(); }
 
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
@@ -306,6 +300,5 @@ class ExtraStrumline extends ScriptedModule {
         leftGradient = null;
         rightGradient = null;
         oppLaneUnderlay = null;
-        initStrumline = false;
     }
 }

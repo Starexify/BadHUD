@@ -8,6 +8,9 @@ import funkin.save.Save;
 import flixel.FlxG;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
+import funkin.play.PauseSubState;
+import flixel.tweens.FlxTween;
+import flixel.tweens.FlxEase;
 
 class CustomScrollSpeed extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -34,19 +37,21 @@ class CustomScrollSpeed extends ScriptedModule {
         state.opponentStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
     }
 
-    override function onPause(event:PauseScriptEvent) {
+    override function onSubStateOpenEnd(event:SubStateScriptEvent) {
         if (!badOptions.customScrollSpeed) return;
-        // Binding with BadHUDOptions for size
-        var textSize = badOptions.hudFontSize;
+        if (Std.isOfType(event.targetState, PauseSubState)) {
+            var pauseState:PauseSubState = event.targetState;
 
-        // Create Scroll Speed Text Element
-        speedText = new FlxText(20, FlxG.height * 0.94, FlxG.width - 40, "", 20);
-        speedText.setFormat(Paths.font(badOptions.hudFont), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
-        speedText.scrollFactor.set(0, 0);
-        speedText.alignment = "right";
-        speedText.camera = state.camHUD;
-        speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + badOptions.scrollSpeedFactor / 10;
-        state.add(speedText);
+            // Create Scroll Speed Text Element
+            speedText = new FlxText(20, 0, FlxG.width - 40);
+            speedText.setFormat(Paths.font(badOptions.hudFont), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+            speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + badOptions.scrollSpeedFactor / 10;
+            speedText.y = FlxG.height - speedText.height;
+            speedText.alignment = "right";
+            pauseState.add(speedText);
+
+            FlxTween.tween(speedText, {alpha: 1, y: speedText.y - 5}, 1.8, {ease: FlxEase.quartOut});
+        }
     }
 
     override function onSubStateCloseBegin(event:SubStateScriptEvent) { cleanup(); }
