@@ -712,6 +712,14 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             vbox.addComponent(ratingAnimationBox);
         }
 
+        if (draggable.spriteType == "hitDiffText") {
+            var hitDiffFadeBox = createCheckBox("Text Fade Out", "If enabled, the hit difference text will fade out.", badOptions.hitDiffFade, 100, (event:UIEvent) -> badOptions.hitDiffFade = event.target.value);
+            var hitDiffColorBox = createCheckBox("Colored Accuracy", "If enabled, the hit difference text will be colored based on accuracy.", badOptions.hitDiffColor, 100, (event:UIEvent) -> badOptions.hitDiffColor = event.target.value);
+
+            vbox.addComponent(hitDiffFadeBox);
+            vbox.addComponent(hitDiffColorBox);
+        }
+
         if (draggable.spriteType == "healthBar") {
             var iconPositions:Array<BasicEntry> = [
                 {id: "off", text: "Off"},

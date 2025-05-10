@@ -39,6 +39,8 @@ class BadHUDOptions extends ScriptedModule {
         judgementsOrt: "left",
         judgementsBool: true,
         hitDiffBool: true,
+        hitDiffFade: true,
+        hitDiffColor: true,
         kpsOrt: "left",
         kpsCounter: false,
         hudOpacity: 100,
@@ -53,7 +55,7 @@ class BadHUDOptions extends ScriptedModule {
         scrollSpeedFactor: 18,
         strumBgColor: 0xFF000000,
         strumHeight: 24
-    };
+    }
 
     // Hooks or smth like that for other classes
     var fontSize:Int;
@@ -167,6 +169,7 @@ typedef BadSaveData = {
     judgementsOrt:String,
     judgementsBool:Bool,
     hitDiffBool:Bool,
+    hitDiffColor:Bool,
     kpsOrt:String,
     kpsCounter:Bool,
     hudOpacity:Int,

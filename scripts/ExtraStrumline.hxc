@@ -8,14 +8,15 @@ import funkin.modding.base.ScriptedFlxSpriteGroup;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ModuleHandler;
 import funkin.modding.module.ScriptedModule;
-import funkin.play.notes.Strumline;
-import funkin.play.notes.notestyle.NoteStyle;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.play.notes.Strumline;
+import funkin.play.notes.notestyle.NoteStyle;
+import funkin.play.scoring.Scoring;
+import funkin.save.Save;
 import funkin.ui.debug.charting.ChartEditorState;
 import funkin.util.Constants;
 import funkin.util.InputUtil;
-import funkin.save.Save;
 
 import flixel.FlxG;
 import flixel.text.FlxText;
@@ -43,6 +44,7 @@ class ExtraStrumline extends ScriptedModule {
 
     var keybindTexts:Array<FlxText> = [];
     var hitDiffText:FlxText;
+    var hitDiffTween:FlxTween;
 
     var ratingsPopUps:RatingPopUps;
     var noteStyle:NoteStyle;
@@ -50,6 +52,13 @@ class ExtraStrumline extends ScriptedModule {
     var noteScaling = 0.5;
     var STRUMLINE_DOWNSCROLL = 200;
     var STRUMLINE_UPSCROLL = -400;
+
+    var PERFECT_COLOR:Int = 0xFFFFFFFF;
+    var KILLER_COLOR:Int = 0xFF00FFFF;
+    var SICK_COLOR:Int = 0xFF2DE356;
+    var GOOD_COLOR:Int = 0xFFFFFF00;
+    var BAD_COLOR:Int = 0xFFE6B72B;
+    var SHIT_COLOR:Int = 0xFFDC3834;
 
     function new() {
         super("ExtraStrumline", 3);
@@ -228,6 +237,23 @@ class ExtraStrumline extends ScriptedModule {
     function popUpRatings(judgement:String, hitDiff:Float, ?combo:Int) {
         if (hitDiffText != null) {
             hitDiffText.text = hitDiff + " ms";
+            if (badOptions.hitDiffColor) hitDiffText.color = getTimingColor(hitDiff);
+            hitDiffText.alpha = 1.0;
+
+            // Fade out hit difference
+            if (badOptions.hitDiffColor) {
+                if (hitDiffTween != null) {
+                    hitDiffTween.cancel();
+                    hitDiffTween = null;
+                }
+
+                hitDiffTween = FlxTween.tween(hitDiffText, {alpha: 0}, 0.2, {
+                    ease: FlxEase.quadOut,
+                    startDelay: 0.3 + state.conductorInUse.beatLengthMs * 0.001,
+                    onComplete: tween -> hitDiffTween = null
+                });
+            }
+
             if (settings != null) hitDiffText.setPosition(settings[0] - hitDiffText.width * 0.5, settings[1] - hitDiffText.height * 0.5);
         }
 
@@ -238,6 +264,20 @@ class ExtraStrumline extends ScriptedModule {
         if (combo >= 10) ratingsPopUps.scriptCall("displayCombo", [combo]);
 
         if (hitDiffText != null && settings == null && judgementSprite != null) hitDiffText.setPosition(judgementSprite.x + judgementSprite.width, judgementSprite.y + judgementSprite.height + hitDiffText.height);
+    }
+
+    function getTimingColor(msTiming:Float) {
+        var absTiming:Float = Math.abs(msTiming);
+
+        // Add directional hint (blue for early, red tint for late) to the color
+        var directionHint:Int = (msTiming < 0) ? 0x000088 : 0x880000;
+
+        if (absTiming < Scoring.PBOT1_PERFECT_THRESHOLD) return PERFECT_COLOR;
+        else if (absTiming < Scoring.PBOT1_KILLER_THRESHOLD) return KILLER_COLOR | directionHint;
+        else if (absTiming < Scoring.PBOT1_SICK_THRESHOLD) return SICK_COLOR | directionHint;
+        else if (absTiming < Scoring.PBOT1_GOOD_THRESHOLD) return GOOD_COLOR | directionHint;
+        else if (absTiming < Scoring.PBOT1_BAD_THRESHOLD) return BAD_COLOR | directionHint;
+        else if (absTiming < Scoring.PBOT1_SHIT_THRESHOLD) return SHIT_COLOR | directionHint;
     }
 
     function fadeInKeybinds(noteHeight:Float) {
@@ -309,6 +349,7 @@ class ExtraStrumline extends ScriptedModule {
         hitDiffText.zIndex = 851;
         hitDiffText.scrollFactor.set();
         hitDiffText.camera = state.camHUD;
+        hitDiffText.alpha = 0;
         state.add(hitDiffText);
     }
 
@@ -334,5 +375,6 @@ class ExtraStrumline extends ScriptedModule {
         rightGradient = null;
         oppLaneUnderlay = null;
         hitDiffText = null;
+        hitDiffTween = null;
     }
 }
