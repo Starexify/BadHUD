@@ -31,6 +31,7 @@ import StringTools;
 
 class ExtraStrumline extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
+    var settings;
     var badHooks:Null<BadHooks>;
     var state:PlayState;
 
@@ -41,6 +42,7 @@ class ExtraStrumline extends ScriptedModule {
     var underlaySprites:Array<FunkinSprite>;
 
     var keybindTexts:Array<FlxText> = [];
+    var hitDiffText:FlxText;
 
     var ratingsPopUps:RatingPopUps;
     var noteStyle:NoteStyle;
@@ -99,6 +101,9 @@ class ExtraStrumline extends ScriptedModule {
         ratingsPopUps.zIndex = 900;
         state.add(ratingsPopUps);
 
+        // Hit Diff Text
+        if (badOptions.hitDiffBool) initHitDiffText();
+
         // Remind Keybinds
         if (badOptions.remindKeys) {
             var noteHeigth:Int;
@@ -125,7 +130,7 @@ class ExtraStrumline extends ScriptedModule {
                 oppLaneUnderlay = new FunkinSprite();
                 oppLaneUnderlay.x = state.opponentStrumline.x;
                 oppLaneUnderlay.makeSolidColor(Std.int(state.opponentStrumline.width * noteScaling + (Strumline.BACKGROUND_PAD * noteScaling) * 2), FlxG.height, Std.parseInt("0xFF" + (badOptions.strumBgColor == 0 ? "000000" : StringTools.hex(badOptions.strumBgColor))));
-                if (state.opponentStrumline.noteStyle.id == Constants.DEFAULT_NOTE_STYLE) oppLaneUnderlay.x += 30;
+                //if (state.opponentStrumline.noteStyle.id == Constants.DEFAULT_NOTE_STYLE) oppLaneUnderlay.x += 30;
                 oppLaneUnderlay.alpha = Preferences.strumlineBackgroundOpacity / 100;
                 oppLaneUnderlay.scrollFactor.set();
                 oppLaneUnderlay.zIndex = -1;
@@ -187,7 +192,9 @@ class ExtraStrumline extends ScriptedModule {
         } catch (e:Exception) trace("[BadHUD] " + e);
     }
 
-    override function onNoteHit(event:HitNoteScriptEvent) {if (state != null && !Std.isOfType(event.targetState, ChartEditorState) && event.note.noteData.getMustHitNote(Strumline.KEY_COUNT)) popUpRatings(event.judgement);}
+    override function onNoteHit(event:HitNoteScriptEvent) {
+        if (state != null && !Std.isOfType(event.targetState, ChartEditorState) && event.note.noteData.getMustHitNote(Strumline.KEY_COUNT)) popUpRatings(event.judgement, event.hitDiff);
+    }
 
     override function onNoteMiss(event:NoteScriptEvent) { event.playSound = !badOptions.muteMiss; }
 
@@ -218,12 +225,19 @@ class ExtraStrumline extends ScriptedModule {
     }
 
     // Helper Methods
-    function popUpRatings(judgement:String, ?combo:Int) {
-        if (judgement == "miss" || badOptions.popUpType == "off" || ratingsPopUps == null) return;
-        ratingsPopUps.scriptCall("displayJudgement", [judgement]);
+    function popUpRatings(judgement:String, hitDiff:Float, ?combo:Int) {
+        if (hitDiffText != null) {
+            hitDiffText.text = hitDiff + " ms";
+            if (settings != null) hitDiffText.setPosition(settings[0] - hitDiffText.width * 0.5, settings[1] - hitDiffText.height * 0.5);
+        }
+
+        if (badOptions.popUpType == "off" || ratingsPopUps == null || judgement == "miss") return;
+        var judgementSprite:FunkinSprite = ratingsPopUps.scriptCall("displayJudgement", [judgement]);
 
         if (combo == null) combo = Highscore.tallies.combo;
         if (combo >= 10) ratingsPopUps.scriptCall("displayCombo", [combo]);
+
+        if (hitDiffText != null && settings == null && judgementSprite != null) hitDiffText.setPosition(judgementSprite.x + judgementSprite.width, judgementSprite.y + judgementSprite.height + hitDiffText.height);
     }
 
     function fadeInKeybinds(noteHeight:Float) {
@@ -281,6 +295,23 @@ class ExtraStrumline extends ScriptedModule {
         }
     }
 
+    function initHitDiffText() {
+        hitDiffText = new FlxText();
+        hitDiffText.setFormat(Paths.font(badOptions.hudFont), badOptions.hudFontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        hitDiffText.borderSize = 1.25;
+        settings = Save.instance.modOptions.get("hitDiffTextSettings");
+        if (settings != null) {
+            hitDiffText.angle = settings[4];
+            hitDiffText.scale.x = settings[2];
+            hitDiffText.scale.y = settings[3];
+            hitDiffText.updateHitbox();
+        } else hitDiffText.setPosition(FlxG.width * 0.55, FlxG.height * 0.45);
+        hitDiffText.zIndex = 851;
+        hitDiffText.scrollFactor.set();
+        hitDiffText.camera = state.camHUD;
+        state.add(hitDiffText);
+    }
+
     // Cleanup Stuff
     override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
 
@@ -297,9 +328,11 @@ class ExtraStrumline extends ScriptedModule {
         if (leftGradient != null) leftGradient.destroy();
         if (rightGradient != null) rightGradient.destroy();
         if (oppLaneUnderlay != null) oppLaneUnderlay.destroy();
+        if (hitDiffText != null) hitDiffText.destroy();
         laneUnderlay = null;
         leftGradient = null;
         rightGradient = null;
         oppLaneUnderlay = null;
+        hitDiffText = null;
     }
 }

@@ -67,6 +67,7 @@ class RatingPopUps extends ScriptedFlxSpriteGroup {
                     }
                 });
         }
+        return judgementSprite;
     }
 
     function displayCombo(combo:Int = 0) {

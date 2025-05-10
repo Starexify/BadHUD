@@ -69,6 +69,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var oppStrum:Bool = true;
 
     var ratingsPopUps:RatingPopUps;
+    var judgementSprite:FunkinSprite;
+    var hitDiffText:FlxText;
     var timeBarBG:FunkinSprite;
     var timeText:FlxText;
     var timeBar:FlxBar;
@@ -254,6 +256,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     function initDraggableSprites() {
         initPopUps();
+        initHitDiff();
         initHealthBarSprite();
         initTimeBarSprite();
         initRestBarSprite();
@@ -268,7 +271,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         ratingsPopUps.scriptSet("noteStyle", noteStyle);
         add(ratingsPopUps);
 
-        var judgementSprite:FunkinSprite = ratingsPopUps.scriptCall("initJudgementSprite", ["sick"]);
+        judgementSprite = ratingsPopUps.scriptCall("initJudgementSprite", ["sick"]);
         addDraggableSprite(judgementSprite, "judgement");
 
         var draggableCombo = null;
@@ -280,6 +283,22 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 else linkSpriteToTarget(draggableCombo, comboSprite, i);
             }
         }
+    }
+
+    function initHitDiff() {
+        if (hitDiffText != null) remove(hitDiffText);
+        if (!badOptions.hitDiffBool) return;
+        hitDiffText = new FlxText();
+        hitDiffText.text = "-999 ms";
+        hitDiffText.setFormat(Paths.font(badOptions.hudFont), badOptions.hudFontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
+        hitDiffText.borderSize = 1.25;
+        positionUIElement(hitDiffText, "hitDiffTextSettings", settings -> {
+        }, sprite -> {
+            if (judgementSprite != null) hitDiffText.setPosition(judgementSprite.x + judgementSprite.width, judgementSprite.y + judgementSprite.height + hitDiffText.height);
+            else hitDiffText.setPosition(FlxG.width * 0.55, FlxG.height * 0.45);
+        }, true);
+        addDraggableSprite(hitDiffText, "hitDiffText");
+        add(hitDiffText);
     }
 
     function initHealthBarSprite() {
@@ -389,11 +408,13 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (statsText != null) remove(statsText);
         if (!badOptions.statsBool) return;
         statsText = new FlxText();
+
         switch (badOptions.statsOrt) {
             case "left": statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: ?" + "\nCombo: 0";
             case "center": statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: ?";
             case "right": statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n? Rating" + "\n0 Combo";
         }
+
         statsText.setFormat(Paths.font(badOptions.hudFont), badOptions.hudFontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         statsText.borderSize = 1.25;
         positionUIElement(statsText, "statsTextSettings", settings -> {
@@ -404,6 +425,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             var yPos = Preferences.downscroll ? 40 : FlxG.height * 0.95;
             sprite.y = (badOptions.healthBar || Save.instance.modOptions.get("healthBarSettings") != null) ? healthBarBG.y + 40 : yPos;
         }, false);
+
         addDraggableSprite(statsText, "statsText");
         add(statsText);
     }
@@ -568,6 +590,13 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             updateHighlight();
             updateText();
         });
+        var hitDiffBox:CheckBox = createCheckBox("Enable Hit Difference", "If disabled, hides the Hit Differnce Text of the in-game HUD.", badOptions.hitDiffBool, 50, (event:UIEvent) -> {
+            badOptions.hitDiffBool = event.target.value;
+            initHitDiff();
+            if (!badOptions.hitDiffBool) draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "hitDiffText");
+            updateHighlight();
+            updateText();
+        });
         var splitOpponentNotesBox:CheckBox = createCheckBox("Split Opponent Notes", "Splits the Opponent Notes on the left and right sides. (Only when using Middlescroll!)", badOptions.oppMiddlescroll, 50, (event:UIEvent) -> {
             badOptions.oppMiddlescroll = event.target.value;
             initStrumlines();
@@ -585,6 +614,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         checkboxContainer.addComponent(judgementsTextBox);
         checkboxContainer.addComponent(restBarBox);
         checkboxContainer.addComponent(kpsCounterBox);
+        checkboxContainer.addComponent(hitDiffBox);
         if (badOptions.middlescroll && badOptions.opponentNoteOpacity != 0) checkboxContainer.addComponent(splitOpponentNotesBox);
 
         var colorFrame:Frame = new Frame();
