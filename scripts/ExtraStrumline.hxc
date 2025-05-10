@@ -241,7 +241,7 @@ class ExtraStrumline extends ScriptedModule {
             hitDiffText.alpha = 1.0;
 
             // Fade out hit difference
-            if (badOptions.hitDiffColor) {
+            if (badOptions.hitDiffFade) {
                 if (hitDiffTween != null) {
                     hitDiffTween.cancel();
                     hitDiffTween = null;

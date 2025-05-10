@@ -169,6 +169,7 @@ typedef BadSaveData = {
     judgementsOrt:String,
     judgementsBool:Bool,
     hitDiffBool:Bool,
+    hitDiffFade:Bool,
     hitDiffColor:Bool,
     kpsOrt:String,
     kpsCounter:Bool,
