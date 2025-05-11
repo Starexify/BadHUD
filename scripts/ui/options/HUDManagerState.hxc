@@ -733,10 +733,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             var iconsPositionBox = createOptionBox("Health Icons Position", "Changes the position of the health icons on the Health Bar.", badOptions.healthIconPosition, iconPositions, value -> badOptions.healthIconPosition = value);
             var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", "If enabled, the bars will move be smoother.", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
             var coloredBarCheck = createCheckBox("Icon Colored Bar (May reduce performance!)", "If enabled, the health bar will be colored corresponding to the health icons.", badOptions.iconColors, 100, (event:UIEvent) -> badOptions.iconColors = event.target.value);
+            var healthIndicCheck = createCheckBox("Health Indicator", "If enabled, displays a marker on the health bar showing the current health.", badOptions.healthIndic, 100, (event:UIEvent) -> badOptions.healthIndic = event.target.value);
 
             vbox.addComponent(iconsPositionBox);
             vbox.addComponent(coloredBarCheck);
             vbox.addComponent(smoothBarsCheck);
+            vbox.addComponent(healthIndicCheck);
         }
 
         if (draggable.spriteType == "timeBar") {
