@@ -202,7 +202,7 @@ class ExtraStrumline extends ScriptedModule {
     }
 
     override function onNoteHit(event:HitNoteScriptEvent) {
-        if (state != null && !Std.isOfType(event.targetState, ChartEditorState) && event.note.noteData.getMustHitNote(Strumline.KEY_COUNT)) popUpRatings(event.judgement, event.hitDiff);
+        if (state != null && event.note.noteData.getMustHitNote(Strumline.KEY_COUNT)) popUpRatings(event.judgement, event.hitDiff);
     }
 
     override function onNoteMiss(event:NoteScriptEvent) { event.playSound = !badOptions.muteMiss; }
@@ -356,7 +356,7 @@ class ExtraStrumline extends ScriptedModule {
     // Cleanup Stuff
     override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
 
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) cleanup(); }
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) {  if (!Std.isOfType(event.targetState, PlayState)) cleanup(); }
 
     override function onSongRetry(event:ScriptEvent) { cleanup(); }
 
@@ -370,11 +370,13 @@ class ExtraStrumline extends ScriptedModule {
         if (rightGradient != null) rightGradient.destroy();
         if (oppLaneUnderlay != null) oppLaneUnderlay.destroy();
         if (hitDiffText != null) hitDiffText.destroy();
+        if (ratingsPopUps != null) ratingsPopUps.destroy();
         laneUnderlay = null;
         leftGradient = null;
         rightGradient = null;
         oppLaneUnderlay = null;
         hitDiffText = null;
         hitDiffTween = null;
+        ratingsPopUps = null;
     }
 }
