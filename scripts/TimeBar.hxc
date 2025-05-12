@@ -40,6 +40,29 @@ class TimeBar extends ScriptedModule {
         initTimeBar();
     }
 
+    override function onSongStart(event:ScriptEvent) {
+        if (!badOptions.timeBar) return;
+        for (sprite in timeBarSprites)
+            if (sprite != null && sprite.alpha != (badOptions.hudOpacity / 100))
+                FlxTween.tween(sprite, {alpha: badOptions.hudOpacity / 100}, 0.5, { ease: FlxEase.circOut, onComplete: tween -> state.refresh() });
+    }
+
+    override function onUpdate(event:UpdateScriptEvent) {
+        if (state == null || !badOptions.timeBar) return;
+        if (timeBar != null && timeBar.visible) {
+            timeBar.value = (state.conductorInUse.songPosition / state.currentSongLengthMs) * 100;
+            timeBar.updateBar();
+        }
+        if (timeText != null) switch (badOptions.timeBarType) {
+            case "left": timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
+            case "left-total": timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
+            case "elapsed": timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false);
+            case "elapsed-total": timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
+            case "elapsed-left": timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
+            case "name": timeText.text = state.currentChart.songName;
+        }
+    }
+
     function initTimeBar() {
         timeText = new FlxText();
         var fontSize = badOptions.timeBarStyle == "timeBarPsychEngine" ? 32 : badHUDOptions.fontSize;
@@ -92,29 +115,6 @@ class TimeBar extends ScriptedModule {
             state.add(timeBar);
         }
         state.add(timeText);
-    }
-
-    override function onSongStart(event:ScriptEvent) {
-        if (!badOptions.timeBar) return;
-        for (sprite in timeBarSprites)
-            if (sprite != null && sprite.alpha != (badOptions.hudOpacity / 100))
-                FlxTween.tween(sprite, {alpha: badOptions.hudOpacity / 100}, 0.5, { ease: FlxEase.circOut, onComplete: tween -> state.refresh() });
-    }
-
-    override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null || !badOptions.timeBar) return;
-        if (timeBar != null && timeBar.visible) {
-            timeBar.value = (state.conductorInUse.songPosition / state.currentSongLengthMs) * 100;
-            timeBar.updateBar();
-        }
-        if (timeText != null) switch (badOptions.timeBarType) {
-            case "left": timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
-            case "left-total": timeText.text = FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
-            case "elapsed": timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false);
-            case "elapsed-total": timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime(state.currentSongLengthMs / 1000, false);
-            case "elapsed-left": timeText.text = FlxStringUtil.formatTime((state.conductorInUse.songPosition) / 1000, false) + " / " + FlxStringUtil.formatTime((state.currentSongLengthMs - state.conductorInUse.songPosition) / 1000, false);
-            case "name": timeText.text = state.currentChart.songName;
-        }
     }
 
     // Cleanup stuff
