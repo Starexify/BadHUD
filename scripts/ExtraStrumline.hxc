@@ -356,7 +356,7 @@ class ExtraStrumline extends ScriptedModule {
     // Cleanup Stuff
     override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
 
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) {  if (!Std.isOfType(event.targetState, PlayState)) cleanup(); }
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) {  if (Std.isOfType(event.targetState, PlayState)) cleanup(); }
 
     override function onSongRetry(event:ScriptEvent) { cleanup(); }
 
