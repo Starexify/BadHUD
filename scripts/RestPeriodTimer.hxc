@@ -56,6 +56,8 @@ class RestPeriodTimer extends ScriptedModule {
 
             // Fade out the rest bar when time is less than 1.5s
             if (restTime <= 1500) for (sprites in restBarSprites) FlxTween.tween(sprites, { alpha: 0 }, 0.5, { ease: FlxEase.expoOut, onComplete: tween -> { sprites.visible = false; sprites.alpha = badOptions.hudOpacity / 100;} });
+        } else { // TODO: Make this better
+            for (sprite in restBarSprites) if (sprite.visible) sprite.visible = false;
         }
     }
 
