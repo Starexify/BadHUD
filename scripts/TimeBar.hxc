@@ -44,7 +44,7 @@ class TimeBar extends ScriptedModule {
         if (!badOptions.timeBar) return;
         for (sprite in timeBarSprites)
             if (sprite != null && sprite.alpha != (badOptions.hudOpacity / 100))
-                FlxTween.tween(sprite, {alpha: badOptions.hudOpacity / 100}, 0.5, { ease: FlxEase.circOut, onComplete: tween -> state.refresh() });
+                FlxTween.tween(sprite, {alpha: badOptions.hudOpacity / 100}, 0.5, { ease: FlxEase.circOut });
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
@@ -111,8 +111,8 @@ class TimeBar extends ScriptedModule {
         }
 
         if (badOptions.timeBarStyle != "off") {
-            state.add(timeBarBG);
             state.add(timeBar);
+            state.add(timeBarBG);
         }
         state.add(timeText);
     }

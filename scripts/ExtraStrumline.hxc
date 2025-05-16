@@ -14,7 +14,6 @@ import funkin.play.notes.Strumline;
 import funkin.play.notes.notestyle.NoteStyle;
 import funkin.play.scoring.Scoring;
 import funkin.save.Save;
-import funkin.ui.debug.charting.ChartEditorState;
 import funkin.util.Constants;
 import funkin.util.InputUtil;
 
@@ -356,7 +355,7 @@ class ExtraStrumline extends ScriptedModule {
     // Cleanup Stuff
     override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
 
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) {  if (Std.isOfType(event.targetState, PlayState)) cleanup(); }
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) cleanup(); }
 
     override function onSongRetry(event:ScriptEvent) { cleanup(); }
 
@@ -370,7 +369,10 @@ class ExtraStrumline extends ScriptedModule {
         if (rightGradient != null) rightGradient.destroy();
         if (oppLaneUnderlay != null) oppLaneUnderlay.destroy();
         if (hitDiffText != null) hitDiffText.destroy();
-        if (ratingsPopUps != null) ratingsPopUps.destroy();
+        if (ratingsPopUps != null) {
+            FlxTween.cancelTweensOf(ratingsPopUps);
+            ratingsPopUps.destroy();
+        }
         laneUnderlay = null;
         leftGradient = null;
         rightGradient = null;
