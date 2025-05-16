@@ -291,7 +291,7 @@ class ExtraStrumline extends ScriptedModule {
                     ease: FlxEase.circIn,
                     onComplete: tween -> {
                         text.destroy();
-                        state.remove(text);
+                        if (state != null) state.remove(text);
                         keybindTexts = [];
                     }
                 })
@@ -364,21 +364,21 @@ class ExtraStrumline extends ScriptedModule {
     override function onDestroy(event:ScriptEvent) { cleanup(); }
 
     function cleanup() {
+        if (state != null && !state.needsReset) {
+            if (ratingsPopUps != null) ratingsPopUps.destroy();
+            ratingsPopUps = null;
+        }
         if (laneUnderlay != null) laneUnderlay.destroy();
         if (leftGradient != null) leftGradient.destroy();
         if (rightGradient != null) rightGradient.destroy();
         if (oppLaneUnderlay != null) oppLaneUnderlay.destroy();
         if (hitDiffText != null) hitDiffText.destroy();
-        if (ratingsPopUps != null) {
-            FlxTween.cancelTweensOf(ratingsPopUps);
-            ratingsPopUps.destroy();
-        }
         laneUnderlay = null;
         leftGradient = null;
         rightGradient = null;
         oppLaneUnderlay = null;
         hitDiffText = null;
         hitDiffTween = null;
-        ratingsPopUps = null;
+        state = null;
     }
 }
