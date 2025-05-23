@@ -16,7 +16,7 @@ import flixel.tweens.FlxTween;
 import flixel.util.FlxStringUtil;
 import flixel.ui.FlxBar;
 
-class TimeBar extends ScriptedModule {
+class BadTimeBar extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var state:PlayState;
 
@@ -28,7 +28,7 @@ class TimeBar extends ScriptedModule {
     var badHUDOptions;
 
     function new() {
-        super("TimeBar");
+        super("BadTimeBar");
         badHUDOptions = new BadHUDOptions();
     }
 
