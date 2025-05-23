@@ -138,7 +138,7 @@ class ExtraStrumline extends ScriptedModule {
                 oppLaneUnderlay = new FunkinSprite();
                 oppLaneUnderlay.x = state.opponentStrumline.x;
                 oppLaneUnderlay.makeSolidColor(Std.int(state.opponentStrumline.width * noteScaling + (Strumline.BACKGROUND_PAD * noteScaling) * 2), FlxG.height, Std.parseInt("0xFF" + (badOptions.strumBgColor == 0 ? "000000" : StringTools.hex(badOptions.strumBgColor))));
-                //if (state.opponentStrumline.noteStyle.id == Constants.DEFAULT_NOTE_STYLE) oppLaneUnderlay.x += 30;
+                if (state.opponentStrumline.noteStyle.id == Constants.DEFAULT_NOTE_STYLE) oppLaneUnderlay.x += 30;
                 oppLaneUnderlay.alpha = Preferences.strumlineBackgroundOpacity / 100;
                 oppLaneUnderlay.scrollFactor.set();
                 oppLaneUnderlay.zIndex = -1;
