@@ -12,7 +12,7 @@ class BadHooks extends ScriptedModule {
     "REAGANOMICS 2", "Snake-Eyes", "Technicolor-Tussle", "Knockout", "Whoopee", "Sansational", "Burning-In-Hell", "Imminent-Demise", "Terrible-Sin", "Last-Reel", "Nightmare-Run",
     "Satanic-Funkin", "Final-Stretch", "Tomo", "Knucklehead", "Spunk", "Ghoulish", "TAKETHISLOLLIPOP", "Bluedrive", "Twiddlefinger"];
 
-    var strumlineExcluded = ["MARKOV", "HOME", "Bones and Notes", "Bones and Notes (Legacy)", "Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2", "TAKETHISLOLLIPOP", "High Live Vocal", "Vine Depths Zone", "Overfilled", "Twiddlefinger"];
+    var strumlineExcluded = ["GIGAVOLT", "MARKOV", "HOME", "Bones and Notes", "Bones and Notes (Legacy)", "Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2", "TAKETHISLOLLIPOP", "High Live Vocal", "Vine Depths Zone", "Overfilled", "Twiddlefinger"];
 
     var gameplayExcludedSongs = ["Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME",
     "Destruction Dance", "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "TAKETHISLOLLIPOP"];
