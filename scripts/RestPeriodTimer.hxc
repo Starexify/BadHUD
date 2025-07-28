@@ -68,7 +68,7 @@ class RestPeriodTimer extends ScriptedModule {
     // Helper Methods
     function getNextNoteAndTime(currentTime:Float):{note:SongNoteData, time:Float} {
         if (state.currentChart == null || state.currentChart.notes == null) return;
-        for (note in state.currentChart.notes) if (note.time > currentTime && note.getMustHitNote(Strumline.KEY_COUNT)) return { note: note, time: note.time };
+        for (note in state.currentChart.notes)if (note.time > currentTime && note.getMustHitNote(Strumline.KEY_COUNT)) return { note: note, time: note.time };
     }
 
     function initRestBar() {

@@ -32,7 +32,6 @@ import StringTools;
 class ExtraStrumline extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var settings;
-    var badHooks:Null<BadHooks>;
     var state:PlayState;
 
     var laneUnderlay:FunkinSprite;
@@ -61,7 +60,6 @@ class ExtraStrumline extends ScriptedModule {
 
     function new() {
         super("ExtraStrumline", 3);
-        badHooks = new BadHooks();
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
@@ -72,7 +70,7 @@ class ExtraStrumline extends ScriptedModule {
         if (noteStyle == null) noteStyle = NoteStyleRegistry.instance.fetchDefault();
 
         // Center player strumline
-        if (badOptions.middlescroll && badHooks.strumlineExcluded.indexOf(state.currentChart.songName) == -1) {
+        if (badOptions.middlescroll && !BadHooks.strumlineExcluded.contains(state.currentChart.songName)) {
             state.playerStrumline.x = FlxG.width * 0.5 - state.playerStrumline.width * 0.5;
             placeOpponentNotes(state.opponentStrumline);
         }
@@ -158,7 +156,7 @@ class ExtraStrumline extends ScriptedModule {
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null || badOptions.opponentNoteOpacity <= 0 || state.opponentStrumline.visible == false || badHooks.strumlineExcluded.indexOf(state.currentChart.songName) != -1) return;
+        if (state == null || badOptions.opponentNoteOpacity <= 0 || state.opponentStrumline.visible == false || BadHooks.strumlineExcluded.indexOf(state.currentChart.songName) != -1) return;
         try {
             if (state.currentStage != null) {
                 // Opponent Hold Covers / Splashes
@@ -176,7 +174,7 @@ class ExtraStrumline extends ScriptedModule {
     }
 
     override function onNoteIncoming(event:NoteScriptEvent) {
-        if (state == null || badOptions.opponentNoteOpacity <= 0 || event.note.noteData.getMustHitNote(Strumline.KEY_COUNT) || badHooks.strumlineExcluded.indexOf(state.currentChart.songName) != -1) return;
+        if (state == null || badOptions.opponentNoteOpacity <= 0 || event.note.noteData.getMustHitNote(Strumline.KEY_COUNT) || BadHooks.strumlineExcluded.indexOf(state.currentChart.songName) != -1) return;
         try {
             if (state.currentStage != null && event.note != null && event.note.alive) {
                 // Basic Notes

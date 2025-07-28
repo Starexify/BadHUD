@@ -7,12 +7,12 @@ import funkin.graphics.FunkinSprite;
 import funkin.input.Cursor;
 import funkin.input.CursorMode;
 import funkin.modding.base.ScriptedFlxSpriteGroup;
-import funkin.modding.base.ScriptedMusicBeatSubState;
 import funkin.modding.module.ModuleHandler;
 import funkin.play.PauseSubState;
 import funkin.play.notes.Strumline;
 import funkin.play.notes.notestyle.NoteStyle;
 import funkin.save.Save;
+import funkin.ui.ScriptedMusicBeatSubState;
 import funkin.ui.debug.charting.util.ChartEditorDropdowns;
 import funkin.ui.options.OptionsState;
 import funkin.util.Constants;
@@ -92,7 +92,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var contextMenu:Menu;
     var isSearching:Bool = false;
     var openedDialog:Bool = false;
-    var mouseDownHandler = null;
 
     var prevAlpha:Float;
     var holdDelayTimer:Float = 0;

@@ -1,10 +1,9 @@
-import funkin.modding.base.ScriptedMusicBeatSubState;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ScriptedModule;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.ui.ScriptedMusicBeatSubState;
 import funkin.ui.debug.charting.ChartEditorState;
-import funkin.ui.debug.latency.LatencyState;
 import funkin.ui.options.OptionsState;
 import funkin.util.ReflectUtil;
 
@@ -20,10 +19,6 @@ class PauseOptions extends ScriptedModule {
     var stateParams:PlayStateParams;
     var pauseState:PauseSubState;
     var currentSongId:String;
-
-    function new() {
-        super("PauseOptions");
-    }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (PlayState.instance == null) return;
@@ -57,7 +52,7 @@ class PauseOptions extends ScriptedModule {
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         var state:PolymodScriptClass = event.targetState._asc;
-        if (event.targetState != PlayState.instance && wasPaused && !Std.isOfType(event.targetState, LatencyState) && ReflectUtil.getAnonymousField(ReflectUtil.getAnonymousField(state, "_c"), "name") != "HUDManagerState") {
+        if (event.targetState != PlayState.instance && wasPaused && ReflectUtil.getAnonymousField(ReflectUtil.getAnonymousField(state, "_c"), "name") != "HUDManagerState") {
             if (isChartingState) {
                 FlxG.switchState(() -> new ChartEditorState({ targetSongId: currentSongId }));
                 wasPaused = false;

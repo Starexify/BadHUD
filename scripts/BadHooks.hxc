@@ -6,18 +6,19 @@ import funkin.play.PlayState;
 class BadHooks extends ScriptedModule {
     var state:PlayState;
 
-    var healthBarExcluded:Array<String> = ["Silly Billy",
+    public static var healthBarExcluded:Array<String> = ["Silly Billy",
     "Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME", "Destruction Dance", "Portal Power", "Bullet Time",
     "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "Overload", "Eradication", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus",
     "REAGANOMICS 2", "Snake-Eyes", "Technicolor-Tussle", "Knockout", "Whoopee", "Sansational", "Burning-In-Hell", "Imminent-Demise", "Terrible-Sin", "Last-Reel", "Nightmare-Run",
-    "Satanic-Funkin", "Final-Stretch", "Tomo", "Knucklehead", "Spunk", "Ghoulish", "TAKETHISLOLLIPOP", "Bluedrive", "Twiddlefinger"];
+    "Satanic-Funkin", "Final-Stretch", "Tomo", "Knucklehead", "Spunk", "Ghoulish", "TAKETHISLOLLIPOP", "Bluedrive", "Twiddlefinger", "Too Slow", "You Can't Run", "Triple Trouble",
+    "Final Escape", "Endless", "Cycles", "Faker", "Black Sun", "Fatality", "Prey", "Round-A-Bout"];
 
-    var strumlineExcluded = ["Zukireta", "GIGAVOLT", "MARKOV", "HOME", "Bones and Notes", "Bones and Notes (Legacy)", "Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2", "TAKETHISLOLLIPOP", "High Live Vocal", "Vine Depths Zone", "Overfilled", "Twiddlefinger"];
+    public static var strumlineExcluded = ["Fatality", "Triple Trouble", "Zukireta", "GIGAVOLT", "MARKOV", "HOME", "Bones and Notes", "Bones and Notes (Legacy)", "Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2", "TAKETHISLOLLIPOP", "High Live Vocal", "Vine Depths Zone", "Overfilled", "Twiddlefinger"];
 
-    var gameplayExcludedSongs = ["Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME",
+    public static var gameplayExcludedSongs = ["Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME",
     "Destruction Dance", "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "TAKETHISLOLLIPOP"];
 
-    var ratings:Map<String, {name:String, min:Float, max:Float}> = [
+    public static var ratings:Map<String, {name:String, min:Float, max:Float}> = [
         "YOU_SUCK" => {name: "You Suck!", min: 0, max: 19},
         "SHIT" => {name: "Shit", min: 20, max: 39},
         "BAD" => {name: "Bad", min: 40, max: 49},

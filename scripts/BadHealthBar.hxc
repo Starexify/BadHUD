@@ -18,7 +18,6 @@ class BadHealthBar extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var settings;
 
-    var badHooks:Null<BadHooks>;
     var state:PlayState;
     var currentP1:BaseCharacter = null;
     var currentP2:BaseCharacter = null;
@@ -37,16 +36,11 @@ class BadHealthBar extends ScriptedModule {
     var lastHealthValue:Float = -1;
     var cachedHealthPercentage:Float = 0;
 
-    function new() {
-        super("BadHealthBar");
-        badHooks = new BadHooks();
-    }
-
     override function onSongLoaded(event:SongLoadScriptEvent) {
         var badHooksModule = ModuleHandler.getModule("BadHooks");
         if (badHooksModule != null) state = badHooksModule.scriptGet('state');
         if (state == null) return;
-        if (badHooks.healthBarExcluded.indexOf(state.currentChart.songName) != -1) return;
+        if (BadHooks.healthBarExcluded.indexOf(state.currentChart.songName) != -1) return;
         healthBarBG = state.healthBarBG;
         healthBar = state.healthBar;
         iconP1 = state.iconP1;
