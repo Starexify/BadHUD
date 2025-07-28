@@ -44,7 +44,7 @@ class CustomScrollSpeed extends ScriptedModule {
             speedText = new FlxText(20, 0, FlxG.width - 40);
             speedText.setFormat(Paths.font(badOptions.hudFont), badOptions.hudFontSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
             speedText.text = "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + badOptions.scrollSpeedFactor / 10;
-            speedText.y = FlxG.height - speedText.height;
+            speedText.y = FlxG.height - speedText.height - 80;
             speedText.alignment = "right";
             event.targetState.add(speedText);
 

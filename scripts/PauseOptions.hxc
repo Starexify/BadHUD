@@ -20,6 +20,11 @@ class PauseOptions extends ScriptedModule {
     var pauseState:PauseSubState;
     var currentSongId:String;
 
+    override public function onCreate(event:ScriptEvent) {
+        PauseSubState.PAUSE_MENU_ENTRIES_STANDARD.insert(PauseSubState.PAUSE_MENU_ENTRIES_STANDARD.length - 1, { text: "Options", callback: openOptionsCallback });
+        PauseSubState.PAUSE_MENU_ENTRIES_CHARTING.insert(PauseSubState.PAUSE_MENU_ENTRIES_CHARTING.length - 1, { text: "Options", callback: openOptionsCallback });
+    }
+
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (PlayState.instance == null) return;
         stateParams = PlayState.instance.lastParams;
@@ -64,29 +69,14 @@ class PauseOptions extends ScriptedModule {
         }
     }
 
-    override function onSubStateOpenEnd(event:SubStateScriptEvent) {
-        if (Std.isOfType(event.targetState, PauseSubState) && !PlayState.instance.isMinimalMode) {
-            pauseState = event.targetState;
-            var menuEntries = pauseState.currentMenuEntries;
-            menuEntries.insert(menuEntries.length - 1, {
-                text: "Options",
-                callback: openOptionsCallback
-            });
-
-            pauseState.clearAndAddMenuEntries();
-            pauseState.changeSelection();
-        }
-    }
-
     function openOptionsCallback(subState:PauseSubState) {
         wasPaused = true;
         if (subState == null) return;
         // Fade out animation
-        var duration = 0.4;
         for (entry in subState.currentMenuEntries.copy()) {
-            if (entry.text == "Options") FlxTween.tween(entry?.sprite, { alpha: 0 }, duration, { ease: FlxEase.quadOut });
+            if (entry.text == "Options") FlxTween.tween(entry?.sprite, { alpha: 0 }, 0.4, { ease: FlxEase.quadOut });
             else entry?.sprite.visible = false;
         }
-        FlxG.camera.fade(0xFF000000, duration, false, () -> FlxG.switchState(() -> new OptionsState()));
+        FlxG.camera.fade(0xFF000000, 0.4, false, () -> FlxG.switchState(() -> new OptionsState()));
     }
 }
