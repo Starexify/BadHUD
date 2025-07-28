@@ -1,7 +1,9 @@
+import funkin.audio.FunkinSound;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ScriptedModule;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
+import funkin.save.Save;
 import funkin.ui.ScriptedMusicBeatSubState;
 import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.options.OptionsState;
@@ -17,10 +19,13 @@ class PauseOptions extends ScriptedModule {
     var wasPaused:Bool = false;
     var isChartingState:Bool = false;
     var stateParams:PlayStateParams;
-    var pauseState:PauseSubState;
     var currentSongId:String;
 
-    override public function onCreate(event:ScriptEvent) {
+    function new() {
+        super("PauseOptions");
+    }
+
+    override function onCreate(event:ScriptEvent) {
         PauseSubState.PAUSE_MENU_ENTRIES_STANDARD.insert(PauseSubState.PAUSE_MENU_ENTRIES_STANDARD.length - 1, { text: "Options", callback: openOptionsCallback });
         PauseSubState.PAUSE_MENU_ENTRIES_CHARTING.insert(PauseSubState.PAUSE_MENU_ENTRIES_CHARTING.length - 1, { text: "Options", callback: openOptionsCallback });
     }
@@ -34,6 +39,7 @@ class PauseOptions extends ScriptedModule {
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
         if (Std.isOfType(event.targetState, OptionsState)) {
+            wasPaused = Save.instance.modOptions.get("badWasPaused");
             //DiscordClient.instance.setPresence({ state: "Setting up Options", details: null });
             // HUD Manager Entry
             var options:OptionsMenu = event.targetState.optionsCodex.get_currentPage();
@@ -51,7 +57,11 @@ class PauseOptions extends ScriptedModule {
             hudManager.x = (FlxG.width - hudManager.width) / 2;
             for (item in lastItems) options.items.add(item);
 
-            if (wasPaused && pauseState != null) pauseState.startPauseMusic();
+            if (wasPaused) FunkinSound.playMusic('freakyMenu', {
+                overrideExisting: true,
+                restartTrack: false,
+                persist: true
+            });
         }
     }
 
@@ -70,8 +80,8 @@ class PauseOptions extends ScriptedModule {
     }
 
     function openOptionsCallback(subState:PauseSubState) {
-        wasPaused = true;
         if (subState == null) return;
+        Save.instance.modOptions.set("badWasPaused", true);
         // Fade out animation
         for (entry in subState.currentMenuEntries.copy()) {
             if (entry.text == "Options") FlxTween.tween(entry?.sprite, { alpha: 0 }, 0.4, { ease: FlxEase.quadOut });
