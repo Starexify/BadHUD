@@ -12,7 +12,6 @@ import funkin.play.notes.notestyle.NoteStyle;
 import funkin.save.Save;
 import funkin.ui.ScriptedMusicBeatSubState;
 import funkin.ui.debug.charting.util.ChartEditorDropdowns;
-import funkin.ui.options.OptionsState;
 import funkin.util.Constants;
 
 import flixel.FlxG;
@@ -111,7 +110,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         setupWelcomeMusic();
 
         var menuBG = new FlxSprite().loadGraphic(Paths.image("menuDesat"));
-        menuBG.setGraphicSize(Std.int(menuBG.width * 1.1));
+        menuBG.setGraphicSize(Std.int(FlxG.width * 1.1));
         menuBG.updateHitbox();
         menuBG.screenCenter();
         menuBG.scrollFactor.set(0, 0);
@@ -132,7 +131,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         spriteSettingsText.y = Preferences.downscroll ? 25 : FlxG.height * 0.95 - spriteSettingsText.height;
         add(spriteSettingsText);
 
-        initToolbox();
+        //initToolbox();
     }
 
     override function update(elapsed:Float) {
@@ -218,7 +217,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             handleCursor(hoveredDraggable);
         }
 
-        if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
+        if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) //initToolbox();
 
         // Exit to OptionsState (Doesn't work with Pause Options)
         if (FlxG.keys.justPressed.ESCAPE && !isSearching && !openedDialog) close();
