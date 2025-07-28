@@ -16,7 +16,6 @@ import flixel.tweens.FlxTween;
 import polymod.hscript._internal.PolymodScriptClass;
 
 class PauseOptions extends ScriptedModule {
-    var wasPaused:Bool = false;
     var isChartingState:Bool = false;
     var stateParams:PlayStateParams;
     var currentSongId:String;
