@@ -11,13 +11,14 @@ import flixel.tweens.FlxTween;
 
 class RatingPopUps extends ScriptedFlxSpriteGroup {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
+    var activeTweens:Array<FlxTween> = [];
 
     var noteStyle:NoteStyle;
 
     var tempJudgementSprite:FunkinSprite;
     var tempComboSprites:Array<FunkinSprite> = [];
 
-    function displayJudgement(judgement:String) {
+    public function displayJudgement(judgement:String) {
         if (judgement == null) judgement = "good";
 
         // Remove existing judgement sprite if it exists
@@ -52,7 +53,7 @@ class RatingPopUps extends ScriptedFlxSpriteGroup {
                 var originalScaleY = judgementSprite.scale.y;
                 var fadeInEase = noteStyle.isJudgementSpritePixel(judgement) ? FlxEase.linear : FlxEase.backOut;
                 judgementSprite.scale.set(originalScaleX * 0.8, originalScaleX * 0.8);
-                FlxTween.tween(judgementSprite.scale, {x: originalScaleX, y: originalScaleY}, 0.2, {
+                var tween = FlxTween.tween(judgementSprite.scale, {x: originalScaleX, y: originalScaleY}, 0.2, {
                     ease: fadeInEase,
                     onComplete: tween -> {
                         FlxTween.tween(judgementSprite, {alpha: 0}, 0.3, {
@@ -60,17 +61,19 @@ class RatingPopUps extends ScriptedFlxSpriteGroup {
                                 remove(judgementSprite, true);
                                 judgementSprite.destroy();
                                 if (tempJudgementSprite == judgementSprite) tempJudgementSprite = null;
+                                activeTweens.remove(tween);
                             },
                             startDelay: Conductor.instance.beatLengthMs * 0.001,
                             ease: fadeEase
                         });
                     }
                 });
+                activeTweens.push(tween);
         }
         return judgementSprite;
     }
 
-    function displayCombo(combo:Int = 0) {
+    public function displayCombo(combo:Int = 0) {
         if (tempComboSprites.length > 0 && badOptions.popUpType == "popup") {
             for (sprite in tempComboSprites) {
                 remove(sprite, true);
@@ -172,5 +175,14 @@ class RatingPopUps extends ScriptedFlxSpriteGroup {
 
         add(numCombo);
         return numCombo;
+    }
+
+    override function destroy() {
+        for (tween in activeTweens) {
+            if (tween != null) tween.cancel();
+        }
+        activeTweens = [];
+
+        super.destroy();
     }
 }

@@ -40,7 +40,7 @@ class GamePlayStats extends ScriptedModule {
     var shits:Int = 0;
     var missed:Int = 0;
     var combo:Int = 0;
-    var totalNotes:Int = 0;
+    var totalNotes:Int = 1;
     var totalNotesPlayed:Int = 0;
 
     var lastScore:Int = -1;
@@ -72,7 +72,7 @@ class GamePlayStats extends ScriptedModule {
 
     override function onCountdownStart(event:CountdownScriptEvent) {
         if (BadHooks.gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
-        totalNotes = tallies.totalNotes;
+        totalNotes += tallies.totalNotes;
         if (PlayStatePlaylist.isStoryMode) totalNotes += talliesLevel.totalNotes;
         updateScore();
         resetJudgements();
@@ -215,7 +215,7 @@ class GamePlayStats extends ScriptedModule {
         if (totalNotesPlayed != 0) {
             //ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalNotesPlayed)); // Old rating percent
             switch (badOptions.accuracyType) {
-                case "vanilla": ratingPercent = Std.int(Math.min(100, Math.max(0, 100 - (shits + bads + missed) / totalNotes * 100)));
+                case "vanilla": ratingPercent = Std.int(Math.min(100, Math.max(0, 100 - (shits + bads + (missed * 2)) / totalNotes * 100)));
                 case "psych":
                     ratingPercent = Math.min(100, Math.max(0, 100 - ((sicks * 0 + goods * 0.33 + bads * 0.67 + shits * 1) / totalNotes) * 100));
                     ratingPercent = Math.round(ratingPercent * 100) / 100;
