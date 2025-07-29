@@ -217,9 +217,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             handleCursor(hoveredDraggable);
         }
 
-        if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) //initToolbox();
+        //if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
 
-        // Exit to OptionsState (Doesn't work with Pause Options)
         if (FlxG.keys.justPressed.ESCAPE && !isSearching && !openedDialog) close();
 
         super.update(elapsed);
