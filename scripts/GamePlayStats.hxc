@@ -293,7 +293,7 @@ class GamePlayStats extends ScriptedModule {
         if (!event.note.noteData.getMustHitNote() || state == null) return;
         if (BadHooks.gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
 
-        if (combo >= 0) combo = tallies.combo + 1;
+        combo = event.comboCount;
 
         switch (event.judgement) {
             case "sick": if (sicks >= 0) sicks = (PlayStatePlaylist.isStoryMode ? talliesLevel.sick + tallies.sick : tallies.sick) + 1;
@@ -309,7 +309,7 @@ class GamePlayStats extends ScriptedModule {
 
     override function onNoteMiss(event:NoteScriptEvent) {
         if (BadHooks.gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
-        combo = 0;
+        combo = event.comboCount;
         if (missed >= 0) missed = PlayStatePlaylist.isStoryMode ? talliesLevel.missed + tallies.missed + 1 : tallies.missed + 1;
         updateScore();
     }
