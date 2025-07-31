@@ -83,6 +83,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var draggableSprites:Array<DraggableSprite> = [];
     var checkboxPool:Array<CheckBox> = [];
 
+    var windowManager = new WindowManager();
     var toolboxWindow:Window;
     var isOverToolbox:Bool = false;
 
@@ -131,7 +132,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         spriteSettingsText.y = Preferences.downscroll ? 25 : FlxG.height * 0.95 - spriteSettingsText.height;
         add(spriteSettingsText);
 
-        //initToolbox();
+        initToolbox();
     }
 
     override function update(elapsed:Float) {
@@ -217,7 +218,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             handleCursor(hoveredDraggable);
         }
 
-        //if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
+        if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
 
         if (FlxG.keys.justPressed.ESCAPE && !isSearching && !openedDialog) close();
 
@@ -473,9 +474,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function initToolbox() {
-        WindowManager.instance.reset();
-        var handlerWindow = RuntimeComponentBuilder.fromAsset(Paths.ui("base-style"));
+        windowManager.reset();
+        var handlerWindow = RuntimeComponentBuilder.build(Paths.ui("base-style"));
         if (handlerWindow == null) return;
+        add(windowManager);
 
         toolboxWindow = new Window();
         toolboxWindow.width = 460;
@@ -633,7 +635,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         tabView.addComponent(visualsTab);
         tabView.addComponent(settingsTab);
         toolboxWindow.addComponent(tabView);
-        WindowManager.instance.addWindow(toolboxWindow);
+        windowManager.addWindow(toolboxWindow);
     }
 
     function showContextMenu(mouseX:Float, mouseY:Float, draggable:DraggableSprite) {
