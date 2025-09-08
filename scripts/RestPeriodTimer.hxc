@@ -15,10 +15,12 @@ import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
+import funkin.data.song.SongData;
 
 class RestPeriodTimer extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
-    var state:PlayState;
+    var playState(get, never):PlayState;
+    function get_playState():PlayState { return PlayState.instance; }
 
     var restBarBG:FunkinSprite;
     var restBar:FlxRadialGauge;
@@ -34,23 +36,21 @@ class RestPeriodTimer extends ScriptedModule {
 
     override function onSongStart(event:ScriptEvent) {
         if (!badOptions.restBar) return;
-        var badHooks = ModuleHandler.getModule("BadHooks");
-        if (badHooks != null) state = badHooks.scriptGet("state");
-        if (state == null) return;
+        if (playState == null) return;
         initRestBar();
     }
 
     override function onUpdate(event:UpdateScriptEvent) {
-        if (state == null || !badOptions.restBar || restText == null) return;
+        if (playState == null || !badOptions.restBar || restText == null) return;
         var restBarFadeOut = 1000; // 1s
-        var songPosition = state.conductorInUse.songPosition;
+        var songPosition = playState.conductorInUse.songPosition;
         var incomingNoteTime = Std.int(getNextNoteAndTime(songPosition)?.time ?? 0);
         var noteTimeDelta = incomingNoteTime - lastHitNoteTime;
         restTime = incomingNoteTime - songPosition;
 
-        if (restTime > restBarFadeOut && noteTimeDelta > badOptions.restBarStartThreshold * 1000) {
-            restText.text = Std.string(Math.round((restTime - restBarFadeOut) / 1000));
-            restBar.amount = (badOptions.restBarType == "countdown") ? (restTime - restBarFadeOut) / (noteTimeDelta - restBarFadeOut) : 1 - ((restTime - restBarFadeOut) / (noteTimeDelta - restBarFadeOut));
+        if (restTime > 1000 && noteTimeDelta > badOptions.restBarStartThreshold * 1000) {
+            restText.text = Std.string(Math.round((restTime - 1000) / 1000));
+            restBar.amount = (badOptions.restBarType == "countdown") ? (restTime - 1000) / (noteTimeDelta - 1000) : 1 - ((restTime - 1000) / (noteTimeDelta - 1000));
 
             for (sprite in restBarSprites) if (!sprite.visible) sprite.visible = true;
 
@@ -67,8 +67,8 @@ class RestPeriodTimer extends ScriptedModule {
 
     // Helper Methods
     function getNextNoteAndTime(currentTime:Float):{note:SongNoteData, time:Float} {
-        if (state.currentChart == null || state.currentChart.notes == null) return;
-        for (note in state.currentChart.notes)if (note.time > currentTime && note.getMustHitNote(Strumline.KEY_COUNT)) return { note: note, time: note.time };
+        if (playState.currentChart == null || playState.currentChart.notes == null) return;
+        for (note in playState.currentChart.notes)if (note.time > currentTime && note.getMustHitNote(Strumline.KEY_COUNT)) return { note: note, time: note.time };
     }
 
     function initRestBar() {
@@ -97,8 +97,8 @@ class RestPeriodTimer extends ScriptedModule {
             restBarBG.updateHitbox();
             restBarBG.setPosition(settings[0] - restBarBG.width / 2, settings[1] - restBarBG.height / 2);
         } else {
-            restBarBG.x = state.playerStrumline.x + state.playerStrumline.width / 2 - restBarBG.width / 2;
-            restBarBG.y = Preferences.downscroll ? state.playerStrumline.y - restBarBG.height : state.playerStrumline.y + restBarBG.height * 1.75;
+            restBarBG.x = playState.playerStrumline.x + playState.playerStrumline.width / 2 - restBarBG.width / 2;
+            restBarBG.y = Preferences.downscroll ? playState.playerStrumline.y - restBarBG.height : playState.playerStrumline.y + restBarBG.height * 1.75;
         }
 
         var centerX = restBarBG.x + restBarBG.width / 2;
@@ -109,17 +109,17 @@ class RestPeriodTimer extends ScriptedModule {
         restBarSprites = [restBarBG, restBar, restText];
 
         for (sprite in restBarSprites) if (sprite != null) {
-            sprite.camera = state.camHUD;
+            sprite.camera = PlayState.instance.camHUD;
             sprite.visible = false;
             sprite.alpha = badOptions.hudOpacity / 100;
-            state.add(sprite);
+            PlayState.instance.add(sprite);
         }
     }
 
     // Cleanup stuff
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!(event.targetState is PlayState) && !(event.targetState is PauseSubState)) cleanup(); }
 
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) cleanup(); }
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (event.targetState is PlayState) cleanup(); }
 
     override function onSongRetry(event:ScriptEvent) { cleanup(); }
 

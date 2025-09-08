@@ -59,7 +59,7 @@ class BadHUDOptions extends ScriptedModule {
     }
 
     // Hooks or smth like that for other classes
-    var fontSize:Int;
+    public var fontSize:Int;
 
     function new() {
         super("BadHUDOptions", 1);

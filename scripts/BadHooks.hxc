@@ -1,11 +1,4 @@
-import funkin.modding.events.ScriptEvent;
-import funkin.modding.module.ScriptedModule;
-import funkin.play.PauseSubState;
-import funkin.play.PlayState;
-
-class BadHooks extends ScriptedModule {
-    var state:PlayState;
-
+class BadHooks {
     public static var healthBarExcluded:Array<String> = ["Silly Billy",
     "Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME", "Destruction Dance", "Portal Power", "Bullet Time",
     "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "Overload", "Eradication", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus",
@@ -13,9 +6,9 @@ class BadHooks extends ScriptedModule {
     "Satanic-Funkin", "Final-Stretch", "Tomo", "Knucklehead", "Spunk", "Ghoulish", "TAKETHISLOLLIPOP", "Bluedrive", "Twiddlefinger", "Too Slow", "You Can't Run", "Triple Trouble",
     "Final Escape", "Endless", "Cycles", "Faker", "Black Sun", "Fatality", "Prey", "Round-A-Bout"];
 
-    public static var strumlineExcluded = ["Fatality", "Triple Trouble", "Zukireta", "GIGAVOLT", "MARKOV", "HOME", "Bones and Notes", "Bones and Notes (Legacy)", "Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2", "TAKETHISLOLLIPOP", "High Live Vocal", "Vine Depths Zone", "Overfilled", "Twiddlefinger"];
+    public static var strumlineExcluded:Array<String> = ["Fatality", "Triple Trouble", "Zukireta", "GIGAVOLT", "MARKOV", "HOME", "Bones and Notes", "Bones and Notes (Legacy)", "Bopeebo Rumble", "Ultraviolet", "Amarillo", "Parasiticide", "wokemindvirus", "REAGANOMICS 2", "TAKETHISLOLLIPOP", "High Live Vocal", "Vine Depths Zone", "Overfilled", "Twiddlefinger"];
 
-    public static var gameplayExcludedSongs = ["Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME",
+    public static var gameplayExcludedSongs:Array<String> = ["Mushroom Plains", "Bricks and Lifts", "Lethal Lava Lair", "Deep Deep Voyage", "Hop-Hop Heights", "Koopa Armada", "2 PLAYER GAME",
     "Destruction Dance", "Portal Power", "Bullet Time", "Boo Blitz", "Cross Console Clash", "Love's End", "Hyperactive Starblaze", "Dream Machine", "TAKETHISLOLLIPOP"];
 
     public static var ratings:Map<String, {name:String, min:Float, max:Float}> = [
@@ -30,22 +23,4 @@ class BadHooks extends ScriptedModule {
         "SICK" => {name: "Sick!", min: 90, max: 99},
         "PERFECT" => {name: "Perfect!!", min: 100, max: 100}
     ];
-
-    function new() {
-        super("BadHooks", 2);
-    }
-
-    override function onSongLoaded(event:SongLoadScriptEvent) {
-        if (PlayState.instance == null) return;
-        state = PlayState.instance;
-    }
-
-    // Cleanup stuff
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) state = null; }
-
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) state = null; }
-
-    override function onSongEnd(event:ScriptEvent) { state = null; }
-
-    override function onDestroy(event:ScriptEvent) { state = null; }
 }

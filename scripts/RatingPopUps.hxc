@@ -178,9 +178,7 @@ class RatingPopUps extends ScriptedFlxSpriteGroup {
     }
 
     override function destroy() {
-        for (tween in activeTweens) {
-            if (tween != null) tween.cancel();
-        }
+        for (tween in activeTweens) if (tween != null) tween.cancel();
         activeTweens = [];
 
         super.destroy();

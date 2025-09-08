@@ -1,7 +1,6 @@
 import funkin.Highscore;
 import funkin.Preferences;
 import funkin.modding.events.ScriptEvent;
-import funkin.modding.module.ModuleHandler;
 import funkin.modding.module.ScriptedModule;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
@@ -18,7 +17,6 @@ import flixel.util.FlxStringUtil;
 
 class GamePlayStats extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
-    var state:PlayState;
 
     var statsText:FlxText;
     var scoreTextTween;
@@ -32,7 +30,7 @@ class GamePlayStats extends ScriptedModule {
     var songScore:Int;
     var formatPairs:Array<FlxTextFormatMarkerPair>;
 
-    var tallies:Tallies;
+    var tallies:Tallies = Highscore.tallies;
     var talliesLevel:Tallies;
     var sicks:Int = 0;
     var goods:Int = 0;
@@ -49,29 +47,25 @@ class GamePlayStats extends ScriptedModule {
     var lastRatingString:String = "";
     var lastStatsOrt:String = "";
 
-    function new() {
-        super("GamePlayStats");
-    }
+    var playState(get, never):PlayState;
+    function get_playState():PlayState { return PlayState.instance; }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
-        var badHooksModule = ModuleHandler.getModule("BadHooks");
-        if (badHooksModule != null) state = badHooksModule.scriptGet("state");
-        if (state == null) return;
-        if (BadHooks.gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        if (playState == null) return;
+        if (BadHooks.gameplayExcludedSongs.indexOf(playState.currentChart.songName) != -1) return;
 
-        tallies = Highscore.tallies;
         var textSize = badOptions.hudFontSize;
 
         // Remove and Init HUD Elements
-        state.remove(state.scoreText);
-        initStats(textSize, badOptions.hudFont);
-        initJudgements(textSize, badOptions.hudFont);
+        playState.remove(playState.scoreText);
+        initStats(badOptions.hudFontSize, badOptions.hudFont);
+        initJudgements(badOptions.hudFontSize, badOptions.hudFont);
 
         if (PlayStatePlaylist.isStoryMode) talliesLevel = Highscore.talliesLevel;
     }
 
     override function onCountdownStart(event:CountdownScriptEvent) {
-        if (BadHooks.gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        if (BadHooks.gameplayExcludedSongs.contains(playState.currentChart.songName)) return;
         totalNotes += tallies.totalNotes;
         if (PlayStatePlaylist.isStoryMode) totalNotes += talliesLevel.totalNotes;
         updateScore();
@@ -104,12 +98,12 @@ class GamePlayStats extends ScriptedModule {
         } else {
             statsText.screenCenter(0x01);
             var yPos = Preferences.downscroll ? 40 : FlxG.height * 0.95;
-            statsText.y = (badOptions.healthBar || Save.instance.modOptions.get("healthBarSettings") != null) ? state.healthBarBG.y + 45 : yPos;
+            statsText.y = (badOptions.healthBar || Save.instance.modOptions.get("healthBarSettings") != null) ? playState.healthBarBG.y + 45 : yPos;
         }
         statsText.scrollFactor.set();
         statsText.zIndex = 851;
-        statsText.camera = state.camHUD;
-        state.add(statsText);
+        statsText.camera = playState.camHUD;
+        playState.add(statsText);
     }
 
     function initJudgements(textSize:Int, textFont:String) {
@@ -131,8 +125,8 @@ class GamePlayStats extends ScriptedModule {
         }
         judgementsText.zIndex = 851;
         judgementsText.scrollFactor.set();
-        judgementsText.camera = state.camHUD;
-        state.add(judgementsText);
+        judgementsText.camera = playState.camHUD;
+        playState.add(judgementsText);
     }
 
     // Helper Methods
@@ -154,7 +148,7 @@ class GamePlayStats extends ScriptedModule {
             var bonusScore = (maxScore * 0.5 / totalNotes) * (hitBonusValue * Math.sqrt(bonus) / 300);
 
             songScore = Math.round(baseScore + bonusScore);
-        } else songScore = state.songScore;
+        } else songScore = PlayState.instance.songScore;
 
         if (badOptions.commaSeparatedScore) songScore = FlxStringUtil.formatMoney(songScore, false, true);
 
@@ -286,12 +280,12 @@ class GamePlayStats extends ScriptedModule {
     }
 
     override function onStepHit(event:SongTimeScriptEvent) {
-        if (state != null) updateScore();
+        if (playState != null) updateScore();
     }
 
     override function onNoteHit(event:HitNoteScriptEvent) {
-        if (!event.note.noteData.getMustHitNote() || state == null) return;
-        if (BadHooks.gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        if (!event.note.noteData.getMustHitNote() || playState == null) return;
+        if (BadHooks.gameplayExcludedSongs.indexOf(playState.currentChart.songName) != -1) return;
 
         combo = event.comboCount;
 
@@ -308,21 +302,21 @@ class GamePlayStats extends ScriptedModule {
     }
 
     override function onNoteMiss(event:NoteScriptEvent) {
-        if (BadHooks.gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        if (BadHooks.gameplayExcludedSongs.indexOf(playState.currentChart.songName) != -1) return;
         combo = event.comboCount;
         if (missed >= 0) missed = PlayStatePlaylist.isStoryMode ? talliesLevel.missed + tallies.missed + 1 : tallies.missed + 1;
         updateScore();
     }
 
     override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) {
-        if (BadHooks.gameplayExcludedSongs.indexOf(state.currentChart.songName) != -1) return;
+        if (BadHooks.gameplayExcludedSongs.indexOf(playState.currentChart.songName) != -1) return;
         updateScore();
     }
 
     // Cleanup stuff
-    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!Std.isOfType(event.targetState, PlayState) && !Std.isOfType(event.targetState, PauseSubState)) cleanup(); }
+    override function onSubStateOpenBegin(event:SubStateScriptEvent) { if (!(event.targetState is PlayState) && !(event.targetState is PauseSubState)) cleanup(); }
 
-    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (Std.isOfType(event.targetState, PlayState)) cleanup(); }
+    override function onSubStateCloseBegin(event:SubStateScriptEvent) { if (event.targetState is PlayState) cleanup(); }
 
     override function onSongEnd(event:ScriptEvent) { cleanup(); }
 

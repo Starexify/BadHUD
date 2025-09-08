@@ -14,7 +14,9 @@ import flixel.util.FlxColor;
 
 class CustomScrollSpeed extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
-    var state:PlayState;
+
+    var playState(get, never):PlayState;
+    function get_playState():PlayState { return PlayState.instance; }
 
     var speedText:FlxText;
 
@@ -24,25 +26,23 @@ class CustomScrollSpeed extends ScriptedModule {
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (!badOptions.customScrollSpeed) return;
-        var badHooks = ModuleHandler.getModule('BadHooks');
-        if (badHooks != null) state = badHooks.scriptGet('state');
-        if (state == null) return;
-        state.playerStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
-        state.opponentStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
+        if (playState == null) return;
+        playState.playerStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
+        playState.opponentStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
     }
 
     override function onSongStart(event) {
         if (!badOptions.customScrollSpeed) return;
-        state.playerStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
-        state.opponentStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
+        playState.playerStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
+        playState.opponentStrumline.scrollSpeed = badOptions.scrollSpeedFactor / 10;
     }
 
     override function onSubStateOpenEnd(event:SubStateScriptEvent) {
         if (!badOptions.customScrollSpeed) return;
-        if (Std.isOfType(event.targetState, PauseSubState)) {
+        if (event.targetState is PauseSubState) {
             // Create Scroll Speed Text Element
             var pauseState:PauseSubState = event.targetState;
-            speedText = new FlxText(24, pauseState.offsetText.y - 40, FlxG.width - 40, "Current Scroll Speed: " + Math.round(state.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + badOptions.scrollSpeedFactor / 10);
+            speedText = new FlxText(24, pauseState.offsetText.y - 40, FlxG.width - 40, "Current Scroll Speed: " + Math.round(PlayState.instance.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + badOptions.scrollSpeedFactor / 10);
             speedText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, "right");
             speedText.scrollFactor.set(0, 0);
             speedText.alpha = 0;
