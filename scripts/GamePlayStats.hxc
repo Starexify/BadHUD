@@ -18,10 +18,10 @@ import flixel.util.FlxStringUtil;
 class GamePlayStats extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
 
-    var statsText:FlxText;
-    var scoreTextTween;
+    var statsText:FlxText = new FlxText();
+    var scoreTextTween:FlxTween;
 
-    var judgementsText:FlxText;
+    var judgementsText:FlxText = new FlxText();
 
     var ratingPercent:Float;
     var ratingName:String = "?";
@@ -75,7 +75,7 @@ class GamePlayStats extends ScriptedModule {
     // Init Methods
     function initStats(textSize:Int, textFont:String) {
         if (!badOptions.statsBool) return;
-        statsText = new FlxText();
+        if (statsText == null) statsText = new FlxText();
         statsText.setFormat(Paths.font(textFont), textSize, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         statsText.borderSize = 1.25;
         if (badOptions.accuracyType == "vanilla") formatPairs = [
@@ -108,7 +108,7 @@ class GamePlayStats extends ScriptedModule {
 
     function initJudgements(textSize:Int, textFont:String) {
         if (!badOptions.judgementsBool) return;
-        judgementsText = new FlxText();
+        if (judgementsText == null) judgementsText = new FlxText();
         judgementsText.setFormat(Paths.font(textFont), textSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
         judgementsText.borderSize = 1.25;
         var settings = Save.instance.modOptions.get("judgementsTextSettings");
@@ -285,10 +285,9 @@ class GamePlayStats extends ScriptedModule {
 
     override function onNoteHit(event:HitNoteScriptEvent) {
         if (!event.note.noteData.getMustHitNote() || playState == null) return;
-        if (BadHooks.gameplayExcludedSongs.indexOf(playState.currentChart.songName) != -1) return;
+        if (BadHooks.gameplayExcludedSongs.contains(playState.currentChart.songName)) return;
 
         combo = event.comboCount;
-
         switch (event.judgement) {
             case "sick": if (sicks >= 0) sicks = (PlayStatePlaylist.isStoryMode ? talliesLevel.sick + tallies.sick : tallies.sick) + 1;
             case "good": if (goods >= 0) goods = (PlayStatePlaylist.isStoryMode ? talliesLevel.good + tallies.good : tallies.good) + 1;
@@ -302,14 +301,14 @@ class GamePlayStats extends ScriptedModule {
     }
 
     override function onNoteMiss(event:NoteScriptEvent) {
-        if (BadHooks.gameplayExcludedSongs.indexOf(playState.currentChart.songName) != -1) return;
+        if (BadHooks.gameplayExcludedSongs.contains(playState.currentChart.songName)) return;
         combo = event.comboCount;
         if (missed >= 0) missed = PlayStatePlaylist.isStoryMode ? talliesLevel.missed + tallies.missed + 1 : tallies.missed + 1;
         updateScore();
     }
 
     override function onNoteGhostMiss(event:GhostMissNoteScriptEvent) {
-        if (BadHooks.gameplayExcludedSongs.indexOf(playState.currentChart.songName) != -1) return;
+        if (BadHooks.gameplayExcludedSongs.contains(playState.currentChart.songName)) return;
         updateScore();
     }
 
@@ -343,6 +342,7 @@ class GamePlayStats extends ScriptedModule {
         totalNotesPlayed = 0;
         songScore = 0;
 
+        scoreTextTween.destroy();
         scoreTextTween = null;
     }
 }
