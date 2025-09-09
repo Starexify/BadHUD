@@ -290,7 +290,6 @@ class ExtraStrumline extends ScriptedModule {
                     ease: FlxEase.circIn,
                     onComplete: tween -> {
                         text.destroy();
-                        if (playState != null) playState.remove(text);
                         keybindTexts = [];
                     }
                 })
