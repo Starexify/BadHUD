@@ -60,19 +60,19 @@ class KPSCounter extends ScriptedModule {
         var currentTime = FlxG.game.ticks / 1000;
         // Check for key presses
         var pressedKeys = [playState.controls.NOTE_DOWN_P, playState.controls.NOTE_UP_P, playState.controls.NOTE_LEFT_P, playState.controls.NOTE_RIGHT_P];
-        for (pressedKey in pressedKeys) if (pressedKey) lastSecondKeyPresses.push(currentTime);
+        for (pressedKey in pressedKeys) if (pressedKey) lastSecondKeyPresses.push(FlxG.game.ticks / 1000);
 
         // Remove key presses older than 1 second
-        while (lastSecondKeyPresses.length > 0 && currentTime - lastSecondKeyPresses[0] > 1) lastSecondKeyPresses.shift();
+        while (lastSecondKeyPresses.length > 0 && (FlxG.game.ticks / 1000) - lastSecondKeyPresses[0] > 1) lastSecondKeyPresses.shift();
 
         // Calculate KPS
         kps = lastSecondKeyPresses.length;
         kpsMax = Std.int(Math.max(kpsMax, kps));
 
         // Update display
-        if (currentTime - lastUpdateTime >= updateInterval) {
+        if ((FlxG.game.ticks / 1000) - lastUpdateTime >= updateInterval) {
             updateKPS();
-            lastUpdateTime = currentTime;
+            lastUpdateTime = FlxG.game.ticks / 1000;
         }
     }
 

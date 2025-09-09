@@ -37,7 +37,8 @@ class PauseOptions extends ScriptedModule {
     }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
-        if (Std.isOfType(event.targetState, OptionsState)) {
+        if (event.targetState is OptionsState) {
+            var persistentEvent = event;
             //DiscordClient.instance.setPresence({ state: "Setting up Options", details: null });
             // HUD Manager Entry
             var options:OptionsMenu = event.targetState.optionsCodex.get_currentPage();
@@ -51,7 +52,7 @@ class PauseOptions extends ScriptedModule {
             lastItems[1].y += 100; // clearSave
             lastItems[2].y += 110; // exit
             for (item in lastItems) options.items.remove(item);
-            var hudManager = options.items.createItem(0, (options.items.length - 3) * 100 + 20, "HUD MANAGER", "bold", () -> event.targetState.openSubState(ScriptedMusicBeatSubState.init("ui.options.HUDManagerState")));
+            var hudManager = options.items.createItem(0, (options.items.length - 3) * 100 + 20, "HUD MANAGER", "bold", () -> persistentEvent.targetState.openSubState(ScriptedMusicBeatSubState.init("ui.options.HUDManagerState")));
             hudManager.x = (FlxG.width - hudManager.width) / 2;
             for (item in lastItems) options.items.add(item);
 
