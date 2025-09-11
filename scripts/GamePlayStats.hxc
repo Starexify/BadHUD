@@ -30,7 +30,9 @@ class GamePlayStats extends ScriptedModule {
     var songScore:Int;
     var formatPairs:Array<FlxTextFormatMarkerPair>;
 
-    var tallies:Tallies = Highscore.tallies;
+    var tallies(get, never):Tallies;
+    function get_tallies():Tallies { return Highscore.tallies; }
+
     var talliesLevel:Tallies;
     var sicks:Int = 0;
     var goods:Int = 0;
@@ -288,6 +290,8 @@ class GamePlayStats extends ScriptedModule {
         if (BadHooks.gameplayExcludedSongs.contains(playState.currentChart.songName)) return;
 
         combo = event.comboCount;
+
+        trace(tallies);
         switch (event.judgement) {
             case "sick": if (sicks >= 0) sicks = (PlayStatePlaylist.isStoryMode ? talliesLevel.sick + tallies.sick : tallies.sick) + 1;
             case "good": if (goods >= 0) goods = (PlayStatePlaylist.isStoryMode ? talliesLevel.good + tallies.good : tallies.good) + 1;
