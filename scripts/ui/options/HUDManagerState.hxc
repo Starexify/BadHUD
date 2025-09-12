@@ -10,6 +10,7 @@ import funkin.modding.base.ScriptedFlxSpriteGroup;
 import funkin.play.notes.Strumline;
 import funkin.play.notes.notestyle.NoteStyle;
 import funkin.save.Save;
+import funkin.ui.FullScreenScaleMode;
 import funkin.ui.ScriptedMusicBeatSubState;
 import funkin.ui.debug.charting.util.ChartEditorDropdowns;
 import funkin.util.Constants;
@@ -1281,7 +1282,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         Save.instance.modOptions.set(settingsKey, [
             xPos, yPos,
             draggable.sprite.scale.x - originalScale.x, draggable.sprite.scale.y - originalScale.y,
-            draggable.sprite.angle
+            draggable.sprite.angle,
+            FullScreenScaleMode.gameCutoutSize.x
         ]);
     }
 
