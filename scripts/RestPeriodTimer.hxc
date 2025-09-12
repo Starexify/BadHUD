@@ -1,7 +1,6 @@
 import funkin.Preferences;
 import funkin.graphics.FunkinSprite;
 import funkin.modding.events.ScriptEvent;
-import funkin.modding.module.ModuleHandler;
 import funkin.modding.module.ScriptedModule;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
@@ -29,6 +28,8 @@ class RestPeriodTimer extends ScriptedModule {
     var lastHitNoteTime:Int = 0;
     var restBarSprites:Array<FlxSprite>;
 
+    var restBarFading:Bool = false;
+
     function new() {
         super("RestPeriodTimer");
     }
@@ -41,7 +42,7 @@ class RestPeriodTimer extends ScriptedModule {
 
     override function onUpdate(event:UpdateScriptEvent) {
         if (playState == null || !badOptions.restBar || restText == null) return;
-        var restBarFadeOut = 1000; // 1s
+
         var songPosition = playState.conductorInUse.songPosition;
         var incomingNoteTime = Std.int(getNextNoteAndTime(songPosition)?.time ?? 0);
         var noteTimeDelta = incomingNoteTime - lastHitNoteTime;
@@ -51,12 +52,23 @@ class RestPeriodTimer extends ScriptedModule {
             restText.text = Std.string(Math.round((restTime - 1000) / 1000));
             restBar.amount = (badOptions.restBarType == "countdown") ? (restTime - 1000) / (noteTimeDelta - 1000) : 1 - ((restTime - 1000) / (noteTimeDelta - 1000));
 
+            // Show sprites only once
             for (sprite in restBarSprites) if (!sprite.visible) sprite.visible = true;
 
-            // Fade out the rest bar when time is less than 1.5s
-            if (restTime <= 1500) for (sprites in restBarSprites) FlxTween.tween(sprites, { alpha: 0 }, 0.5, { ease: FlxEase.expoOut, onComplete: tween -> { sprites.visible = false; sprites.alpha = badOptions.hudOpacity / 100;} });
+            // Only start fade once
+            if (restTime <= 1500 && !restBarFading) {
+                restBarFading = true;
+                for (sprite in restBarSprites) {
+                    FlxTween.tween(sprite, { alpha: 0 }, 0.5, {
+                        ease: FlxEase.expoOut,
+                        onComplete: tween -> { sprite.visible = false; sprite.alpha = badOptions.hudOpacity / 100; }
+                    });
+                }
+            }
         } else { // TODO: Make this better
+            // Hide sprites immediately if outside rest period
             for (sprite in restBarSprites) if (sprite.visible) sprite.visible = false;
+            restBarFading = false;
         }
     }
 
