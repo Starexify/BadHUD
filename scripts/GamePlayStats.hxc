@@ -291,7 +291,6 @@ class GamePlayStats extends ScriptedModule {
 
         combo = event.comboCount;
 
-        trace(tallies);
         switch (event.judgement) {
             case "sick": if (sicks >= 0) sicks = (PlayStatePlaylist.isStoryMode ? talliesLevel.sick + tallies.sick : tallies.sick) + 1;
             case "good": if (goods >= 0) goods = (PlayStatePlaylist.isStoryMode ? talliesLevel.good + tallies.good : tallies.good) + 1;
@@ -346,7 +345,9 @@ class GamePlayStats extends ScriptedModule {
         totalNotesPlayed = 0;
         songScore = 0;
 
-        scoreTextTween.destroy();
-        scoreTextTween = null;
+        if (scoreTextTween != null) {
+            scoreTextTween.destroy();
+            scoreTextTween = null;
+        }
     }
 }
