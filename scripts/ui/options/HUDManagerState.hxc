@@ -55,7 +55,6 @@ import Main;
 
 class HUDManagerState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
-    var badHUDOptions = new BadHUDOptions();
 
     var welcomeMusic:FunkinSound = new FunkinSound();
     var spriteSettingsText:FlxText;
@@ -609,7 +608,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var strumlineHeight = createNumberBox("Strumline Height", "Sets the y position/height of the strumlines.", "px", 0, 1, 0, Constants.STRUMLINE_Y_OFFSET, value -> {
             badOptions.strumHeight = value;
             Constants.STRUMLINE_Y_OFFSET = badOptions.strumHeight;
-            if (badOptions.oppMiddlescroll) opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
+            if (badOptions.oppMiddlescroll && badOptions.opponentNoteOpacity > 0) opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
             playerStrumline.y = Preferences.downscroll ? FlxG.height - playerStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
         });
 
@@ -663,213 +662,206 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         vbox.percentWidth = 100;
         vbox.verticalSpacing = 10;
 
-        if (draggable.spriteType == "judgement" || draggable.spriteType == "combo") {
-            var noteStyleBox = new HBox();
-            noteStyleBox.percentWidth = 100;
+        switch (draggable.spriteType) {
+            case "judgement", "combo":
+                var noteStyleBox = new HBox();
+                noteStyleBox.percentWidth = 100;
 
-            var label = new Label();
-            label.text = "Note Style \n(Only Visual!)";
-            label.percentWidth = 40;
-            label.verticalAlign = "center";
+                var label = new Label();
+                label.text = "Note Style \n(Only Visual!)";
+                label.percentWidth = 40;
+                label.verticalAlign = "center";
 
-            var noteStyleList:DropDown = new DropDown();
-            noteStyleList.id = "noteStyleList";
-            noteStyleList.tooltip = "Choose the style of the rating pop-up to show in the HUD Manager.";
-            noteStyleList.value = ChartEditorDropdowns.populateDropdownWithNoteStyles(noteStyleList, noteStyle.id);
-            noteStyleList.percentWidth = 60;
-            noteStyleList.searchable = true;
-            // Change NoteStyle and update the Draggable
-            noteStyleList.onChange = (event:UIEvent) -> {
-                if (event.data?.id == null && !noteStyleList.selected) return;
-                noteStyle = NoteStyleRegistry.instance.fetchEntry(event.data.id);
-                initStrumlines();
-                var selectedDraggableType:String = null;
-                for (draggable in draggableSprites) if (draggable.isSelected) selectedDraggableType = draggable.spriteType;
-                draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "judgement" && draggable.spriteType != "combo");
-                initPopUps();
-                if (selectedDraggableType != null) for (draggable in draggableSprites) {
-                    if (draggable.spriteType == selectedDraggableType) {
-                        draggable.isSelected = true;
-                        updateHighlight(draggable);
-                        updateText(draggable);
-                        break;
+                var noteStyleList:DropDown = new DropDown();
+                noteStyleList.id = "noteStyleList";
+                noteStyleList.tooltip = "Choose the style of the rating pop-up to show in the HUD Manager.";
+                noteStyleList.value = ChartEditorDropdowns.populateDropdownWithNoteStyles(noteStyleList, noteStyle.id);
+                noteStyleList.percentWidth = 60;
+                noteStyleList.searchable = true;
+                // Change NoteStyle and update the Draggable
+                noteStyleList.onChange = (event:UIEvent) -> {
+                    if (event.data?.id == null && !noteStyleList.selected) return;
+                    noteStyle = NoteStyleRegistry.instance.fetchEntry(event.data.id);
+                    initStrumlines();
+                    var selectedDraggableType:String = null;
+                    for (draggable in draggableSprites) if (draggable.isSelected) selectedDraggableType = draggable.spriteType;
+                    draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "judgement" && draggable.spriteType != "combo");
+                    initPopUps();
+                    if (selectedDraggableType != null) for (draggable in draggableSprites) {
+                        if (draggable.spriteType == selectedDraggableType) {
+                            draggable.isSelected = true;
+                            updateHighlight(draggable);
+                            updateText(draggable);
+                            break;
+                        }
                     }
                 }
-            }
-            noteStyleList.searchField.onClick = (event:MouseEvent) -> isSearching = true;
-            noteStyleList.registerEvent(UIEvent.CLOSE, (event:UIEvent) -> isSearching = false);
+                noteStyleList.searchField.onClick = (event:MouseEvent) -> isSearching = true;
+                noteStyleList.registerEvent(UIEvent.CLOSE, (event:UIEvent) -> isSearching = false);
 
-            // Prevent closing the context menu when the Note Style Dropdown is open
-            contextMenu.registerEvent(UIEvent.BEFORE_CLOSE, (event:UIEvent) -> if (noteStyleList.dropDownOpen) event.cancel());
+                // Prevent closing the context menu when the Note Style Dropdown is open
+                contextMenu.registerEvent(UIEvent.BEFORE_CLOSE, (event:UIEvent) -> if (noteStyleList.dropDownOpen) event.cancel());
 
-            noteStyleBox.addComponent(label);
-            noteStyleBox.addComponent(noteStyleList);
+                noteStyleBox.addComponent(label);
+                noteStyleBox.addComponent(noteStyleList);
 
-            var ratingAnimations:Array<BasicEntry> = [
-                {id: "off", text: "Off"},
-                {id: "vanilla", text: "Vanilla"},
-                {id: "popup", text: "Pop-Up"}
-            ];
+                var ratingAnimations:Array<BasicEntry> = [
+                    {id: "off", text: "Off"},
+                    {id: "vanilla", text: "Vanilla"},
+                    {id: "popup", text: "Pop-Up"}
+                ];
 
-            var ratingAnimationBox = createOptionBox("Animation Type", "The pop-up animation that the ratings will use when appearing.", badOptions.popUpType, ratingAnimations, value -> badOptions.popUpType = value);
+                var ratingAnimationBox = createOptionBox("Animation Type", "The pop-up animation that the ratings will use when appearing.", badOptions.popUpType, ratingAnimations, value -> badOptions.popUpType = value);
 
-            vbox.addComponent(noteStyleBox);
-            vbox.addComponent(ratingAnimationBox);
-        }
+                vbox.addComponent(noteStyleBox);
+                vbox.addComponent(ratingAnimationBox);
+            case "hitDiffText":
+                var hitDiffFadeBox = createCheckBox("Text Fade Out", "If enabled, the hit difference text will fade out.", badOptions.hitDiffFade, 100, (event:UIEvent) -> badOptions.hitDiffFade = event.target.value);
+                var hitDiffColorBox = createCheckBox("Colored Accuracy", "If enabled, the hit difference text will be colored based on accuracy.", badOptions.hitDiffColor, 100, (event:UIEvent) -> badOptions.hitDiffColor = event.target.value);
 
-        if (draggable.spriteType == "hitDiffText") {
-            var hitDiffFadeBox = createCheckBox("Text Fade Out", "If enabled, the hit difference text will fade out.", badOptions.hitDiffFade, 100, (event:UIEvent) -> badOptions.hitDiffFade = event.target.value);
-            var hitDiffColorBox = createCheckBox("Colored Accuracy", "If enabled, the hit difference text will be colored based on accuracy.", badOptions.hitDiffColor, 100, (event:UIEvent) -> badOptions.hitDiffColor = event.target.value);
+                vbox.addComponent(hitDiffFadeBox);
+                vbox.addComponent(hitDiffColorBox);
 
-            vbox.addComponent(hitDiffFadeBox);
-            vbox.addComponent(hitDiffColorBox);
-        }
+            case "healthBar":
+                var iconPositions:Array<BasicEntry> = [
+                    {id: "off", text: "Off"},
+                    {id: "vanilla", text: "Vanilla"},
+                    {id: "rotated", text: "Rotated"},
+                    {id: "flipped", text: "Flipped"},
+                    {id: "centered", text: "Centered"},
+                    {id: "ends", text: "Ends"}
+                ];
 
-        if (draggable.spriteType == "healthBar") {
-            var iconPositions:Array<BasicEntry> = [
-                {id: "off", text: "Off"},
-                {id: "vanilla", text: "Vanilla"},
-                {id: "rotated", text: "Rotated"},
-                {id: "flipped", text: "Flipped"},
-                {id: "centered", text: "Centered"},
-                {id: "ends", text: "Ends"}
-            ];
+                var iconsPositionBox = createOptionBox("Health Icons Position", "Changes the position of the health icons on the Health Bar.", badOptions.healthIconPosition, iconPositions, value -> badOptions.healthIconPosition = value);
+                var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", "If enabled, the bars will move be smoother.", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
+                var coloredBarCheck = createCheckBox("Icon Colored Bar (May reduce performance!)", "If enabled, the health bar will be colored corresponding to the health icons.", badOptions.iconColors, 100, (event:UIEvent) -> badOptions.iconColors = event.target.value);
+                var healthIndicCheck = createCheckBox("Health Indicator", "If enabled, displays a marker on the health bar showing the current health.", badOptions.healthIndic, 100, (event:UIEvent) -> badOptions.healthIndic = event.target.value);
 
-            var iconsPositionBox = createOptionBox("Health Icons Position", "Changes the position of the health icons on the Health Bar.", badOptions.healthIconPosition, iconPositions, value -> badOptions.healthIconPosition = value);
-            var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", "If enabled, the bars will move be smoother.", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
-            var coloredBarCheck = createCheckBox("Icon Colored Bar (May reduce performance!)", "If enabled, the health bar will be colored corresponding to the health icons.", badOptions.iconColors, 100, (event:UIEvent) -> badOptions.iconColors = event.target.value);
-            var healthIndicCheck = createCheckBox("Health Indicator", "If enabled, displays a marker on the health bar showing the current health.", badOptions.healthIndic, 100, (event:UIEvent) -> badOptions.healthIndic = event.target.value);
+                vbox.addComponent(iconsPositionBox);
+                vbox.addComponent(coloredBarCheck);
+                vbox.addComponent(smoothBarsCheck);
+                vbox.addComponent(healthIndicCheck);
 
-            vbox.addComponent(iconsPositionBox);
-            vbox.addComponent(coloredBarCheck);
-            vbox.addComponent(smoothBarsCheck);
-            vbox.addComponent(healthIndicCheck);
-        }
+            case "timeBar":
+                var displayStyles:Array<BasicEntry> = [
+                    {id: "off", text: "Off"},
+                    {id: "left", text: "Time Left"},
+                    {id: "left-total", text: "Time Left / Total"},
+                    {id: "elapsed", text: "Elapsed"},
+                    {id: "elapsed-total", text: "Elapsed / Total"},
+                    {id: "elapsed-left", text: "Elapsed / Time Left"},
+                    {id: "name", text: "Song Name"},
+                ];
 
-        if (draggable.spriteType == "timeBar") {
-            var displayStyles:Array<BasicEntry> = [
-                {id: "off", text: "Off"},
-                {id: "left", text: "Time Left"},
-                {id: "left-total", text: "Time Left / Total"},
-                {id: "elapsed", text: "Elapsed"},
-                {id: "elapsed-total", text: "Elapsed / Total"},
-                {id: "elapsed-left", text: "Elapsed / Time Left"},
-                {id: "name", text: "Song Name"},
-            ];
+                var barStyles:Array<BasicEntry> = [
+                    {id: "off", text: "Off"},
+                    {id: "timeBarPsychEngine", text: "Psych Engine"},
+                    {id: "timeBarMinimal", text: "Minimal"},
+                    {id: "timeBarMinimalRounded", text: "Minimal Rounded"},
+                ];
 
-            var barStyles:Array<BasicEntry> = [
-                {id: "off", text: "Off"},
-                {id: "timeBarPsychEngine", text: "Psych Engine"},
-                {id: "timeBarMinimal", text: "Minimal"},
-                {id: "timeBarMinimalRounded", text: "Minimal Rounded"},
-            ];
-
-            var displayBox = createOptionBox("Text Display", "Changes the display of the time text on the bar.", badOptions.timeBarType, displayStyles, value -> badOptions.timeBarType = value);
-            var styleBox = createOptionBox("Bar Style", "Changes how the the bar looks like.", badOptions.timeBarStyle, barStyles, value -> {
-                badOptions.timeBarStyle = value;
-                var selectedDraggableType:String = null;
-                for (draggable in draggableSprites) {
-                    if (draggable.isSelected) selectedDraggableType = draggable.spriteType;
-                    for (draggable in draggableSprites) if (draggable.spriteType == "timeBar") {
-                        for (linked in draggable.linkedSprites) remove(linked.sprite);
+                var displayBox = createOptionBox("Text Display", "Changes the display of the time text on the bar.", badOptions.timeBarType, displayStyles, value -> badOptions.timeBarType = value);
+                var styleBox = createOptionBox("Bar Style", "Changes how the the bar looks like.", badOptions.timeBarStyle, barStyles, value -> {
+                    badOptions.timeBarStyle = value;
+                    var selectedDraggableType:String = null;
+                    for (draggable in draggableSprites) {
+                        if (draggable.isSelected) selectedDraggableType = draggable.spriteType;
+                        for (draggable in draggableSprites) if (draggable.spriteType == "timeBar") {
+                            for (linked in draggable.linkedSprites) remove(linked.sprite);
+                        }
                     }
-                }
-                draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "timeBar");
-                initTimeBarSprite();
-                if (selectedDraggableType != null) for (draggable in draggableSprites) {
-                    if (draggable.spriteType == selectedDraggableType) {
-                        draggable.isSelected = true;
-                        updateHighlight(draggable);
-                        updateText(draggable);
-                        break;
+                    draggableSprites = draggableSprites.filter(draggable -> draggable.spriteType != "timeBar");
+                    initTimeBarSprite();
+                    if (selectedDraggableType != null) for (draggable in draggableSprites) {
+                        if (draggable.spriteType == selectedDraggableType) {
+                            draggable.isSelected = true;
+                            updateHighlight(draggable);
+                            updateText(draggable);
+                            break;
+                        }
                     }
-                }
-            });
-            var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", "If enabled, the bars will move be smoother.", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
+                });
+                var smoothBarsCheck = createCheckBox("Smooth Bars (May reduce performance!)", "If enabled, the bars will move be smoother.", badOptions.smoothBars, 100, (event:UIEvent) -> badOptions.smoothBars = event.target.value);
 
-            vbox.addComponent(displayBox);
-            vbox.addComponent(styleBox);
-            vbox.addComponent(smoothBarsCheck);
-        }
+                vbox.addComponent(displayBox);
+                vbox.addComponent(styleBox);
+                vbox.addComponent(smoothBarsCheck);
 
-        if (draggable.spriteType == "restBar") {
-            var displayTypes:Array<BasicEntry> = [
-                {id: "countdown", text: "Countdown"},
-                {id: "countup", text: "Countup"},
-            ];
+            case "restBar":
+                var displayTypes:Array<BasicEntry> = [
+                    {id: "countdown", text: "Countdown"},
+                    {id: "countup", text: "Countup"},
+                ];
 
-            var displayBox = createOptionBox("Display Type", "Changes the way the rest bar is displaying the rest time.", badOptions.restBarType, displayTypes, value -> badOptions.restBarType = value);
-            var startThreshold = createNumberBox("Start Threshold", "The rest time at which the bar begins to display.", "s", 2, 0.1, 1, badOptions.restBarStartThreshold, value -> badOptions.restBarStartThreshold = value);
+                var displayBox = createOptionBox("Display Type", "Changes the way the rest bar is displaying the rest time.", badOptions.restBarType, displayTypes, value -> badOptions.restBarType = value);
+                var startThreshold = createNumberBox("Start Threshold", "The rest time at which the bar begins to display.", "s", 2, 0.1, 1, badOptions.restBarStartThreshold, value -> badOptions.restBarStartThreshold = value);
 
-            vbox.addComponent(displayBox);
-            vbox.addComponent(startThreshold);
-        }
+                vbox.addComponent(displayBox);
+                vbox.addComponent(startThreshold);
 
-        if (draggable.spriteType == "judgementsText") {
-            var textOrientation:Array<BasicEntry> = [
-                {id: "left", text: "Left"},
-                {id: "center", text: "Center"},
-                {id: "right", text: "Right"},
-            ];
+            case "judgementsText":
+                var textOrientation:Array<BasicEntry> = [
+                    {id: "left", text: "Left"},
+                    {id: "center", text: "Center"},
+                    {id: "right", text: "Right"},
+                ];
 
-            var textOrientationBox = createOptionBox("Text Orientation", "Changes the orientation of the text.", badOptions.judgementsOrt, textOrientation, value -> {
-                badOptions.judgementsOrt = value;
-                switch (badOptions.judgementsOrt) {
-                    case "left": judgementsText.text = "Sicks: 0" + "\nGoods: 0" + "\nBads: 0" + "\nShits: 0";
-                    case "center": judgementsText.text = "Sicks: 0" + " | Goods: 0" + " | Bads: 0" + " | Shits: 0";
-                    case "right": judgementsText.text = "0 Sicks" + "\n0 Goods" + "\n0 Bads" + "\n0 Shits";
-                }
-            });
+                var textOrientationBox = createOptionBox("Text Orientation", "Changes the orientation of the text.", badOptions.judgementsOrt, textOrientation, value -> {
+                    badOptions.judgementsOrt = value;
+                    switch (badOptions.judgementsOrt) {
+                        case "left": judgementsText.text = "Sicks: 0" + "\nGoods: 0" + "\nBads: 0" + "\nShits: 0";
+                        case "center": judgementsText.text = "Sicks: 0" + " | Goods: 0" + " | Bads: 0" + " | Shits: 0";
+                        case "right": judgementsText.text = "0 Sicks" + "\n0 Goods" + "\n0 Bads" + "\n0 Shits";
+                    }
+                });
 
-            vbox.addComponent(textOrientationBox);
-        }
+                vbox.addComponent(textOrientationBox);
 
-        if (draggable.spriteType == "statsText") {
-            var accuracySystem:Array<BasicEntry> = [
-                {id: "vanilla", text: "Vanilla"},
-                {id: "psych", text: "Psych Engine"},
-                {id: "osu", text: "osu!Mania"},
-            ];
-            var textOrientation:Array<BasicEntry> = [
-                {id: "left", text: "Left"},
-                {id: "center", text: "Center"},
-                {id: "right", text: "Right"},
-            ];
+            case "statsText":
+                var accuracySystem:Array<BasicEntry> = [
+                    {id: "vanilla", text: "Vanilla"},
+                    {id: "psych", text: "Psych Engine"},
+                    {id: "osu", text: "osu!Mania"},
+                ];
+                var textOrientation:Array<BasicEntry> = [
+                    {id: "left", text: "Left"},
+                    {id: "center", text: "Center"},
+                    {id: "right", text: "Right"},
+                ];
 
-            var accuracySystemBox = createOptionBox("Accuracy System", "Changes the accuracy system used.", badOptions.accuracyType, accuracySystem, value -> badOptions.accuracyType = value);
-            var textOrientationBox = createOptionBox("Text Orientation", "Changes the orientation of the text.", badOptions.statsOrt, textOrientation, value -> {
-                badOptions.statsOrt = value;
-                switch (badOptions.statsOrt) {
-                    case "left": statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: ?" + "\nCombo: 0";
-                    case "center": statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: ?";
-                    case "right": statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n? Rating" + "\n0 Combo";
-                }
-            });
+                var accuracySystemBox = createOptionBox("Accuracy System", "Changes the accuracy system used.", badOptions.accuracyType, accuracySystem, value -> badOptions.accuracyType = value);
+                var textOrientationBox = createOptionBox("Text Orientation", "Changes the orientation of the text.", badOptions.statsOrt, textOrientation, value -> {
+                    badOptions.statsOrt = value;
+                    switch (badOptions.statsOrt) {
+                        case "left": statsText.text = "Score: 0" + "\nCombo Breaks: 0" + "\nRating: ?" + "\nCombo: 0";
+                        case "center": statsText.text = "Score: 0" + " | Combo Breaks: 0" + " | Rating: ?";
+                        case "right": statsText.text = "0 Score" + "\n0 Combo Breaks" + "\n? Rating" + "\n0 Combo";
+                    }
+                });
 
-            var commaSeparationCheck = createCheckBox("Comma Separated Score", "If enabled, the score is showing separated by commas.", badOptions.commaSeparatedScore, 100, (event:UIEvent) -> badOptions.commaSeparatedScore = event.target.value);
+                var commaSeparationCheck = createCheckBox("Comma Separated Score", "If enabled, the score is showing separated by commas.", badOptions.commaSeparatedScore, 100, (event:UIEvent) -> badOptions.commaSeparatedScore = event.target.value);
 
-            vbox.addComponent(accuracySystemBox);
-            vbox.addComponent(textOrientationBox);
-            vbox.addComponent(commaSeparationCheck);
-        }
+                vbox.addComponent(accuracySystemBox);
+                vbox.addComponent(textOrientationBox);
+                vbox.addComponent(commaSeparationCheck);
 
-        if (draggable.spriteType == "kpsText") {
-            var textOrientation:Array<BasicEntry> = [
-                {id: "left", text: "Left"},
-                {id: "center", text: "Center"},
-                {id: "right", text: "Right"},
-            ];
+            case "kpsText":
+                var textOrientation:Array<BasicEntry> = [
+                    {id: "left", text: "Left"},
+                    {id: "center", text: "Center"},
+                    {id: "right", text: "Right"},
+                ];
 
-            var textOrientationBox = createOptionBox("Text Orientation", "Changes the orientation of the text.", badOptions.kpsOrt, textOrientation, value -> {
-                badOptions.kpsOrt = value;
-                switch (badOptions.kpsOrt) {
-                    case "left": kpsText.text = "KPS: 0" + "\nMax KPS: 99";
-                    case "center": kpsText.text = "KPS: 0" + "| Max KPS: 99";
-                    case "right": kpsText.text = "0 KPS" + "\n99 Max KPS";
-                }
-            });
+                var textOrientationBox = createOptionBox("Text Orientation", "Changes the orientation of the text.", badOptions.kpsOrt, textOrientation, value -> {
+                    badOptions.kpsOrt = value;
+                    switch (badOptions.kpsOrt) {
+                        case "left": kpsText.text = "KPS: 0" + "\nMax KPS: 99";
+                        case "center": kpsText.text = "KPS: 0" + "| Max KPS: 99";
+                        case "right": kpsText.text = "0 KPS" + "\n99 Max KPS";
+                    }
+                });
 
-            vbox.addComponent(textOrientationBox);
+                vbox.addComponent(textOrientationBox);
         }
 
         frame.addComponent(vbox);
@@ -880,7 +872,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         var resetDialog = new MessageBox();
         resetDialog.title = "Confirm Reset of HUD Element ?";
-        trace(resetDialog.iconImage);
         resetDialog.text = "You are about to PERMANENTLY reset this HUD Element to its default position settings.\n\n⚠️ This action CANNOT be undone!\n\nAre you absolutely sure you want to proceed?";
         resetDialog.type = "yesno";
         resetDialog.iconImage.styleString = "resource: 'haxeui-core/styles/shared/warning-large.png'";
