@@ -652,7 +652,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         contextMenu = new Menu();
         contextMenu.width = 350;
         contextMenu.x = Math.max(0, Math.min(mouseX, FlxG.width - contextMenu.width));
-        contextMenu.y = mouseY;
 
         var frame:Frame = new Frame();
         frame.text = "Sprite Settings";
@@ -927,6 +926,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         contextMenu.addComponent(frame);
         contextMenu.addComponent(resetContainer);
         Screen.instance.addComponent(contextMenu);
+        contextMenu.validateNow();
+        contextMenu.y = Math.max(0, Math.min(mouseY, FlxG.height - contextMenu.height));
     }
 
     // Handlers
