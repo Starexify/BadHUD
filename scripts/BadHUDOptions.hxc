@@ -2,7 +2,9 @@ import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ScriptedModule;
 import funkin.Preferences;
 import funkin.save.Save;
+import funkin.ui.debug.FunkinDebugDisplay;
 import funkin.ui.options.OptionsState;
+import funkin.ui.options.PreferencesMenu;
 import funkin.util.Constants;
 import funkin.util.ReflectUtil;
 import funkin.util.tools.StringTools;
@@ -10,8 +12,6 @@ import haxe.ds.StringMap;
 import haxe.io.Path;
 import Main;
 import openfl.text.TextFormat;
-import funkin.ui.options.PreferencesMenu;
-import funkin.ui.debug.FunkinDebugDisplay;
 
 class BadHUDOptions extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -68,11 +68,16 @@ class BadHUDOptions extends ScriptedModule {
                 if (!ReflectUtil.hasField(badOptions, field)) ReflectUtil.setField(badOptions, field, ReflectUtil.field(saveData, field));
             }
             switchFontSize(badOptions.hudFont);
-            changeDebugDisplay(badOptions.hudFont);
+            trace(Main.debugDisplay.numChildren);
+            if (Main.debugDisplay != null) changeDebugDisplay(badOptions.hudFont);
             Constants.STRUMLINE_Y_OFFSET = badOptions.strumHeight;
         }
         Save.instance.flush();
         badOptions = Save.instance.modOptions.get("badOptions");
+    }
+
+    override function onCreate(event:ScriptEvent) {
+        changeDebugDisplay(badOptions.hudFont);
     }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
@@ -133,7 +138,7 @@ class BadHUDOptions extends ScriptedModule {
     }
 
     function changeDebugDisplay(font:String) {
-        if (Preferences.debugDisplay != 0 && Assets.exists(Paths.font(font))) {
+        if (Preferences.debugDisplay != 0 && Assets.exists(Paths.font(font)) && Main.debugDisplay != null) {
             var debugDisplay = Main.debugDisplay;
             var font = Assets.getPath(Paths.font(font));
             debugDisplay.infoDisplay.defaultTextFormat = new TextFormat(font);

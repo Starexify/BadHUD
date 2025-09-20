@@ -51,6 +51,8 @@ import haxe.ui.events.MouseEvent;
 import haxe.ui.events.UIEvent;
 import haxe.ui.layouts.VerticalGridLayout;
 
+import Main;
+
 class HUDManagerState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var badHUDOptions = new BadHUDOptions();
@@ -130,7 +132,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         add(highlightOutline);
 
         spriteSettingsText = new FlxText(10, 0, 0).setFormat(Paths.font("vcr.ttf"), 20);
-        spriteSettingsText.y = Preferences.downscroll ? 25 : FlxG.height * 0.95 - spriteSettingsText.height;
+        if (Preferences.downscroll) {
+            spriteSettingsText.y = 10;
+            if (Preferences.debugDisplay != 0) Main.debugDisplay.visible = false;
+        } else {
+            spriteSettingsText.y = FlxG.height * 0.95 - spriteSettingsText.height;
+        }
         add(spriteSettingsText);
 
         initToolbox();
@@ -1494,6 +1501,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (welcomeMusic != null) welcomeMusic.destroy();
         if (FlxG.sound.music != null) FlxG.sound.music.resume();
         FlxG.state.persistentUpdate = prevPersistentUpdate;
+        Main.debugDisplay.visible = true;
     }
 }
 
