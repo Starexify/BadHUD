@@ -1,19 +1,17 @@
-import funkin.Preferences;
-import funkin.save.Save;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ScriptedModule;
+import funkin.Preferences;
+import funkin.save.Save;
 import funkin.ui.options.OptionsState;
-import funkin.ui.options.PreferencesMenu;
 import funkin.util.Constants;
 import funkin.util.ReflectUtil;
 import funkin.util.tools.StringTools;
-
-import openfl.text.TextFormat;
-
 import haxe.ds.StringMap;
 import haxe.io.Path;
-
 import Main;
+import openfl.text.TextFormat;
+import funkin.ui.options.PreferencesMenu;
+import funkin.ui.debug.FunkinDebugDisplay;
 
 class BadHUDOptions extends ScriptedModule {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
@@ -59,15 +57,15 @@ class BadHUDOptions extends ScriptedModule {
     }
 
     // Hooks or smth like that for other classes
-    public var fontSize:Int;
+    public static var fontSize:Int;
 
     function new() {
         super("BadHUDOptions", 1);
         // Default Options (First Start)
         if (!Save.instance.modOptions.exists("badOptions")) Save.instance.modOptions.set("badOptions", saveData);
         else {
-            for (field in ReflectUtil.getAnonymousFieldsOf(saveData)) {
-                if (!ReflectUtil.hasAnonymousField(badOptions, field)) ReflectUtil.setAnonymousField(badOptions, field, ReflectUtil.getAnonymousField(saveData, field));
+            for (field in ReflectUtil.fields(saveData)) {
+                if (!ReflectUtil.hasField(badOptions, field)) ReflectUtil.setField(badOptions, field, ReflectUtil.field(saveData, field));
             }
             switchFontSize(badOptions.hudFont);
             changeDebugDisplay(badOptions.hudFont);
@@ -78,74 +76,83 @@ class BadHUDOptions extends ScriptedModule {
     }
 
     override function onStateChangeEnd(event:StateChangeScriptEvent) {
-        if (Std.isOfType(event.targetState, OptionsState)) {
-            var preferences:PreferencesMenu = event.targetState.optionsCodex.pages.get("preferences");
-            if (preferences != null) {
-                switchFontSize(badOptions.hudFont);
-                Save.instance.flush();
+        if (!(event.targetState is OptionsState)) return;
 
-                preferences.createPrefItemCheckbox("Middlescroll", "If enabled, player notes will be centerd on the screen, and opponent's notes will be split.", value -> badOptions.middlescroll = value, badOptions.middlescroll);
-                preferences.createPrefItemPercentage("Opponent Notes Opacity", "Adjust the opacity of the opponent's notes.", value -> badOptions.opponentNoteOpacity = value, badOptions.opponentNoteOpacity);
+        var preferences:PreferencesMenu = OptionsState.instance.optionsCodex.pages.get("preferences");
+        if (preferences != null) {
+            switchFontSize(badOptions.hudFont);
+            Save.instance.flush();
 
-                // HUD Customization
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold", () -> false);
-                preferences.preferenceDesc.push("");
-                preferences.createPrefItemPercentage("HUD Opacity", "Adjust the opacity of the HUD.", value -> badOptions.hudOpacity = value, badOptions.hudOpacity);
+            preferences.createPrefItemCheckbox("Middlescroll", "If enabled, player notes will be centerd on the screen, and opponent's notes will be split.", value -> badOptions.middlescroll = value, badOptions.middlescroll);
+            preferences.createPrefItemPercentage("Opponent Notes Opacity", "Adjust the opacity of the opponent's notes.", value -> badOptions.opponentNoteOpacity = value, badOptions.opponentNoteOpacity);
 
-                var fontList:Array<String> = Assets.list("FONT");
-                fontOptions = new StringMap();
-                var excludedFonts = ["vcr", "VCR OSD Neue", "ModernDOS", "fbUsv8C5eI", "DS DIGI"];
-                for (font in fontList) {
-                    var fileName = Path.withoutDirectory(font);
-                    var displayName = fileName;
-                    displayName = StringTools.stripSuffix(displayName, ".ttf");
-                    displayName = StringTools.stripSuffix(displayName, ".TTF");
-                    displayName = StringTools.stripSuffix(displayName, ".otf");
-                    displayName = displayName.split("_").join(" ").split("-").join(" ");
-                    if (excludedFonts.contains(displayName) == -1) displayName = StringTools.toTitleCase(displayName);
-                    if (displayName == "vcr") displayName = "VCR OSD Mono (Vanilla)";
-                    fontOptions.set(displayName, fileName);
-                }
-                var prefDisplayName = StringTools.stripSuffix(badOptions.hudFont, ".ttf");
-                prefDisplayName = StringTools.stripSuffix(prefDisplayName, ".TTF");
-                prefDisplayName = StringTools.stripSuffix(prefDisplayName, ".otf");
-                preferences.createPrefItemEnum("HUD Font", "Select the font style for the HUD text.", fontOptions, (key, value) -> {
-                    trace(key + ", " + value);
-                    badOptions.hudFont = value;
-                    changeDebugDisplay(badOptions.hudFont);
-                    switchFontSize(value);
-                }, prefDisplayName);
-                preferences.createPrefItemNumber("HUD Font Size", "Adjust the size of the HUD text.", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
+            // HUD Customization
+            preferences.items.createItem(120, 120 * preferences.items.length + 30, "HUD Customization :", "bold", () -> false);
+            preferences.preferenceDesc.push("");
+            preferences.createPrefItemPercentage("HUD Opacity", "Adjust the opacity of the HUD.", value -> badOptions.hudOpacity = value, badOptions.hudOpacity);
 
-                // Extras
-                preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold", () -> false);
-                preferences.preferenceDesc.push("");
-
-                preferences.createPrefItemCheckbox("Enable Keybind Reminder", "If enabled, a keybind reminder will appear above notes when loaded, then fade away   .", value -> badOptions.remindKeys = value, badOptions.remindKeys);
-                preferences.createPrefItemCheckbox("Mute Miss Sounds", "If enabled, mutes the sound of the note being missed.", value -> badOptions.muteMiss = value, badOptions.muteMiss);
-                preferences.createPrefItemCheckbox("Custom Scroll Speed", "If enabled, the Scroll Speed Factor option will be used.", value -> badOptions.customScrollSpeed = value, badOptions.customScrollSpeed);
-                preferences.createPrefItemNumber("Scroll Speed Factor", "Adjust the speed of the incoming notes.", value -> badOptions.scrollSpeedFactor = value, value -> Std.string(badOptions.scrollSpeedFactor / 10), Std.int(badOptions.scrollSpeedFactor), 1, 9999, 1, 0);
+            var fontList:Array<String> = Assets.list("FONT");
+            fontOptions = new StringMap();
+            var excludedFonts = ["vcr", "VCR OSD Neue", "ModernDOS", "fbUsv8C5eI", "DS DIGI"];
+            for (font in fontList) {
+                var fileName = Path.withoutDirectory(font);
+                var displayName = fileName;
+                displayName = StringTools.stripSuffix(displayName, ".ttf");
+                displayName = StringTools.stripSuffix(displayName, ".TTF");
+                displayName = StringTools.stripSuffix(displayName, ".otf");
+                displayName = displayName.split("_").join(" ").split("-").join(" ");
+                if (excludedFonts.contains(displayName) == -1) displayName = StringTools.toTitleCase(displayName);
+                if (displayName == "vcr") displayName = "VCR OSD Mono (Vanilla)";
+                fontOptions.set(displayName, fileName);
             }
+            var prefDisplayName = StringTools.stripSuffix(badOptions.hudFont, ".ttf");
+            prefDisplayName = StringTools.stripSuffix(prefDisplayName, ".TTF");
+            prefDisplayName = StringTools.stripSuffix(prefDisplayName, ".otf");
+            preferences.createPrefItemEnum("HUD Font", "Select the font style for the HUD text.", fontOptions, (key, value) -> {
+                badOptions.hudFont = value;
+                changeDebugDisplay(badOptions.hudFont);
+                switchFontSize(value);
+            }, prefDisplayName);
+            preferences.createPrefItemNumber("HUD Font Size", "Adjust the size of the HUD text.", value -> badOptions.hudFontSize = Std.int(value), null, badOptions.hudFontSize, 0, 999, 1, 0);
+
+            // Extras
+            preferences.items.createItem(120, 120 * preferences.items.length + 30, "Extras :", "bold", () -> false);
+            preferences.preferenceDesc.push("");
+
+            preferences.createPrefItemCheckbox("Enable Keybind Reminder", "If enabled, a keybind reminder will appear above notes when loaded, then fade away   .", value -> badOptions.remindKeys = value, badOptions.remindKeys);
+            preferences.createPrefItemCheckbox("Mute Miss Sounds", "If enabled, mutes the sound of the note being missed.", value -> badOptions.muteMiss = value, badOptions.muteMiss);
+            preferences.createPrefItemCheckbox("Custom Scroll Speed", "If enabled, the Scroll Speed Factor option will be used.", value -> badOptions.customScrollSpeed = value, badOptions.customScrollSpeed);
+            preferences.createPrefItemNumber("Scroll Speed Factor", "Adjust the speed of the incoming notes.", value -> badOptions.scrollSpeedFactor = value, value -> Std.string(badOptions.scrollSpeedFactor / 10), Std.int(badOptions.scrollSpeedFactor), 1, 9999, 1, 0);
+
+            var callback = preferences.items.getItem("Debug Display").onChangeCallback;
+            preferences.items.getItem("Debug Display").onChangeCallback = (key:String, value:DebugDisplayMode) -> {
+                callback(key, value);
+                changeDebugDisplay(badOptions.hudFont);
+            };
         }
     }
 
     function changeDebugDisplay(font:String) {
-        if (Preferences.debugDisplay && Assets.exists(Paths.font(font))) {
-            Main.fpsCounter.set_defaultTextFormat(new TextFormat(Assets.getPath(Paths.font(font))));
-            Main.memoryCounter.set_defaultTextFormat(new TextFormat(Assets.getPath(Paths.font(font))));
+        if (Preferences.debugDisplay != 0 && Assets.exists(Paths.font(font))) {
+            var debugDisplay = Main.debugDisplay;
+            var font = Assets.getPath(Paths.font(font));
+            debugDisplay.infoDisplay.defaultTextFormat = new TextFormat(font);
+            debugDisplay.fpsGraph.textDisplay.defaultTextFormat = new TextFormat(font);
+            debugDisplay.gcMemGraph.textDisplay.defaultTextFormat = new TextFormat(font);
+            debugDisplay.taskMemGraph.textDisplay.defaultTextFormat = new TextFormat(font);
         }
     }
 
     function switchFontSize(value:String) {
         switch (value) {
-            case "vcr.ttf": fontSize = 21;
-            case "VCR OSD Neue.ttf": fontSize = 21; // 16px
-            case "Minecraft.ttf": fontSize = 16;
-            case "Retro Gaming.ttf": fontSize = 18; // 11px
-            case "RobloxFont-Regular.ttf": fontSize = 28; // ?px
-            case "ModernDOS.ttf": fontSize = 21; // 16px
-            case "Euxoi.ttf": fontSize = 28;
-            default: fontSize = 24;
+            case "vcr.ttf": BadHUDOptions.fontSize = 21;
+            case "VCR OSD Neue.ttf": BadHUDOptions.fontSize = 21; // 16px
+            case "Minecraft.ttf": BadHUDOptions.fontSize = 16;
+            case "Retro Gaming.ttf": BadHUDOptions.fontSize = 18; // 11px
+            case "RobloxFont-Regular.ttf": BadHUDOptions.fontSize = 28; // ?px
+            case "ModernDOS.ttf": BadHUDOptions.fontSize = 21; // 16px
+            case "Euxoi.ttf": BadHUDOptions.fontSize = 28;
+            default: BadHUDOptions.fontSize = 24;
         }
     }
 }

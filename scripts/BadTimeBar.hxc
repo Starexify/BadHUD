@@ -65,7 +65,7 @@ class BadTimeBar extends ScriptedModule {
 
     function initTimeBar() {
         timeText = new FlxText();
-        var fontSize = badOptions.timeBarStyle == "timeBarPsychEngine" ? 32 : badHUDOptions.fontSize;
+        var fontSize = badOptions.timeBarStyle == "timeBarPsychEngine" ? 32 : BadHUDOptions.fontSize;
         timeText.setFormat(Paths.font(badOptions.hudFont), fontSize, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000);
         timeText.borderSize = badOptions.timeBarStyle == "timeBarPsychEngine" ? 2 : 1.75;
         timeText.scrollFactor.set();
