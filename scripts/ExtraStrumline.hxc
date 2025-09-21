@@ -4,7 +4,6 @@ import funkin.Preferences;
 import funkin.data.notestyle.NoteStyleRegistry;
 import funkin.graphics.FunkinSprite;
 import funkin.input.PreciseInputManager;
-import funkin.modding.base.ScriptedFlxSpriteGroup;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ScriptedModule;
 import funkin.play.PauseSubState;
@@ -140,6 +139,7 @@ class ExtraStrumline extends ScriptedModule {
         // Opponent Strumline Background
         playState.opponentStrumline.background.visible = false;
         if (badOptions.opponentNoteOpacity > 0 && playState.opponentStrumline.visible == true) {
+            if (FlxG.onMobile) playState.opponentStrumline.x -= 100;
             if (badOptions.middlescroll && !badOptions.oppMiddlescroll) {
                 oppLaneUnderlay = new FunkinSprite();
                 oppLaneUnderlay.x = playState.opponentStrumline.x;
@@ -153,7 +153,8 @@ class ExtraStrumline extends ScriptedModule {
             } else if (!badOptions.middlescroll) {
                 oppLaneUnderlay = new FunkinSprite();
                 oppLaneUnderlay.x = playState.opponentStrumline.x - Strumline.BACKGROUND_PAD;
-                oppLaneUnderlay.makeSolidColor(Std.int(playState.opponentStrumline.width + Strumline.BACKGROUND_PAD * 2), FlxG.height, Std.parseInt("0xFF" + (badOptions.strumBgColor == 0 ? "000000" : StringTools.hex(badOptions.strumBgColor))));
+                if (FlxG.onMobile) oppLaneUnderlay.x += Strumline.BACKGROUND_PAD * 2;
+                oppLaneUnderlay.makeSolidColor(Std.int(playState.opponentStrumline.width + Strumline.BACKGROUND_PAD * 2 - (FlxG.onMobile ? Strumline.BACKGROUND_PAD : 0)), FlxG.height, Std.parseInt("0xFF" + (badOptions.strumBgColor == 0 ? "000000" : StringTools.hex(badOptions.strumBgColor))));
                 oppLaneUnderlay.alpha = Preferences.strumlineBackgroundOpacity / 100;
                 oppLaneUnderlay.scrollFactor.set();
                 oppLaneUnderlay.zIndex = -1;
@@ -220,7 +221,7 @@ class ExtraStrumline extends ScriptedModule {
     // Gradient Underlay
     function createGradient(width:Int, height:Int, alphaStart:Float, alphaEnd:Float, isLeftToRight:Bool = true):FunkinSprite {
         var gradientSprite = new FunkinSprite();
-        if (PlatformUtil.detectHostPlatform() != HostPlatform.LINUX && !FlxG.onMobile) return gradientSprite;
+        if (PlatformUtil.detectHostPlatform() == HostPlatform.LINUX || FlxG.onMobile) return gradientSprite;
         var bitmap = new BitmapData(2, 1, true, 0x0);
 
         var leftAlpha = isLeftToRight ? alphaStart : alphaEnd;
