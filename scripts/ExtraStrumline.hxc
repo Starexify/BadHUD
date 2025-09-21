@@ -106,8 +106,8 @@ class ExtraStrumline extends ScriptedModule {
 
         // Replace Rating PopUps
         playState.remove(playState.comboPopUps);
-        ratingsPopUps = ScriptedFlxSpriteGroup.init("RatingPopUps");
-        ratingsPopUps.scriptSet("noteStyle", noteStyle);
+        ratingsPopUps = new RatingPopUps();
+        ratingsPopUps.noteStyle = noteStyle;
         ratingsPopUps.camera = playState.camHUD;
         ratingsPopUps.zIndex = 900;
         playState.add(ratingsPopUps);
@@ -263,10 +263,10 @@ class ExtraStrumline extends ScriptedModule {
         }
 
         if (badOptions.popUpType == "off" || ratingsPopUps == null || judgement == "miss") return;
-        var judgementSprite:FunkinSprite = ratingsPopUps.scriptCall("displayJudgement", [judgement]);
+        var judgementSprite:FunkinSprite = ratingsPopUps.displayJudgement(judgement);
 
         if (combo == null) combo = Highscore.tallies.combo;
-        if (combo >= 10) ratingsPopUps.scriptCall("displayCombo", [combo]);
+        if (combo >= 10) ratingsPopUps.displayCombo(combo);
 
         if (hitDiffText != null && settings == null && judgementSprite != null) hitDiffText.setPosition(judgementSprite.x + judgementSprite.width, judgementSprite.y + judgementSprite.height + hitDiffText.height);
     }

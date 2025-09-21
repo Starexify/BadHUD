@@ -9,7 +9,7 @@ import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.options.OptionsState;
-import funkin.ui.ScriptedMusicBeatSubState;
+import ui.options.HUDManagerState;
 import funkin.util.ReflectUtil;
 
 class PauseOptions extends ScriptedModule {
@@ -19,7 +19,7 @@ class PauseOptions extends ScriptedModule {
 
     var badWasPaused(get, set):Bool;
 
-    function set_badWasPaused(value:Bool):Bool { return ModStore.register("badWasPaused", value); }
+    function set_badWasPaused(value:Bool) { ModStore.stores.set("badWasPaused", value); }
 
     function get_badWasPaused():Bool { return ModStore.get("badWasPaused"); }
 
@@ -30,6 +30,7 @@ class PauseOptions extends ScriptedModule {
     override function onCreate(event:ScriptEvent) {
         PauseSubState.PAUSE_MENU_ENTRIES_STANDARD.insert(PauseSubState.PAUSE_MENU_ENTRIES_STANDARD.length - 1, { text: "Options", callback: openOptionsCallback });
         PauseSubState.PAUSE_MENU_ENTRIES_CHARTING.insert(PauseSubState.PAUSE_MENU_ENTRIES_CHARTING.length - 1, { text: "Options", callback: openOptionsCallback });
+        ModStore.register("badWasPaused", false);
     }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
@@ -37,11 +38,6 @@ class PauseOptions extends ScriptedModule {
         stateParams = PlayState.instance.lastParams;
         isChartingState = PlayState.instance.isChartingMode;
         currentSongId = PlayState.instance.currentSong.id;
-    }
-
-    override public function onPause(event:PauseScriptEvent) {
-        //if (!FlxG.onMobile) return;
-
     }
 
     override public function onSubStateOpenEnd(event:SubStateScriptEvent) {
@@ -68,7 +64,7 @@ class PauseOptions extends ScriptedModule {
         lastItems[1].y += 100; // clearSave
         lastItems[2].y += 110; // exit
         for (item in lastItems) options.items.remove(item);
-        var hudManager = options.items.createItem(0, (options.items.length - 3) * 100 + 20, "HUD MANAGER", "bold", () -> persistentEvent.targetState.openSubState(ScriptedMusicBeatSubState.init("ui.options.HUDManagerState")));
+        var hudManager = options.items.createItem(0, (options.items.length - 3) * 100 + 20, "HUD MANAGER", "bold", () -> persistentEvent.targetState.openSubState(new HUDManagerState()));
         hudManager.x = (FlxG.width - hudManager.width) / 2;
         for (item in lastItems) options.items.add(item);
 
@@ -80,16 +76,16 @@ class PauseOptions extends ScriptedModule {
     }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
-        var state:PolymodScriptClass = event.targetState._asc;
-        if (event.targetState != PlayState.instance && badWasPaused && ReflectUtil.field(ReflectUtil.field(state, "_c"), "name") != "HUDManagerState") {
-            if (isChartingState) {
-                FlxG.switchState(() -> new ChartEditorState({ targetSongId: currentSongId }));
-                badWasPaused = false;
-                isChartingState = false;
-            } else {
-                FlxG.switchState(() -> new PlayState(stateParams));
-                badWasPaused = false;
-            }
+        if (event.targetState == PlayState.instance) return;
+        if (!badWasPaused) return;
+        if (ReflectUtil.field(ReflectUtil.field(event.targetState._asc, "_c"), "name") == "HUDManagerState") return;
+        if (isChartingState) {
+            FlxG.switchState(() -> new ChartEditorState({ targetSongId: currentSongId }));
+            badWasPaused = false;
+            isChartingState = false;
+        } else {
+            FlxG.switchState(() -> new PlayState(stateParams));
+            badWasPaused = false;
         }
     }
 

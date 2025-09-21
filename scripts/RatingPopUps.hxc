@@ -1,19 +1,18 @@
+import flixel.FlxG;
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
 import funkin.Conductor;
 import funkin.graphics.FunkinSprite;
-import funkin.modding.base.ScriptedFlxSpriteGroup;
+import funkin.modding.base.ScriptedFlxTypedGroup;
 import funkin.play.notes.notestyle.NoteStyle;
 import funkin.save.Save;
 import funkin.util.EaseUtil;
 
-import flixel.FlxG;
-import flixel.tweens.FlxEase;
-import flixel.tweens.FlxTween;
-
-class RatingPopUps extends ScriptedFlxSpriteGroup {
+class RatingPopUps extends ScriptedFlxTypedGroup {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
     var activeTweens:Array<FlxTween> = [];
 
-    var noteStyle:NoteStyle;
+    public var noteStyle:NoteStyle;
 
     var tempJudgementSprite:FunkinSprite;
     var tempComboSprites:Array<FunkinSprite> = [];

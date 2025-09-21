@@ -1,5 +1,4 @@
 import funkin.modding.events.ScriptEvent;
-import funkin.modding.module.ModuleHandler;
 import funkin.modding.module.ScriptedModule;
 import funkin.play.PauseSubState;
 import funkin.play.PlayState;
@@ -20,10 +19,6 @@ class CustomScrollSpeed extends ScriptedModule {
 
     var speedText:FlxText;
 
-    function new() {
-        super("CustomScrollSpeed");
-    }
-
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (!badOptions.customScrollSpeed) return;
         if (playState == null) return;
@@ -42,7 +37,9 @@ class CustomScrollSpeed extends ScriptedModule {
         if (event.targetState is PauseSubState) {
             // Create Scroll Speed Text Element
             var pauseState:PauseSubState = event.targetState;
-            speedText = new FlxText(24, pauseState.offsetText.y - 40, FlxG.width - 40, "Current Scroll Speed: " + Math.round(PlayState.instance.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + badOptions.scrollSpeedFactor / 10);
+            var xOffset = FlxG.onMobile ? 10 : 24;
+            var yOffset = FlxG.onMobile ? 20 : pauseState.offsetText.y - 40;
+            speedText = new FlxText(xOffset, yOffset, FlxG.width - 40, "Current Scroll Speed: " + Math.round(PlayState.instance.playerStrumline.scrollSpeed * 10) / 10 + "\nSet Scroll Speed: " + badOptions.scrollSpeedFactor / 10);
             speedText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, "right");
             speedText.scrollFactor.set(0, 0);
             speedText.alpha = 0;
