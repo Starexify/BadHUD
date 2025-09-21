@@ -221,7 +221,7 @@ class ExtraStrumline extends ScriptedModule {
     // Gradient Underlay
     function createGradient(width:Int, height:Int, alphaStart:Float, alphaEnd:Float, isLeftToRight:Bool = true):FunkinSprite {
         var gradientSprite = new FunkinSprite();
-        if (PlatformUtil.detectHostPlatform() == HostPlatform.LINUX || FlxG.onMobile) return gradientSprite;
+        if (PlatformUtil.detectHostPlatform() == HostPlatform.LINUX || FlxG.onMobile) gradientSprite.visible = false;
         var bitmap = new BitmapData(2, 1, true, 0x0);
 
         var leftAlpha = isLeftToRight ? alphaStart : alphaEnd;
