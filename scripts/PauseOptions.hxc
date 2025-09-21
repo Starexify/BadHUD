@@ -9,8 +9,8 @@ import funkin.play.PauseSubState;
 import funkin.play.PlayState;
 import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.options.OptionsState;
-import ui.options.HUDManagerState;
 import funkin.util.ReflectUtil;
+import ui.options.HUDManagerState;
 
 class PauseOptions extends ScriptedModule {
     var isChartingState:Bool = false;

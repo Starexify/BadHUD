@@ -37,6 +37,7 @@ class ExtraStrumline extends ScriptedModule {
     var playState(get, never):PlayState;
     function get_playState():PlayState { return PlayState.instance; }
 
+    var underlayWidth:Float;
     var laneUnderlay:FunkinSprite;
     var oppLaneUnderlay:FunkinSprite;
     var leftGradient:FunkinSprite;
@@ -82,20 +83,22 @@ class ExtraStrumline extends ScriptedModule {
         // Note Underlay
         if (Preferences.strumlineBackgroundOpacity > 0) {
             playState.playerStrumline.background.visible = false;
-            laneUnderlay = new FunkinSprite(playState.playerStrumline.x - Strumline.BACKGROUND_PAD).makeSolidColor(Std.int(playState.playerStrumline.width + Strumline.BACKGROUND_PAD * 2), FlxG.height, Std.parseInt("0xFF" + (badOptions.strumBgColor == 0 ? "000000" : StringTools.hex(badOptions.strumBgColor))));
+
+            underlayWidth = playState.playerStrumline.width + Strumline.BACKGROUND_PAD * 2;
+            if (playState.playerStrumline.inArrowContorlSchemeMode && playState.playerStrumline.isPlayer) underlayWidth *= 1.05;
+
+            laneUnderlay = new FunkinSprite(playState.playerStrumline.x - Strumline.BACKGROUND_PAD).makeSolidColor(Std.int(underlayWidth), FlxG.height, Std.parseInt("0xFF" + (badOptions.strumBgColor == 0 ? "000000" : StringTools.hex(badOptions.strumBgColor))));
+            if (playState.playerStrumline.inArrowContorlSchemeMode && playState.playerStrumline.isPlayer) laneUnderlay.x -= 85;
             laneUnderlay.alpha = Preferences.strumlineBackgroundOpacity / 100;
-            if (PlatformUtil.detectHostPlatform() != HostPlatform.LINUX) {
-                var fadeRegionWidth = Std.int(playState.playerStrumline.width * 0.04);
-                leftGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, Preferences.strumlineBackgroundOpacity / 100, true);
-                leftGradient.x = laneUnderlay.x - fadeRegionWidth;
+            // Add gradients
+            var fadeRegionWidth = Std.int(playState.playerStrumline.width * 0.04);
+            leftGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, Preferences.strumlineBackgroundOpacity / 100, true);
+            leftGradient.x = laneUnderlay.x - fadeRegionWidth;
 
-                rightGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, Preferences.strumlineBackgroundOpacity / 100, false);
-                rightGradient.x = laneUnderlay.x + laneUnderlay.width;
+            rightGradient = createGradient(fadeRegionWidth, FlxG.height * 2, 0, Preferences.strumlineBackgroundOpacity / 100, false);
+            rightGradient.x = laneUnderlay.x + laneUnderlay.width;
 
-                underlaySprites = [leftGradient, rightGradient];
-            }
-
-            underlaySprites.push(laneUnderlay);
+            underlaySprites = [laneUnderlay, leftGradient, rightGradient];
             for (sprite in underlaySprites) {
                 sprite.scrollFactor.set();
                 sprite.zIndex = -1;
@@ -217,6 +220,7 @@ class ExtraStrumline extends ScriptedModule {
     // Gradient Underlay
     function createGradient(width:Int, height:Int, alphaStart:Float, alphaEnd:Float, isLeftToRight:Bool = true):FunkinSprite {
         var gradientSprite = new FunkinSprite();
+        if (PlatformUtil.detectHostPlatform() != HostPlatform.LINUX && !FlxG.onMobile) return gradientSprite;
         var bitmap = new BitmapData(2, 1, true, 0x0);
 
         var leftAlpha = isLeftToRight ? alphaStart : alphaEnd;

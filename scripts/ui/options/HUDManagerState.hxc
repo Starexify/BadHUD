@@ -1531,8 +1531,6 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         welcomeMusic = FunkinSound.load(Paths.music("chartEditorLoop/chartEditorLoop"), true, true);
         welcomeMusic.play(false, FlxG.random.int(0, Std.int(welcomeMusic.length / 2)));
     }
-    // TouchUtil
-
 
     //  RotationUtil
     function checkScaleBounds(sprite:FlxSprite, newScaleX:Float, newScaleY:Float, centerX:Float, centerY:Float):Bool {
