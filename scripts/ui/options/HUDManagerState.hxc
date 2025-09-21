@@ -14,18 +14,24 @@ import funkin.ui.FullScreenScaleMode;
 import funkin.ui.ScriptedMusicBeatSubState;
 import funkin.ui.debug.charting.util.ChartEditorDropdowns;
 import funkin.util.Constants;
+import funkin.util.HostPlatform;
+import funkin.util.PlatformUtil;
+import funkin.util.TouchUtil;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.display.FlxPieDialShape;
 import flixel.addons.display.FlxRadialGauge;
+import flixel.input.touch.FlxTouch;
 import flixel.math.FlxAngle;
+import flixel.math.FlxPoint;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
 import flixel.ui.FlxBar;
 import flixel.ui.FlxBarFillDirection;
 import flixel.util.FlxColor;
 import flixel.util.FlxSpriteUtil;
+import flixel.util.helpers.FlxBounds;
 
 import haxe.ui.RuntimeComponentBuilder;
 import haxe.ui.components.Button;
@@ -58,6 +64,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var badOptions:Null<BadSaveData> = Save.instance.modOptions.get("badOptions");
 
     var welcomeMusic:FunkinSound = new FunkinSound();
+    var prevPersistentUpdate:Bool;
     var spriteSettingsText:FlxText;
     var highlightOutline:FunkinSprite;
     var highlightInitialized:Bool = false;
@@ -88,20 +95,25 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
     var windowManager = new WindowManager();
     var toolboxWindow:Window;
-    var isOverToolbox:Bool = false;
-
     var contextMenu:Menu;
+    var isOverToolbox:Bool = false;
     var isSearching:Bool = false;
     var openedDialog:Bool = false;
 
+    var hoveredDraggable:DraggableSprite = null;
     var prevAlpha:Float;
-    var holdDelayTimer:Float = 0;
     var isHolding:Bool = false;
-    var prevPersistentUpdate:Bool;
-
     var pressArray:Array<Bool> = [];
     var holdArray:Array<Bool> = [];
     var releaseArray:Array<Bool> = [];
+    var holdDelayTimer:Float = 0;
+    var lastTapTime:Float = 0;
+    var doubleTapThreshold:Float = 0.25;
+    var initialTouchDistance:Float = 0;
+    var initialTouchAngle:Float = 0;
+    var initialSpriteScale:FlxPoint;
+    var initialSpriteAngle:Float = 0;
+    var isPinching:Bool = false;
 
     var isMobile(get, never):Bool;
     function get_isMobile():Bool { return FlxG.onMobile; }
@@ -138,8 +150,11 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (Preferences.downscroll) {
             spriteSettingsText.y = 10;
             if (Preferences.debugDisplay != 0) Main.debugDisplay.visible = false;
-        } else {
-            spriteSettingsText.y = FlxG.height * 0.95 - spriteSettingsText.height;
+        } else spriteSettingsText.y = FlxG.height * 0.95 - spriteSettingsText.height;
+
+        if (isMobile) {
+            spriteSettingsText.y = FlxG.height * 0.95 - spriteSettingsText.height - 15;
+            spriteSettingsText.x = 20;
         }
         add(spriteSettingsText);
 
@@ -148,10 +163,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         if (isMobile) addBackButton(FlxG.width - 230, FlxG.height - 200, FlxColor.WHITE, () -> close());
     }
 
-    var hoveredDraggable = null;
     override function update(elapsed:Float) {
         var mouseX = FlxG.mouse.x;
         var mouseY = FlxG.mouse.y;
+
         hoveredDraggable = null;
         var toolboxActive = !isOverToolbox || toolboxWindow.hidden;
         pressArray = [controls.UI_LEFT_P, controls.UI_DOWN_P, controls.UI_UP_P, controls.UI_RIGHT_P];
@@ -182,7 +197,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
             }
         }
 
-        if (hoveredDraggable != null && FlxG.mouse.justPressed) {
+        if (hoveredDraggable != null && FlxG.mouse.justPressed && !isPinching) {
             // Reset selection status for all sprites
             for (draggable in draggableSprites) {
                 draggable.isSelected = (draggable == hoveredDraggable);
@@ -214,28 +229,34 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 hoveredDraggable.dragOffsetY = mouseY - hoveredDraggable.sprite.y;
                 prevAlpha = hoveredDraggable.sprite.alpha;
             }
-        } else if (hoveredDraggable != null && hoveredDraggable.isSelected && FlxG.mouse.justPressedRight)
-            showContextMenu(mouseX, mouseY, hoveredDraggable);
+        } else if (hoveredDraggable != null && hoveredDraggable.isSelected) {
+            if (FlxG.mouse.justPressedRight) showContextMenu(mouseX, mouseY, hoveredDraggable);
+            if (TouchUtil.justReleased) {
+                var now:Float = FlxG.game.ticks / 1000;
+                if (now - lastTapTime <= doubleTapThreshold) {
+                    var touchX = TouchUtil.touch.justPressedPosition.x;
+                    var touchY = TouchUtil.touch.justPressedPosition.y;
+                    showContextMenu(touchX, touchY, hoveredDraggable);
+                    lastTapTime = 0; // reset so triple tap doesn't trigger
+                } else {
+                    lastTapTime = now;
+                }
+            }
+        }
 
-        // Handling the sprite movement
+        // Handling sprite movement
         for (draggable in draggableSprites) {
             if (!isSearching && !openedDialog) {
-                if (draggable.isDragging) handleDragging(draggable, mouseX, mouseY);
-                else if (draggable.isSelected) handleSelected(draggable);
-
+                    if (draggable.isDragging && !isPinching) handleDragging(draggable, mouseX, mouseY);
+                    else if (draggable.isSelected) {
+                        if (!FlxG.onMobile) handleKeyboardMovement(draggable);
+                        else handleTouchGestures(draggable);
+                    }
                 if (draggable.isSelected || draggable.isDragging) updateHighlight(draggable);
             }
         }
 
-        if (!openedDialog) {
-            handleNotePress();
-            if (!isMobile) handleCursor(hoveredDraggable);
-        }
-
-        if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
-
-        if (FlxG.keys.justPressed.ESCAPE && !isSearching && !openedDialog) close();
-
+        handleInput();
         super.update(elapsed);
     }
 
@@ -257,17 +278,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
                 playerStrumline.strumlineScale.set(playerStrumlineScale, playerStrumlineScale);
                 playerStrumline.setNoteSpacing(playerNoteSpacing);
                 // Who thought it'd be a good idea to make the iterator nullable?
-                for (strum in playerStrumline) {
-                    strum.width *= 2;
-                }
+                for (strum in playerStrumline) strum.width *= 2;
 
                 playerStrumline.x = (FlxG.width - playerStrumline.width) / 2 + Constants.STRUMLINE_X_OFFSET;
                 playerStrumline.y = (FlxG.height - playerStrumline.height) * 0.95 - Constants.STRUMLINE_Y_OFFSET;
-                if (noteStyle != "pixel") {
-
-                } else {
-                    playerStrumline.y -= 10;
-                }
+                if (noteStyle != "pixel" && PlatformUtil.detectHostPlatform() == HostPlatform.ANDROID) playerStrumline.y += 10;
+                else playerStrumline.y -= 10;
             }
         }
         playerStrumline.background.visible = false;
@@ -545,27 +561,27 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var tabView:TabView = new TabView();
         tabView.percentWidth = 100;
 
-        var keybindsTab:Box = new Box();
-        keybindsTab.text = "Keybinds";
-        keybindsTab.percentWidth = 100;
+        var controlsTab:Box = new Box();
+        controlsTab.text = "Control";
+        controlsTab.percentWidth = 100;
 
-        var keybindsTable:TableView = new TableView();
-        keybindsTable.percentWidth = 100;
+        var controlsTable:TableView = new TableView();
+        controlsTable.percentWidth = 100;
 
         // Add Columns
-        var actionColumn = keybindsTable.addColumn("Action");
+        var actionColumn = controlsTable.addColumn("Action");
         actionColumn.percentWidth = 50;
         actionColumn.id = "action";
-        var keybindColumn = keybindsTable.addColumn("Keybind");
+        var keybindColumn = controlsTable.addColumn("Control");
         keybindColumn.percentWidth = 50;
-        keybindColumn.id = "keybind";
+        keybindColumn.id = "control";
 
-        var header = keybindsTable.header;
+        var header = controlsTable.header;
         if (header != null) header.percentWidth = 100;
 
-        keybindsTable.value = populateKeybindsTable(keybindsTable);
+        controlsTable.value = populateControlsTable(controlsTable);
 
-        keybindsTab.addComponent(keybindsTable);
+        controlsTab.addComponent(controlsTable);
 
         var visualsTab:Box = new Box();
         visualsTab.text = "Visual Settings";
@@ -648,8 +664,15 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var strumlineHeight = createNumberBox("Strumline Height", "Sets the y position/height of the strumlines.", "px", 0, 1, 0, Constants.STRUMLINE_Y_OFFSET, value -> {
             badOptions.strumHeight = value;
             Constants.STRUMLINE_Y_OFFSET = badOptions.strumHeight;
-            if (badOptions.oppMiddlescroll && badOptions.opponentNoteOpacity > 0) opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
-            playerStrumline.y = Preferences.downscroll ? FlxG.height - playerStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
+            if (!isMobile) {
+                if (badOptions.oppMiddlescroll && badOptions.opponentNoteOpacity > 0) opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
+                playerStrumline.y = Preferences.downscroll ? FlxG.height - playerStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
+            } else {
+                if (badOptions.opponentNoteOpacity > 0) opponentStrumline.y = Constants.STRUMLINE_Y_OFFSET * 0.3;
+                playerStrumline.y = (FlxG.height - playerStrumline.height) * 0.95 - Constants.STRUMLINE_Y_OFFSET;
+                if (noteStyle != "pixel" && PlatformUtil.detectHostPlatform() == HostPlatform.ANDROID) playerStrumline.y += 10;
+                else playerStrumline.y -= 10;
+            }
         });
 
         checkboxContainer.addComponent(healthBarBox);
@@ -659,7 +682,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         checkboxContainer.addComponent(restBarBox);
         checkboxContainer.addComponent(kpsCounterBox);
         checkboxContainer.addComponent(hitDiffBox);
-        if (badOptions.middlescroll && badOptions.opponentNoteOpacity != 0) checkboxContainer.addComponent(splitOpponentNotesBox);
+        if (badOptions.middlescroll && badOptions.opponentNoteOpacity != 0 && !isMobile) checkboxContainer.addComponent(splitOpponentNotesBox);
 
         var colorFrame:Frame = new Frame();
         colorFrame.text = "Strumline Background Color";
@@ -678,7 +701,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         settingsTab.addComponent(strumlineHeight);
         settingsTab.addComponent(colorFrame);
 
-        tabView.addComponent(keybindsTab);
+        tabView.addComponent(controlsTab);
         tabView.addComponent(visualsTab);
         tabView.addComponent(settingsTab);
         toolboxWindow.addComponent(tabView);
@@ -971,6 +994,17 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     // Handlers
+    function handleInput() {
+        if (!openedDialog) {
+            handleNotePress();
+            if (!isMobile) handleCursor();
+        }
+        if (!isMobile) {
+            if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
+            if (FlxG.keys.justPressed.ESCAPE && !isSearching && !openedDialog) close();
+        }
+    }
+
     function handleDragging(draggable:DraggableSprite, mouseX:Float, mouseY:Float) {
         if (FlxG.mouse.pressed) {
             if (FlxG.keys.pressed.ALT) {
@@ -1002,7 +1036,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         }
     }
 
-    function handleSelected(draggable:DraggableSprite) {
+    function handleKeyboardMovement(draggable:DraggableSprite) {
         var holdDelayThreshold:Float = 0.25;
         var moveSpeed:Float = 10;
         if (FlxG.keys.pressed.CONTROL) moveSpeed = 0.5;
@@ -1089,6 +1123,101 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         updateText(draggable);
     }
 
+    function handleTouchGestures(draggable:DraggableSprite) {
+        // Get all active touches
+        var activeTouches:Array<FlxTouch> = [];
+        for (touch in FlxG.touches.list) {
+            if (touch != null && touch.pressed) activeTouches.push(touch);
+        }
+
+        // Check if we have exactly 2 touches for gestures
+        if (activeTouches.length == 2) {
+            var touch1 = activeTouches[0];
+            var touch2 = activeTouches[1];
+
+            // Calculate distance and angle between the two touches
+            var dx = touch2.x - touch1.x;
+            var dy = touch2.y - touch1.y;
+            var currentDistance = Math.sqrt(dx * dx + dy * dy);
+            var currentAngle = FlxAngle.degreesFromOrigin(dx, dy);
+
+            if (!isPinching) {
+                // Start pinch gesture
+                isPinching = true;
+                initialTouchDistance = currentDistance;
+                initialTouchAngle = currentAngle;
+                initialSpriteScale = FlxPoint.get(draggable.sprite.scale.x, draggable.sprite.scale.y);
+                initialSpriteAngle = draggable.sprite.angle;
+            } else {
+                // Continue pinch gesture - calculate scale ratio and angle change
+                if (initialTouchDistance > 0) {
+                    var scaleRatio = currentDistance / initialTouchDistance;
+                    var angleChange = currentAngle - initialTouchAngle;
+
+                    // Calculate new scale values with precision rounding
+                    var newScaleX = initialSpriteScale.x * scaleRatio;
+                    var newScaleY = initialSpriteScale.y * scaleRatio;
+
+                    // Round scale to 2 decimal places (0.xx)
+                    newScaleX = Math.round(newScaleX * 100) / 100;
+                    newScaleY = Math.round(newScaleY * 100) / 100;
+
+                    // Apply scale limits
+                    var minScale = 0.1;
+                    var maxScaleX = FlxG.width / draggable.sprite.frameWidth;
+                    var maxScaleY = FlxG.height / draggable.sprite.frameHeight;
+
+                    newScaleX = Math.max(minScale, Math.min(maxScaleX, newScaleX));
+                    newScaleY = Math.max(minScale, Math.min(maxScaleY, newScaleY));
+
+                    // Calculate new rotation with precision rounding
+                    var newAngle = (initialSpriteAngle + angleChange) % 360;
+                    if (newAngle < 0) newAngle += 360;
+
+                    // Round angle to 1 decimal place (0.x)
+                    newAngle = Math.round(newAngle * 10) / 10;
+
+                    // Store center position before scaling/rotating
+                    var centerX = draggable.sprite.x + draggable.sprite.width / 2;
+                    var centerY = draggable.sprite.y + draggable.sprite.height / 2;
+
+                    // Apply the new scale and rotation
+                    draggable.sprite.scale.set(newScaleX, newScaleY);
+                    draggable.sprite.angle = newAngle;
+                    draggable.sprite.updateHitbox();
+
+                    // Reposition to keep sprite centered
+                    draggable.sprite.setPosition(centerX - draggable.sprite.width / 2,
+                    centerY - draggable.sprite.height / 2);
+
+                    // Update linked sprites if any
+                    if (draggable.linkedSprites != null) {
+                        for (linked in draggable.linkedSprites) {
+                            linked.sprite.scale = draggable.sprite.scale;
+                            linked.sprite.angle = draggable.sprite.angle;
+                            linked.sprite.updateHitbox();
+                            syncSpriteWithTarget(linked, draggable);
+                        }
+                    }
+                }
+            }
+        } else {
+            // Remove pinch gesture if we don't have 2 touches anymore
+            if (isPinching) {
+                isPinching = false;
+                saveSpriteSettings(draggable);
+
+                // Clean up
+                if (initialSpriteScale != null) {
+                    initialSpriteScale.put();
+                    initialSpriteScale = null;
+                }
+            }
+        }
+
+        updateText(draggable);
+    }
+
     function handleNotePress() {
         if (playerStrumline == null || isSearching) return;
         var notePressArray:Array<Bool> = [controls.NOTE_LEFT_P, controls.NOTE_DOWN_P, controls.NOTE_UP_P, controls.NOTE_RIGHT_P];
@@ -1101,7 +1230,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         }
     }
 
-    function handleCursor(hoveredDraggable) {
+    function handleCursor() {
         // Mouse sounds
         if (Cursor.cursorMode != CursorMode.Default || isOverToolbox) {
             if (FlxG.mouse.justPressed || FlxG.mouse.justPressedRight) FunkinSound.playOnce(Paths.sound("chartingSounds/ClickDown"));
@@ -1340,20 +1469,32 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         } else { if (defaultPosition != null) defaultPosition(sprite); }
     }
 
-    function populateKeybindsTable(tableView:TableView):Array<KeybindEntry> {
+    function populateControlsTable(tableView:TableView):Array<ControlEntry> {
         tableView.dataSource.clear();
-        var keybinds:Array<KeybindEntry> = [
-            {action: "Show Guide", keybind: "F1"},
-            {action: "Return to Options", keybind: "Esc/F5"},
-            {action: "Open Sprite Context Menu", keybind: "Right Mouse Button"},
-            {action: "Drag / Select Sprite", keybind: "Left Mouse Button"},
-            {action: "Rotate Sprite", keybind: "Alt + Right Mouse Button"},
-            {action: "Precise Sprite Movement", keybind: "W/A/S/D (+ 10) \nCtrl + W/A/S/D (+ 0.5)\nShift + W/A/S/D (+ 0.25)"},
-            {action: "Precise Sprite Scaling", keybind: "Mouse Wheel (-/+ 0.1) \nCtrl + Mouse Wheel (-/+ 0.1 y-axis)\nShift + W/A/S/D (-/+ 0.1 x-axis)"},
-        ];
+        var entries:Array<ControlEntry> = [];
+        if (isMobile) {
+            entries = [
+                {action: "Show Guide", control: ""},
+                {action: "Open Sprite Context Menu", control: "Double Tap"},
+                {action: "Rotate Sprite", control: "Pinch In/Out"},
+                {action: "Scale Sprite", control: "Two-Finger Twist"},
+                {action: "Scale & Rotate Combined", control: "Pinch + Twist"},
+                {action: "Move Sprite", control: "Single Finger Drag"}
+            ];
+        } else {
+            entries = [
+                {action: "Show Guide", control: "F1"},
+                {action: "Return to Options", control: "Esc/F5"},
+                {action: "Open Sprite Context Menu", control: "Right Mouse Button"},
+                {action: "Drag / Select Sprite", control: "Left Mouse Button"},
+                {action: "Rotate Sprite", control: "Alt + Right Mouse Button"},
+                {action: "Precise Sprite Movement", control: "W/A/S/D (+ 10) \nCtrl + W/A/S/D (+ 0.5)\nShift + W/A/S/D (+ 0.25)"},
+                {action: "Precise Sprite Scaling", control: "Mouse Wheel (-/+ 0.1) \nCtrl + Mouse Wheel (-/+ 0.1 y-axis)\nShift + W/A/S/D (-/+ 0.1 x-axis)"},
+            ];
+        }
 
-        for (keybind in keybinds) tableView.dataSource.add(keybind);
-        return keybinds;
+        for (keybind in entries) tableView.dataSource.add(keybind);
+        return entries;
     }
 
     function placeOpponentNotes(strumline:Strumline) {
@@ -1390,9 +1531,11 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         welcomeMusic = FunkinSound.load(Paths.music("chartEditorLoop/chartEditorLoop"), true, true);
         welcomeMusic.play(false, FlxG.random.int(0, Std.int(welcomeMusic.length / 2)));
     }
+    // TouchUtil
+
+
     //  RotationUtil
     function checkScaleBounds(sprite:FlxSprite, newScaleX:Float, newScaleY:Float, centerX:Float, centerY:Float):Bool {
-        // Store original values
         var origX = sprite.x;
         var origY = sprite.y;
         var origScaleX = sprite.scale.x;
@@ -1406,8 +1549,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         // Check if sprite would be out of bounds with new scale
         var corners = getRotatedCorners(sprite);
         var bounds = getMinMaxBounds(corners);
-        var outOfBounds = (bounds.minX < 0 || bounds.minY < 0 ||
-        bounds.maxX > FlxG.width || bounds.maxY > FlxG.height);
+        var outOfBounds = (bounds.x.min < 0 || bounds.y.min < 0 || bounds.x.max > FlxG.width || bounds.y.max > FlxG.height);
 
         // Restore original values
         sprite.scale.set(origScaleX, origScaleY);
@@ -1417,19 +1559,18 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return !outOfBounds;
     }
 
-    function calculateDragPosition(draggable:DraggableSprite, mouseX:Float, mouseY:Float) {
+    function calculateDragPosition(draggable:DraggableSprite, mouseX:Float, mouseY:Float):FlxPoint {
         var newX = mouseX - draggable.dragOffsetX;
         var newY = mouseY - draggable.dragOffsetY;
 
         return applyBoundaryConstraints(newX, newY, draggable.sprite);
     }
 
-    function applyBoundaryConstraints(newX:Float, newY:Float, sprite:FlxSprite):{x:Float, y:Float} {
-        // Fast path for unrotated sprites
-        if (sprite.angle % 360 == 0) return {
-            x: Math.max(0, Math.min(FlxG.width - sprite.width, newX)),
-            y: Math.max(0, Math.min(FlxG.height - sprite.height, newY))
-        };
+    function applyBoundaryConstraints(newX:Float, newY:Float, sprite:FlxSprite):FlxPoint {
+        if (sprite.angle % 360 == 0) return FlxPoint.get(
+            Math.max(0, Math.min(FlxG.width - sprite.width, newX)),
+            Math.max(0, Math.min(FlxG.height - sprite.height, newY))
+        );
 
         // Only calculate corners for rotated sprites
         var origX = sprite.x;
@@ -1442,12 +1583,12 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var bounds = getMinMaxBounds(corners);
 
         // Apply constraints only if needed
-        if (bounds.minX < 0) newX += (0 - bounds.minX);
-        if (bounds.minY < 0) newY += (0 - bounds.minY);
-        if (bounds.maxX > FlxG.width) newX -= (bounds.maxX - FlxG.width);
-        if (bounds.maxY > FlxG.height) newY -= (bounds.maxY - FlxG.height);
+        if (bounds.x.min < 0) newX += (0 - bounds.x.min);
+        if (bounds.y.min < 0) newY += (0 - bounds.y.min);
+        if (bounds.x.max > FlxG.width) newX -= (bounds.x.max - FlxG.width);
+        if (bounds.y.max > FlxG.height) newY -= (bounds.y.max - FlxG.height);
 
-        return {x: newX, y: newY};
+        return FlxPoint.get(newX, newY);
     }
 
     function isPointInsideRotatedSprite(pointX:Float, pointY:Float, sprite:FlxSprite):Bool {
@@ -1463,7 +1604,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return isPointInPolygon(pointX, pointY, corners);
     }
 
-    function isPointInPolygon(pointX:Float, pointY:Float, vertices:Array<{x:Float, y:Float}>):Bool {
+    function isPointInPolygon(pointX:Float, pointY:Float, vertices:Array<FlxPoint>):Bool {
         var inside = false;
         var n = vertices.length;
         var j = n - 1;
@@ -1481,11 +1622,10 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         return inside;
     }
 
-    function getRotatedCorners(sprite:FlxSprite):Array<{x:Float, y:Float}> {
-        var centerX = sprite.x + sprite.width / 2;
-        var centerY = sprite.y + sprite.height / 2;
-        var halfWidth = sprite.width / 2;
-        var halfHeight = sprite.height / 2;
+    function getRotatedCorners(sprite:FlxSprite):Array<FlxPoint> {
+        var center = sprite.getMidpoint();
+        var halfWidth = sprite.width * 0.5;
+        var halfHeight = sprite.height * 0.5;
 
         // Cache these calculations
         var angleRad = FlxAngle.asRadians(sprite.angle);
@@ -1493,28 +1633,30 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         var sin = Math.sin(angleRad);
 
         // Pre-allocate array with fixed size for better memory management
-        var corners:Array<{x:Float, y:Float}> = [
-            { x: (-halfWidth * cos) - (-halfHeight * sin) + centerX, y: (-halfWidth * sin) + (-halfHeight * cos) + centerY },
-            { x: (halfWidth * cos) - (-halfHeight * sin) + centerX, y: (halfWidth * sin) + (-halfHeight * cos) + centerY },
-            { x: (halfWidth * cos) - (halfHeight * sin) + centerX, y: (halfWidth * sin) + (halfHeight * cos) + centerY },
-            { x: (-halfWidth * cos) - (halfHeight * sin) + centerX, y: (-halfWidth * sin) + (halfHeight * cos) + centerY }
+        var corners:Array<FlxPoint> = [
+            FlxPoint.get(center.x + (-halfWidth * cos - -halfHeight * sin), center.y + (-halfWidth * sin + -halfHeight * cos)),
+            FlxPoint.get(center.x + (halfWidth * cos - -halfHeight * sin), center.y + (halfWidth * sin + -halfHeight * cos)),
+            FlxPoint.get(center.x + (halfWidth * cos - halfHeight * sin), center.y + (halfWidth * sin + halfHeight * cos)),
+            FlxPoint.get(center.x + (-halfWidth * cos - halfHeight * sin), center.y + (-halfWidth * sin + halfHeight * cos))
         ];
 
+        center.put();
         return corners;
     }
 
-    function getMinMaxBounds(corners:Array<{x:Float, y:Float}>):{minX:Float, minY:Float, maxX:Float, maxY:Float} {
-        var minX = Math.POSITIVE_INFINITY, minY = Math.POSITIVE_INFINITY;
-        var maxX = Math.NEGATIVE_INFINITY, maxY = Math.NEGATIVE_INFINITY;
+    function getMinMaxBounds(corners:Array<FlxPoint>):{x:FlxBounds<Float>, y:FlxBounds<Float>} {
+        var xBounds = new FlxBounds(Math.POSITIVE_INFINITY, Math.NEGATIVE_INFINITY);
+        var yBounds = new FlxBounds(Math.POSITIVE_INFINITY, Math.NEGATIVE_INFINITY);
 
         for (corner in corners) {
-            minX = Math.min(minX, corner.x);
-            minY = Math.min(minY, corner.y);
-            maxX = Math.max(maxX, corner.x);
-            maxY = Math.max(maxY, corner.y);
+            if (corner.x < xBounds.min) xBounds.min = corner.x;
+            if (corner.x > xBounds.max) xBounds.max = corner.x;
+
+            if (corner.y < yBounds.min) yBounds.min = corner.y;
+            if (corner.y > yBounds.max) yBounds.max = corner.y;
         }
 
-        return {minX: minX, minY: minY, maxX: maxX, maxY: maxY};
+        return {x: xBounds, y: yBounds};
     }
 
     // Cleanup
@@ -1539,6 +1681,5 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
 typedef DraggableSprite = {sprite:FlxSprite, isDragging:Bool, isSelected:Bool, dragOffsetX:Float, dragOffsetY:Float, spriteType:String, linkedSprites:Array<LinkedSprite>}
 typedef LinkedSprite = {sprite:FlxSprite, index:Int}
-typedef KeybindEntry = {action:String, keybind:String}
-typedef TouchEntry = {action:String, touchCtrl:String}
+typedef ControlEntry = {action:String, control:String}
 typedef BasicEntry = {id:String, text:String}

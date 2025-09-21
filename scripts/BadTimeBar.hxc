@@ -24,15 +24,9 @@ class BadTimeBar extends ScriptedModule {
     var timeText:FlxText;
 
     var timeBarSprites:Array<FlxSprite> = [];
-    var badHUDOptions;
 
     var playState(get, never):PlayState;
     function get_playState():PlayState { return PlayState.instance; }
-
-    function new() {
-        super("BadTimeBar");
-        badHUDOptions = new BadHUDOptions();
-    }
 
     override function onSongLoaded(event:SongLoadScriptEvent) {
         if (!badOptions.timeBar) return;
