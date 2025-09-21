@@ -235,7 +235,7 @@ class BadHealthBar extends ScriptedModule {
     }
 
     function updateIconsPosition() {
-        if (!badOptions.healthBar) return;
+        if (!badOptions.healthBar || healthBar == null) return;
 
         // Rotate and move icons according to the Modified Bar !
         if (badOptions.healthIconPosition != "ends" && badOptions.healthIconPosition != "centered") {

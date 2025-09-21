@@ -1,3 +1,4 @@
+import flixel.FlxG;
 import funkin.modding.events.ScriptEvent;
 import funkin.modding.module.ScriptedModule;
 import funkin.Preferences;
@@ -88,7 +89,7 @@ class BadHUDOptions extends ScriptedModule {
             switchFontSize(badOptions.hudFont);
             Save.instance.flush();
 
-            preferences.createPrefItemCheckbox("Middlescroll", "If enabled, player notes will be centerd on the screen, and opponent's notes will be split.", value -> badOptions.middlescroll = value, badOptions.middlescroll);
+            if (!FlxG.onMobile) preferences.createPrefItemCheckbox("Middlescroll", "If enabled, player notes will be centerd on the screen, and opponent's notes will be split.", value -> badOptions.middlescroll = value, badOptions.middlescroll);
             preferences.createPrefItemPercentage("Opponent Notes Opacity", "Adjust the opacity of the opponent's notes.", value -> badOptions.opponentNoteOpacity = value, badOptions.opponentNoteOpacity);
 
             // HUD Customization
@@ -129,11 +130,13 @@ class BadHUDOptions extends ScriptedModule {
             preferences.createPrefItemCheckbox("Custom Scroll Speed", "If enabled, the Scroll Speed Factor option will be used.", value -> badOptions.customScrollSpeed = value, badOptions.customScrollSpeed);
             preferences.createPrefItemNumber("Scroll Speed Factor", "Adjust the speed of the incoming notes.", value -> badOptions.scrollSpeedFactor = value, value -> Std.string(badOptions.scrollSpeedFactor / 10), Std.int(badOptions.scrollSpeedFactor), 1, 9999, 1, 0);
 
-            var callback = preferences.items.getItem("Debug Display").onChangeCallback;
-            preferences.items.getItem("Debug Display").onChangeCallback = (key:String, value:DebugDisplayMode) -> {
-                callback(key, value);
-                changeDebugDisplay(badOptions.hudFont);
-            };
+            if (!FlxG.onMobile) {
+                var callback = preferences.items.getItem("Debug Display").onChangeCallback;
+                preferences.items.getItem("Debug Display").onChangeCallback = (key:String, value:DebugDisplayMode) -> {
+                    callback(key, value);
+                    changeDebugDisplay(badOptions.hudFont);
+                };
+            }
         }
     }
 

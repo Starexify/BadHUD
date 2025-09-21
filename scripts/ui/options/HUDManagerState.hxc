@@ -6,6 +6,7 @@ import funkin.data.notestyle.NoteStyleRegistry;
 import funkin.graphics.FunkinSprite;
 import funkin.input.Cursor;
 import funkin.input.CursorMode;
+import funkin.mobile.input.ControlsHandler;
 import funkin.modding.base.ScriptedFlxSpriteGroup;
 import funkin.play.notes.Strumline;
 import funkin.play.notes.notestyle.NoteStyle;
@@ -24,6 +25,7 @@ import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
 import flixel.ui.FlxBar;
 import flixel.ui.FlxBarFillDirection;
+import flixel.util.FlxColor;
 import flixel.util.FlxSpriteUtil;
 
 import haxe.ui.RuntimeComponentBuilder;
@@ -102,6 +104,9 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     var holdArray:Array<Bool> = [];
     var releaseArray:Array<Bool> = [];
 
+    var isMobile(get, never):Bool;
+    function get_isMobile():Bool { return FlxG.onMobile; }
+
     override function create() {
         super.create();
 
@@ -109,7 +114,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         prevPersistentUpdate = FlxG.state.persistentUpdate;
         FlxG.state.persistentUpdate = false;
 
-        Cursor.show();
+        if (!isMobile) Cursor.show();
         setupWelcomeMusic();
 
         var menuBG = new FlxSprite().loadGraphic(Paths.image("menuDesat"));
@@ -140,12 +145,14 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         add(spriteSettingsText);
 
         initToolbox();
+
+        if (isMobile) addBackButton(FlxG.width - 230, FlxG.height - 200, FlxColor.WHITE, () -> close());
     }
 
+    var hoveredDraggable = null;
     override function update(elapsed:Float) {
         var mouseX = FlxG.mouse.x;
         var mouseY = FlxG.mouse.y;
-        var hoveredDraggable = null;
         var toolboxActive = !isOverToolbox || toolboxWindow.hidden;
         pressArray = [controls.UI_LEFT_P, controls.UI_DOWN_P, controls.UI_UP_P, controls.UI_RIGHT_P];
         holdArray = [controls.UI_LEFT, controls.UI_DOWN, controls.UI_UP, controls.UI_RIGHT];
@@ -222,7 +229,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
 
         if (!openedDialog) {
             handleNotePress();
-            handleCursor(hoveredDraggable);
+            if (!isMobile) handleCursor(hoveredDraggable);
         }
 
         if (FlxG.keys.justPressed.F1 && toolboxWindow.hidden) initToolbox();
@@ -233,26 +240,59 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     // Init
+    var cutoutSize = FullScreenScaleMode.gameCutoutSize.x / 2.5;
     function initStrumlines() {
         if (playerStrumline != null) remove(playerStrumline);
         playerStrumline = new Strumline(noteStyle, true);
-        playerStrumline.y = Preferences.downscroll ? FlxG.height - playerStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
-        playerStrumline.visible = playerStrum;
+        if (!isMobile) {
+            playerStrumline.y = Preferences.downscroll ? FlxG.height - playerStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
+            if (badOptions.middlescroll) playerStrumline.screenCenter(0x01);
+            else playerStrumline.x = FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET + (cutoutSize / 2.0);
+        } else {
+            if (Preferences.controlsScheme == "Arrows" && !ControlsHandler.usingExternalInputDevice) {
+                var amplification:Float = (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
+                var playerStrumlineScale:Float = ((FlxG.height / FlxG.width) * 1.95) * amplification;
+                var playerNoteSpacing:Float = ((FlxG.height / FlxG.width) * 2.8) * amplification;
+
+                playerStrumline.strumlineScale.set(playerStrumlineScale, playerStrumlineScale);
+                playerStrumline.setNoteSpacing(playerNoteSpacing);
+                // Who thought it'd be a good idea to make the iterator nullable?
+                for (strum in playerStrumline) {
+                    strum.width *= 2;
+                }
+
+                playerStrumline.x = (FlxG.width - playerStrumline.width) / 2 + Constants.STRUMLINE_X_OFFSET;
+                playerStrumline.y = (FlxG.height - playerStrumline.height) * 0.95 - Constants.STRUMLINE_Y_OFFSET;
+                if (noteStyle != "pixel") {
+
+                } else {
+                    playerStrumline.y -= 10;
+                }
+            }
+        }
         playerStrumline.background.visible = false;
-        if (badOptions.middlescroll) playerStrumline.screenCenter(0x01);
-        else playerStrumline.x = FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET;
+        playerStrumline.visible = playerStrum;
         add(playerStrumline);
         if (badOptions.opponentNoteOpacity > 0) {
             if (opponentStrumline != null) remove(opponentStrumline);
-            opponentStrumline = new Strumline(noteStyle, true);
-            opponentStrumline.x = Constants.STRUMLINE_X_OFFSET;
-            opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
-            if (badOptions.middleScroll && !badOptions.oppMiddlescroll)
-                opponentStrumline.y = Preferences.downscroll ? opponentStrumline.y - 150 : opponentStrumline.y + 200;
+            opponentStrumline = new Strumline(noteStyle, false);
+            opponentStrumline.x = Constants.STRUMLINE_X_OFFSET + cutoutSize;
+            if (!isMobile) {
+                opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
+                if (badOptions.middleScroll && !badOptions.oppMiddlescroll) opponentStrumline.y = Preferences.downscroll ? opponentStrumline.y - 150 : opponentStrumline.y + 200;
+                placeOpponentNotes(opponentStrumline);
+            } else {
+                if (Preferences.controlsScheme == "Arrows" && !ControlsHandler.usingExternalInputDevice) {
+                    var amplification:Float = (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
+                    opponentStrumline.enterMiniMode(0.4 * amplification);
+                    opponentStrumline.y = Constants.STRUMLINE_Y_OFFSET * 0.3;
+                    opponentStrumline.x -= 30;
+                }
+            }
+
             opponentStrumline.alpha = badOptions.opponentNoteOpacity / 100;
             opponentStrumline.visible = oppStrum;
             opponentStrumline.background.visible = false;
-            placeOpponentNotes(opponentStrumline);
             add(opponentStrumline);
         }
     }
@@ -497,7 +537,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
         toolboxWindow.onMouseOver = (event:MouseEvent) -> {
             if (!isOverToolbox) {
                 isOverToolbox = true;
-                Cursor.cursorMode = CursorMode.Default;
+                if (!isMobile) Cursor.cursorMode = CursorMode.Default;
             }
         }
         toolboxWindow.onMouseOut = (event:MouseEvent) -> if (isOverToolbox) isOverToolbox = false;
@@ -1489,7 +1529,7 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 
     function cleanup() {
-        Cursor.hide();
+        if (!isMobile) Cursor.hide();
         if (welcomeMusic != null) welcomeMusic.destroy();
         if (FlxG.sound.music != null) FlxG.sound.music.resume();
         FlxG.state.persistentUpdate = prevPersistentUpdate;
@@ -1497,27 +1537,8 @@ class HUDManagerState extends ScriptedMusicBeatSubState {
     }
 }
 
-typedef DraggableSprite = {
-    sprite:FlxSprite,
-    isDragging:Bool,
-    isSelected:Bool,
-    dragOffsetX:Float,
-    dragOffsetY:Float,
-    spriteType:String,
-    linkedSprites:Array<LinkedSprite>
-}
-
-typedef LinkedSprite = {
-    sprite:FlxSprite,
-    index:Int
-}
-
-typedef KeybindEntry = {
-    action:String,
-    keybind:String
-}
-
-typedef BasicEntry = {
-    id:String,
-    text:String
-}
+typedef DraggableSprite = {sprite:FlxSprite, isDragging:Bool, isSelected:Bool, dragOffsetX:Float, dragOffsetY:Float, spriteType:String, linkedSprites:Array<LinkedSprite>}
+typedef LinkedSprite = {sprite:FlxSprite, index:Int}
+typedef KeybindEntry = {action:String, keybind:String}
+typedef TouchEntry = {action:String, touchCtrl:String}
+typedef BasicEntry = {id:String, text:String}

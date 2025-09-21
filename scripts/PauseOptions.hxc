@@ -1,24 +1,27 @@
-import funkin.audio.FunkinSound;
-import funkin.modding.events.ScriptEvent;
-import funkin.modding.module.ScriptedModule;
-import funkin.play.PauseSubState;
-import funkin.play.PlayState;
-import funkin.save.Save;
-import funkin.ui.ScriptedMusicBeatSubState;
-import funkin.ui.debug.charting.ChartEditorState;
-import funkin.ui.options.OptionsState;
-import funkin.util.ReflectUtil;
-
 import flixel.FlxG;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
-
-import polymod.hscript._internal.PolymodScriptClass;
+import funkin.audio.FunkinSound;
+import funkin.modding.events.ScriptEvent;
+import funkin.modding.ModStore;
+import funkin.modding.module.ScriptedModule;
+import funkin.play.PauseSubState;
+import funkin.play.PlayState;
+import funkin.ui.debug.charting.ChartEditorState;
+import funkin.ui.options.OptionsState;
+import funkin.ui.ScriptedMusicBeatSubState;
+import funkin.util.ReflectUtil;
 
 class PauseOptions extends ScriptedModule {
     var isChartingState:Bool = false;
     var stateParams:PlayStateParams;
     var currentSongId:String;
+
+    var badWasPaused(get, set):Bool;
+
+    function set_badWasPaused(value:Bool):Bool { return ModStore.register("badWasPaused", value); }
+
+    function get_badWasPaused():Bool { return ModStore.get("badWasPaused"); }
 
     function new() {
         super("PauseOptions");
@@ -36,51 +39,63 @@ class PauseOptions extends ScriptedModule {
         currentSongId = PlayState.instance.currentSong.id;
     }
 
-    override function onStateChangeEnd(event:StateChangeScriptEvent) {
-        if (event.targetState is OptionsState) {
-            var persistentEvent = event;
-            //DiscordClient.instance.setPresence({ state: "Setting up Options", details: null });
-            // HUD Manager Entry
-            var options:OptionsMenu = event.targetState.optionsCodex.get_currentPage();
-            for (optionEntries in options.items.members) optionEntries.y -= 80;
-            var lastItems = [
-                options.items.members[options.items.length - 3], // ngLogin
-                options.items.members[options.items.length - 2], // clearSave
-                options.items.members[options.items.length - 1] // exit
-            ];
-            lastItems[0].y += 100; // ngLogin
-            lastItems[1].y += 100; // clearSave
-            lastItems[2].y += 110; // exit
-            for (item in lastItems) options.items.remove(item);
-            var hudManager = options.items.createItem(0, (options.items.length - 3) * 100 + 20, "HUD MANAGER", "bold", () -> persistentEvent.targetState.openSubState(ScriptedMusicBeatSubState.init("ui.options.HUDManagerState")));
-            hudManager.x = (FlxG.width - hudManager.width) / 2;
-            for (item in lastItems) options.items.add(item);
+    override public function onPause(event:PauseScriptEvent) {
+        //if (!FlxG.onMobile) return;
 
-            if (Save.instance.modOptions.get("badWasPaused")) FunkinSound.playMusic('freakyMenu', {
-                overrideExisting: true,
-                restartTrack: false,
-                persist: true
-            });
+    }
+
+    override public function onSubStateOpenEnd(event:SubStateScriptEvent) {
+        if (!FlxG.onMobile || !(event.targetState is PauseSubState)) return;
+        var pause:PauseSubState = event.targetState;
+        for (entry in pause.currentMenuEntries) {
+            entry.sprite.y -= 35;
         }
+    }
+
+    override function onStateChangeEnd(event:StateChangeScriptEvent) {
+        if (!(event.targetState is OptionsState)) return;
+        var persistentEvent = event;
+        //DiscordClient.instance.setPresence({ state: "Setting up Options", details: null });
+        // HUD Manager Entry
+        var options:OptionsMenu = event.targetState.optionsCodex.get_currentPage();
+        for (optionEntries in options.items.members) optionEntries.y -= 80;
+        var lastItems = [
+            options.items.members[options.items.length - 3], // ngLogin
+            options.items.members[options.items.length - 2], // clearSave
+            options.items.members[options.items.length - 1] // exit
+        ];
+        lastItems[0].y += 100; // ngLogin
+        lastItems[1].y += 100; // clearSave
+        lastItems[2].y += 110; // exit
+        for (item in lastItems) options.items.remove(item);
+        var hudManager = options.items.createItem(0, (options.items.length - 3) * 100 + 20, "HUD MANAGER", "bold", () -> persistentEvent.targetState.openSubState(ScriptedMusicBeatSubState.init("ui.options.HUDManagerState")));
+        hudManager.x = (FlxG.width - hudManager.width) / 2;
+        for (item in lastItems) options.items.add(item);
+
+        if (badWasPaused) FunkinSound.playMusic('freakyMenu', {
+            overrideExisting: true,
+            restartTrack: false,
+            persist: true
+        });
     }
 
     override function onSubStateOpenBegin(event:SubStateScriptEvent) {
         var state:PolymodScriptClass = event.targetState._asc;
-        if (event.targetState != PlayState.instance && Save.instance.modOptions.get("badWasPaused") && ReflectUtil.getAnonymousField(ReflectUtil.getAnonymousField(state, "_c"), "name") != "HUDManagerState") {
+        if (event.targetState != PlayState.instance && badWasPaused && ReflectUtil.field(ReflectUtil.field(state, "_c"), "name") != "HUDManagerState") {
             if (isChartingState) {
                 FlxG.switchState(() -> new ChartEditorState({ targetSongId: currentSongId }));
-                Save.instance.modOptions.set("badWasPaused", false);
+                badWasPaused = false;
                 isChartingState = false;
             } else {
                 FlxG.switchState(() -> new PlayState(stateParams));
-                Save.instance.modOptions.set("badWasPaused", false);
+                badWasPaused = false;
             }
         }
     }
 
     function openOptionsCallback(subState:PauseSubState) {
         if (subState == null) return;
-        Save.instance.modOptions.set("badWasPaused", true);
+        badWasPaused = true;
         // Fade out animation
         for (entry in subState.currentMenuEntries.copy()) {
             if (entry.text == "Options") FlxTween.tween(entry?.sprite, { alpha: 0 }, 0.4, { ease: FlxEase.quadOut });

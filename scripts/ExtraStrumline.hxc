@@ -71,7 +71,7 @@ class ExtraStrumline extends ScriptedModule {
         if (noteStyle == null) noteStyle = NoteStyleRegistry.instance.fetchDefault();
 
         // Center player strumline
-        if (badOptions.middlescroll && !BadHooks.strumlineExcluded.contains(playState.currentChart.songName)) {
+        if (badOptions.middlescroll && !BadHooks.strumlineExcluded.contains(playState.currentChart.songName) && !FlxG.onMobile) {
             playState.playerStrumline.x = FlxG.width * 0.5 - playState.playerStrumline.width * 0.5;
             placeOpponentNotes(playState.opponentStrumline);
         }
@@ -124,7 +124,7 @@ class ExtraStrumline extends ScriptedModule {
                 var keybindText = new FlxText(staticNote.x, staticNote.y, staticNote.width, keyName);
                 keybindText.setFormat(Paths.font(badOptions.hudFont), 32, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE_FAST, 0xFF000000);
                 keybindText.y = staticNote.y + staticNote.height * 0.5;
-                keybindText.y += Preferences.downscroll ? -keybindText.height : keybindText.height;
+                keybindText.y += Preferences.downscroll || FlxG.onMobile ? -keybindText.height : keybindText.height;
                 keybindText.alpha = 0;
                 keybindText.camera = PlayState.instance.camHUD;
                 PlayState.instance.add(keybindText);
@@ -179,6 +179,7 @@ class ExtraStrumline extends ScriptedModule {
     }
 
     override function onNoteIncoming(event:NoteScriptEvent) {
+        if (FlxG.onMobile) return;
         if (playState == null || badOptions.opponentNoteOpacity <= 0 || event.note.noteData.getMustHitNote(Strumline.KEY_COUNT) || BadHooks.strumlineExcluded.indexOf(playState.currentChart.songName) != -1) return;
         try {
             if (playState.currentStage != null && event.note != null && event.note.alive) {
@@ -287,8 +288,8 @@ class ExtraStrumline extends ScriptedModule {
     function fadeInKeybinds(noteHeight:Float) {
         var index = 0;
         for (text in keybindTexts) {
-            var textYDirI = Preferences.downscroll ? -noteHeight * 0.5 : noteHeight * 0.5;
-            var textYDirII = Preferences.downscroll ? 20 : -20;
+            var textYDirI = Preferences.downscroll || FlxG.onMobile ? -noteHeight * 0.5 : noteHeight * 0.5;
+            var textYDirII = Preferences.downscroll || FlxG.onMobile ? 20 : -20;
             FlxTween.tween(text, {y: text.y + textYDirI, alpha: 1}, 1, {
                 ease: FlxEase.circOut,
                 startDelay: 0.5 + (0.2 * index),
